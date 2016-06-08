@@ -25,14 +25,23 @@ Unpack the tarball of a base working system to the strapdir.
 
 # zlibs/imaging
 
-## img_mkimage() ##
+## img_mkimage()
 Uses dd to dump zeroes into a raw .img of the preconfigured size.
+Goes further and rsyncs strapdir into the image, installs bootloader and a
+kernel.
 
 ## img_partition_dos() ##
 Partitions the raw image into dos format and formats (boot=ext2; root=ext4)
 
 ## img_partition_gpt() ##
 Partitions the raw image into gpt format and formats (boot=ext2; root=ext4)
+
+## img_rsync_strapdir() ##
+rsyncs the strapdir to te mounted rootfs of our raw image.
+
+## img_install_bootloader() ##
+calls functions from sysconf: `conf_install_kernel` and `conf_install_grub` to
+install the on the image
 
 ## img_mount() ##
 Mounts the root and boot partitions in `$workdir/rootp` in order to work on it.
@@ -54,16 +63,16 @@ escalate root "chroot /somewhere/where/i/want/to"
 For the raw image. Finds a free loopdevice and makes a /dev/mapper device which
 is then kpartx-ed to give us partitions we can mount.
 
-## mountdevproc()
-Mounts `/dev`, `/dev/pts`, and `/proc` where needed. Takes one argument, which
+## mountdevprocsys()
+Mounts `/sys`, `/dev`, `/dev/pts`, and `/proc` where needed. Takes one argument, which
 is the path containing those. ex:
 
 ```
 mountdevproc /path/to/bootstrapped/chroot
 ```
 
-## umountdevproc()
-Does the opposite of `mountdevproc`.
+## umountdevprocsys()
+Does the opposite of `mountdevprocsys`.
 
 ## silly()
 Because NSA
@@ -71,6 +80,12 @@ Because NSA
 # zlibs/sysconf
 NOTE: everything is printed to stdout. Pipe or redirect if you want to write on
 storage.
+
+## conf_install_grub()
+Installs `grub-pc` to the target. Arg taken is a path to a chroot
+
+## conf_install_kernel()
+Installs `linux-image-$arch` to the target. Arg taken is a path to the chroot.
 
 ## conf_print_debconf()
 Prints out the config for console-common setup

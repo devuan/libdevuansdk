@@ -137,7 +137,7 @@ img_mount() {
 	sudo mkdir -p ${workdir}/rootp/{boot,dev,proc,sys}
 	sudo mount ${bootpart} ${workdir}/rootp/boot && act "mounted boot partition"
 
-	mountdevproc ${workdir}/rootp
+	mountdevprocsys ${workdir}/rootp
 }
 
 img_umount() {
@@ -145,7 +145,7 @@ img_umount() {
 	req=(bootpart rootpart workdir)
 	ckreq || return 1
 
-	umountdevproc ${workdir}/rootp
+	umountdevprocsys ${workdir}/rootp
 
 	sudo umount ${workdir}/rootp/boot && act "umounted boot partition"
 	sudo umount ${workdir}/rootp      && act "umounted root partition"
