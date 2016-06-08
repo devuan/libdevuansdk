@@ -27,7 +27,7 @@ iso_prepare() {
     fn iso_prepare $@
     req=(strapdir os release version arch)
     root=$strapdir
-	freq=($strapdir/bin/bash)
+	freq=($strapdir/.done)
     # freq=($R/chroot/$chroot_arch/$iso/initrd.gz)
     reqck || return 1
 
