@@ -40,8 +40,8 @@ section="main"
 
 # core packages for the system
 core_packages=(devuan-keyring debian-keyring)
-core_packages+=(git-core binutils ca-certificates curl)
-core_packages+=(locales console-common less nano vim)
+core_packages+=(binutils ca-certificates curl)
+core_packages+=(console-common less nano vim)
 
 # base packages for the system
 base_packages=(bzip2 dialog apt-utils fakeroot e2fsprogs parted)
