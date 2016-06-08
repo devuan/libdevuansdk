@@ -90,7 +90,7 @@ rm -f /etc/ssh/*.pub
 rm -f /root/.bash_history
 
 # our file for which we check the bootstrap is complete
-touch .done
+echo "1" > .done
 EOF
 }
 
