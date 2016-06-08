@@ -1,0 +1,69 @@
+#!/usr/bin/env zsh
+#
+# Copyright (C) 2012-2016 Dyne.org Foundation
+#
+#
+# This source code is free software; you can redistribute it
+# and/or modify it under the terms of the GNU Public License
+# as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later
+# version.
+#
+# This source code is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied
+# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+# PURPOSE.  Please refer to the GNU Public License for more
+# details.
+#
+# You should have received a copy of the GNU Public License
+# along with this source code; if not, write to: Free
+# Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+# 02139, USA.
+
+devuan_sdk_version=0.1
+
+# export DOWSE_PREFIX and DOWSE_HOME to override
+R=${SDK_PREFIX:-/usr/local/devuan-sdk}
+H=${SDK_HOME:-$HOME/.devuan-sdk}
+E=${SDK_CONF:-/etc/devuan-sdk}
+
+[[ -r $R ]] || {
+    print "Devuan SDK is not installed in: $R"
+    print "export SDK_PREFIX if installed on a different path"
+}
+
+
+########################
+## Load Zuper extensions
+# conclude initialization
+if [[ -r   $R/zuper/zuper ]]; then
+    source $R/zuper/zuper
+else source ./zuper/zuper; fi
+
+DEBUG=${DEBUG:-0}
+QUIET=${QUIET:-0}
+LOG=${LOG:-""}
+
+# path and debugging
+vars+=(R H E)
+
+# source $R/zlibs/library
+
+# conclude initialization
+if [[ -r   $R/zuper/zuper.init ]]; then
+    source $R/zuper/zuper.init
+else source ./zuper/zuper.init; fi
+
+# add all other dowse binaries to the path
+path+=($R/bin)
+rehash
+
+
+# For gettext
+TEXTDOMAIN=devuan
+
+notice "Loading Devuan SDK library v$devuan_sdk_version"
+
+# ...
+
+act "library succesfully loaded"
