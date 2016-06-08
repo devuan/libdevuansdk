@@ -40,8 +40,13 @@ section="main"
 
 # core packages for the system
 core_packages=(devuan-keyring debian-keyring)
+<<<<<<< HEAD
 core_packages+=(binutils ca-certificates curl)
 core_packages+=(console-common less nano vim)
+=======
+core_packages+=(initramfs-tools binutils ca-certificates curl)
+core_packages+=(locales console-common less nano vim)
+>>>>>>> progress on iso making
 
 # base packages for the system
 base_packages=(bzip2 dialog apt-utils fakeroot e2fsprogs parted)
@@ -55,6 +60,7 @@ imgsize=1337
 ## libdevuansdk-specific settings
 workdir="$H/workdir"
 strapdir="${workdir}/${os}-${release}-${version}"
+outdir="$H/builds"
 
 # declare zuper globals
 vars+=(os release version mirror section)

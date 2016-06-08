@@ -23,6 +23,15 @@
 
 ## Default system configuration
 
+conf_install_kernel() {
+	fn conf_install_kernel
+	req=(arch strapdir)
+	freq=($strapdir/bin/bash)
+	ckreq || return 1
+
+	escalate root "chroot $strapdir apt-get install linux-image-$arch"
+}
+
 conf_print_debconf() {
 	fn conf_print_debconf
 
