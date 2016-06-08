@@ -42,18 +42,73 @@ iso_prepare() {
 	[[ -r /usr/lib/ISOLINUX/isohdpfx.bin ]] || {
 		error "Isolinux binary not found"
 		zerr; zshexit }
-	cp /usr/lib/ISOLINUX/isolinux.bin $isodir
+
+	mkdir -p $isodir/isolinux
+	cp /usr/lib/ISOLINUX/isolinux.bin              $isodir/isolinux
+	cp /usr/lib/syslinux/modules/bios/*.c32        $isodir/isolinux
+	# cp /usr/lib/syslinux/modules/bios/pwd.c32      $isodir/isolinux
+	# cp /usr/lib/syslinux/modules/bios/sysdump.c32  $isodir/isolinux
+	# cp /usr/lib/syslinux/modules/bios/meminfo.c32  $isodir/isolinux
+	# cp /usr/lib/syslinux/modules/bios/chain.c32    $isodir/isolinux
+	# cp /usr/lib/syslinux/modules/bios/ldlinux.c32  $isodir/isolinux
+	# cp /usr/lib/syslinux/modules/bios/libcom32.c32 $isodir/isolinux
+	# cp /usr/lib/syslinux/modules/bios/libutil.c32  $isodir/isolinux
+	# cp /usr/lib/syslinux/modules/bios/vesamenu.c32 $isodir/isolinux
+	cat <<EOF >  $isodir/isolinux/isolinux.cfg
+path
+include menu.cfg
+default vesamenu.c32
+prompt 0
+timeout 0
+label Shell
+com32 rosh.c32
+EOF
+	cat <<EOF >  $isodir/isolinux/menu.cfg
+menu hshift 7
+menu width 61
+
+menu title Devuan GNU+Linux
+
+include stdmenu.cfg
+include txt.cfg
+EOF
+	cat <<EOF >  $isodir/isolinux/stdmenu.cfg
+menu color title	* #FFFFFFFF *
+menu color border	* #00000000 #00000000 none
+menu color sel		* #ffffffff #76a1d0ff *
+menu color hotsel	1;7;37;40 #ffffffff #76a1d0ff *
+menu color tabmsg	* #ffffffff #00000000 *
+menu color help		37;40 #ffdddd00 #00000000 none
+# XXX When adjusting vshift, take care that rows is set to a small
+# enough value so any possible menu will fit on the screen,
+# rather than falling off the bottom.
+menu vshift 12
+menu rows 10
+menu helpmsgrow 15
+# The command line must be at least one line from the bottom.
+menu cmdlinerow 16
+menu timeoutrow 16
+menu tabmsgrow 18
+menu tabmsg Press ENTER to boot or TAB to edit a menu entry
+EOF
+
+	cat <<EOF >  $isodir/isolinux/txt.cfg
+label default
+	menu label ^Boot Devuan $release $version $arch
+	kernel linux
+	append vga=788 initrd=initrd.img
+EOF
 }
 
 iso_mkinitrd() {
 	fn iso_mkinitrd $@
 	req=(iso isodir arch)
-	freq=($isodir/isolinux.bin)
+	freq=($isodir/isolinux/isolinux.bin)
 	ckreq || return 1
 
 	escalate root "chroot $strapdir update-initramfs -c -k all"
-	cp -v $strapdir/initrd.img $isodir/
-	cp -v $strapdir/vmlinuz    $isodir/
+	cp -v $strapdir/initrd.img $isodir/isolinux/
+	cp -v $strapdir/vmlinuz    $isodir/isolinux/linux
 }
 
 iso_mkusr() {
@@ -63,16 +118,17 @@ iso_mkusr() {
 iso_make() {
 	fn iso_make $@
 	req=(iso isodir outdir)
-	freq=($isodir/isolinux.bin)
+	freq=($isodir/isolinux/isolinux.bin)
 	ckreq || return 1
 
 	mkdir -p $outdir
 
     escalate root "
-xorriso -as mkisofs -output $outdir/$iso \
-        -iso-level 3 -full-iso9660-filenames -r -J -no-emul-boot -boot-load-size 4 \
-        -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin -partition_offset 16 \
-        -boot-info-table -b isolinux.bin -c boot.cat $isodir"
+xorriso -as mkisofs -r -J -joliet-long -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin
+        -partition_offset 16 -V DEVUAN
+        -b isolinux/isolinux.bin -c isolinux/boot.cat  -no-emul-boot -boot-load-size 4
+        -boot-info-table -o $outdir/$iso $isodir
+"
 
     notice "$iso ready"
     ls -lh $outdir/$iso
