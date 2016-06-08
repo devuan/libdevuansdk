@@ -51,7 +51,7 @@ system_packages=(sysvinit ssh)
 
 ## libdevuansdk-specific settings
 workdir="$H/workdir"
-strapdir="${workdir}/strapdir"
+strapdir="${workdir}/${os}-${release}-${version}-${arch}"
 
 # declare zuper globals
 vars+=(os release version mirror section)
