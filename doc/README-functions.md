@@ -28,16 +28,16 @@ Unpack the tarball of a base working system to the strapdir.
 ## img_mkimage() ##
 Uses dd to dump zeroes into a raw .img of the preconfigured size.
 
-## img_partimage_dos() ##
+## img_partition_dos() ##
 Partitions the raw image into dos format and formats (boot=ext2; root=ext4)
 
-## img_partimage_gpt() ##
+## img_partition_gpt() ##
 Partitions the raw image into gpt format and formats (boot=ext2; root=ext4)
 
-## img_mountimage() ##
+## img_mount() ##
 Mounts the root and boot partitions in `$workdir/rootp` in order to work on it.
 
-## img_umountimage() ##
+## img_umount() ##
 Undoes the above function.
 
 # zlibs/helpers

@@ -39,8 +39,8 @@ img_mkimage() {
 		bs=1M count=${imgsize}
 }
 
-img_partimage_dos() {
-	fn img_partimage_dos
+img_partition_dos() {
+	fn img_partition_dos
 	req=(imgname imgpath)
 	ckreq || return 1
 
@@ -62,8 +62,8 @@ img_partimage_dos() {
 	popd
 }
 
-img_partimage_gpt() {
-	fn img_partimage_gpt
+img_partition_gpt() {
+	fn img_partition_gpt
 	req=(imgname imgpath)
 	ckreq || return 1
 
@@ -88,8 +88,8 @@ img_partimage_gpt() {
 	popd
 }
 
-img_mountimage() {
-	fn img_mountimage
+img_mount() {
+	fn img_mount
 	req=(bootpart rootpart workdir)
 	ckreq || return 1
 
@@ -99,8 +99,8 @@ img_mountimage() {
 	escalate root "mount ${bootpart} ${workdir}/rootp/boot" && act "mounted root partition"
 }
 
-img_umountimage() {
-	fn img_umountimage
+img_umount() {
+	fn img_umount
 	req=(bootpart rootpart workdir)
 	ckreq || return 1
 
