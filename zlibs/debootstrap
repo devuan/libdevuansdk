@@ -41,25 +41,25 @@ bootstrap() {
 		bootstrap_tar_unpack ${strapdir}
 	else
 		# Debootstrap stage 1
-		escalate "root" "debootstrap --foreign --arch ${arch} ${release} ${strapdir} ${mirror}"
+		sudo debootstrap --foreign --arch ${arch} ${release} ${strapdir} ${mirror}
 
 		# Debootstrap stage 2
-		escalate "root" "chroot ${strapdir} /debootstrap/debootstrap --second-stage"
+		sudo chroot ${strapdir} /debootstrap/debootstrap --second-stage
 
 		# write all system configuration
-		conf_print_debconf | escalate "root" "tee ${strapdir}/debconf.set"
-		conf_print_fstab   | escalate "root" "tee ${strapdir}/etc/fstab"
-		conf_print_hostname | escalate "root" "tee ${strapdir}/etc/hostname"
-		conf_print_hosts | escalate "root" "tee ${strapdir}/etc/hosts"
-		conf_print_networkifaces | escalate "root" "tee ${strapdir}/etc/network/interfaces"
-		conf_print_resolvconf | escalate "root" "tee ${strapdir}/etc/resolv.conf"
-		conf_print_sourceslist | escalate "root" "tee ${strapdir}/etc/apt/sources.list"
+		conf_print_debconf       | sudo tee ${strapdir}/debconf.set
+		conf_print_fstab         | sudo tee ${strapdir}/etc/fstab
+		conf_print_hostname      | sudo tee ${strapdir}/etc/hostname
+		conf_print_hosts         | sudo tee ${strapdir}/etc/hosts
+		conf_print_networkifaces | sudo tee ${strapdir}/etc/network/interfaces
+		conf_print_resolvconf    | sudo tee ${strapdir}/etc/resolv.conf
+		conf_print_sourceslist   | sudo tee ${strapdir}/etc/apt/sources.list
 
 		# write third-stage for chroot
-		bootstrap_config_thirdstage | escalate "root" "tee ${strapdir}/thirdstage.sh"
-		bootstrap_config_cleanup | escalate "root" "tee ${strapdir}/cleanup.sh"
-		escalate "root" "chmod +x ${strapdir}/thirdstage.sh"
-		escalate "root" "chmod +x ${strapdir}/cleanup.sh"
+		bootstrap_config_thirdstage | sudo tee ${strapdir}/thirdstage.sh
+		bootstrap_config_cleanup    | sudo tee ${strapdir}/cleanup.sh
+		sudo chmod +x ${strapdir}/thirdstage.sh
+		sudo chmod +x ${strapdir}/cleanup.sh
 
 		# chroot into it and configure further
 		# Debootstrap stage 3
@@ -68,8 +68,8 @@ bootstrap() {
 
 		mountdevproc ${strapdir}
 
-		escalate "root" "chroot ${strapdir} /thirdstage.sh"
-		escalate "root" "chroot ${strapdir} /cleanup.sh"
+		sudo chroot ${strapdir} /thirdstage.sh
+		sudo chroot ${strapdir} /cleanup.sh
 
 		umountdevproc ${strapdir}
 
@@ -87,6 +87,7 @@ rm -f /debconf.set
 rm -f /thirdstage.sh
 rm -f /etc/ssh/*key
 rm -f /etc/ssh/*.pub
+rm -f /root/.bash_history
 EOF
 }
 
@@ -122,6 +123,8 @@ apt-get --yes --force-yes dist-upgrade
 
 apt-get --yes --force-yes autoremove
 
+apt-get clean
+
 rm -f /usr/sbin/policy-rc.d
 rm -f /usr/sbin/invoke-rc.d
 dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
@@ -139,9 +142,15 @@ bootstrap_tar_pack() {
 		act "tarball found already in ::1 dir::" $_dest
 	else
 		notice "Creating boostrap tarball in ::1 tgz::" $bootstrap_tgz
+		silly
+
 		pushd ${strapdir}
+
 		mkdir -p ${_dest}
-		escalate root "tar czf $bootstrap_tgz . --exclude=dev,sys,proc"
+		sudo tar czf $bootstrap_tgz \
+			--exclude={./boot,./dev,./sys,./proc} \
+			./
+
 		popd
 	fi
 	ls -lh $bootstrap_tgz
@@ -160,5 +169,7 @@ bootstrap_tar_unpack() {
 	}
 
 	mkdir -p ${unpath}
+	silly
 	tar xf $bootstrap_tgz -C ${unpath}
+	sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
 }

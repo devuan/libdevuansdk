@@ -39,10 +39,11 @@ escalate() {
 
 findloopmapp() {
 	fn findloopmapp
-	req=(imgpath)
+	req=(imgpath imgname workdir)
 	ckreq || return 1
 
-	loopdevice=`sudo losetup -f --show ${imgpath}`
+	pushd ${workdir}
+	loopdevice=`sudo losetup -f --show ${imgname}`
 	mappdevice=`sudo kpartx -va $loopdevice | sed -E 's/.*(loop[0-9])p.*/\1/g' | head -1`
 	func "Loop device:   ::1 loopdev::" $loopdevice
 	func "Mapper device: ::1 mappdev::" $mappdevice
@@ -52,6 +53,8 @@ findloopmapp() {
 	mappdevice="/dev/mapper/${mappdevice}"
 	bootpart=${mappdevice}p1
 	rootpart=${mappdevice}p2
+
+	popd
 }
 
 mountdevproc() {
@@ -60,9 +63,9 @@ mountdevproc() {
 	req=(mntdir)
 	ckreq || return 1
 
-	escalate "root" "mount -t proc proc ${mntdir}/proc" && act "mounted /proc"
-	escalate "root" "mount -o bind /dev ${mntdir}/dev"  && act "mounted /dev"
-	escalate "root" "mount -o bind /dev/pts ${mntdir}/dev/pts" && act "mounted /dev/pts"
+	sudo mount -t proc proc ${mntdir}/proc        && act "mounted /proc"
+	sudo mount -o bind /dev ${mntdir}/dev         && act "mounted /dev"
+	sudo mount -o bind /dev/pts ${mntdir}/dev/pts && act "mounted /dev/pts"
 }
 
 umountdevproc() {
@@ -71,9 +74,9 @@ umountdevproc() {
 	req=(mntdir)
 	ckreq || return 1
 
-	escalate "root" "umount ${mntdir}/dev/pts" && act "unmounted /dev/pts" && sleep 2
-	escalate "root" "umount ${mntdir}/dev"  && act "unmounted /dev" && sleep 2
-	escalate "root" "umount ${mntdir}/proc" && act "unmounted /proc" && sleep 2
+	sudo umount ${mntdir}/dev/pts && act "unmounted /dev/pts" && sleep 2
+	sudo umount ${mntdir}/dev     && act "unmounted /dev" && sleep 2
+	sudo umount ${mntdir}/proc    && act "unmounted /proc" && sleep 2
 }
 
 silly() {

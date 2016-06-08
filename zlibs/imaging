@@ -45,6 +45,7 @@ img_partition_dos() {
 	ckreq || return 1
 
 	notice "Partitioning with dos"
+	silly
 
 	dos_boot_size=(ext2 0 64)
 	dos_root_size=(ext4 64 -1)
@@ -71,6 +72,7 @@ img_partition_gpt() {
 	ckreq || return 1
 
 	notice "Partitioning with gpt"
+	silly
 
 	pushd ${workdir}
 
@@ -106,8 +108,10 @@ img_mount() {
 
 	mkdir -p ${workdir}/rootp
 
-	escalate root "mount ${rootpart} ${workdir}/rootp"      && act "mounted root partition"
-	escalate root "mount ${bootpart} ${workdir}/rootp/boot" && act "mounted root partition"
+	sudo mount ${rootpart} ${workdir}/rootp      && act "mounted root partition"
+	sudo mount ${bootpart} ${workdir}/rootp/boot && act "mounted boot partition"
+
+	mountdevproc ${workdir}/rootp
 }
 
 img_umount() {

@@ -23,13 +23,24 @@
 
 ## Default system configuration
 
-conf_install_kernel() {
-	fn conf_install_kernel
-	req=(arch strapdir)
-	freq=($strapdir/bin/bash)
+conf_install_grub() {
+	fn conf_install_grub $@
+	chrootpath="$1"
+	req=(chrootpath)
 	ckreq || return 1
 
-	escalate root "chroot $strapdir apt-get install linux-image-$arch"
+	notice "Installing grub-pc"
+	sudo chroot ${chrootpath} apt-get --yes --force-yes install grub-pc
+}
+
+conf_install_kernel() {
+	fn conf_install_kernel $@
+	chrootpath="$1"
+	req=(arch chrootpath)
+	ckreq || return 1
+
+	notice "Installing stock kernel (linux-image-$arch)"
+	sudo chroot ${chrootpath} apt-get --yes --force-yes install linux-image-$arch
 }
 
 conf_print_debconf() {
