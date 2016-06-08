@@ -1,6 +1,23 @@
 libdevuansdk functions
 ----------------------
 
+# zlibs/debootstrap
+
+## bootstrap()
+Stages 1, 2, and 3 of debootstrap.
+
+## config_cleanup()
+Final cleanup of the rootfs.
+
+## config_thirdstage()
+Shell script for the system's third debootstrap stage.
+
+## tar_bootstrap()
+Make a tarball of a base working system, ready to be worked on later.
+
+## tar_unpack()
+Unpack the tarball of a base working system to the strapdir.
+
 # zlibs/helpers
 
 ## escalate()
@@ -40,6 +57,9 @@ Prints default `/etc/hosts`
 
 ## conf_print_networkifaces()
 Prints the `/etc/network/interfaces` file
+
+## conf_print_resolvconf()
+Prints the `/etc/resolv.conf` file.
 
 ## conf_print_sourceslist()
 Prints default `/etc/apt/sources.list`

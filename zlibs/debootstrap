@@ -1,0 +1,145 @@
+#!/usr/bin/env zsh
+#
+# Copyright (c) 2016 Dyne.org Foundation
+# libdevuansdk is written and maintained by
+#     Jaromil <jaromil@dyne.org>
+#     KatolaZ <katolaz@freaknet.org>
+#     parazyd <parazyd@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+## Debootstrap things
+
+bootstrap() {
+	fn bootstrap $@
+	arch="$1"
+	req=(os strapdir workdir arch release mirror)
+	ckreq || return 1
+
+	notice "Bootstrapping ${os} base"
+
+	mkdir -p ${strapdir}
+
+	if [[ -f $R/tmp/${os}-${arch}.tgz ]]; then
+		tar_unpack ${strapdir}
+	else
+		# Debootstrap stage 1
+		escalate "root" "debootstrap --foreign --arch ${arch} ${release} ${strapdir} ${mirror}"
+
+		# Debootstrap stage 2
+		escalate "root" "chroot ${strapdir} /debootstrap/debootstrap --second-stage"
+
+		# write all system configuration
+		conf_print_debconf | escalate "root" "tee ${strapdir}/debconf.set"
+		conf_print_fstab   | escalate "root" "tee ${strapdir}/etc/fstab"
+		conf_print_hostname | escalate "root" "tee ${strapdir}/etc/hostname"
+		conf_print_hosts | escalate "root" "tee ${strapdir}/etc/hosts"
+		conf_print_networkifaces | escalate "root" "tee ${strapdir}/etc/network/interfaces"
+		conf_print_resolvconf | escalate "root" "tee ${strapdir}/etc/resolv.conf"
+		conf_print_sourceslist | escalate "root" "tee ${strapdir}/etc/apt/sources.list"
+
+		# write third-stage for chroot
+		config_thirdstage | escalate "root" "tee ${strapdir}/thirdstage.sh"
+		config_cleanup | escalate "root" "tee ${strapdir}/cleanup.sh"
+		escalate "root" "chmod +x ${strapdir}/thirdstage.sh"
+		escalate "root" "chmod +x ${strapdir}/cleanup.sh"
+
+		# chroot into it and configure further
+		# Debootstrap stage 3
+		export LC_ALL=C
+		export DEBIAN_FRONTEND=noninteractive
+
+		mountdevproc ${strapdir}
+
+		escalate "root" "chroot ${strapdir} /thirdstage.sh"
+
+		umountdevproc ${strapdir}
+
+		tar_bootstrap
+	fi
+}
+
+config_cleanup() {
+	fn config_cleanup
+
+	cat << EOF
+#!/bin/sh
+
+rm -f /debconf.set
+rm -f /thirdstage.sh
+EOF
+}
+
+config_thirdstage() {
+	fn config_thirdstage
+	req=(core_packages base_packages system_packages)
+	ckreq || return 1
+
+	cat << EOF
+#!/bin/sh
+dpkg-divert --add --local --divert /usr/sbin/invoke-rc.d.chroot --rename /usr/sbin/invoke-rc.d
+cp /bin/true /usr/sbin/invoke-rc.d
+echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
+chmod +x /usr/sbin/policy-rc.d
+
+apt-get update
+apt-get --yes --force-yes install locales-all
+
+debconf-set-selections /debconf.set
+
+apt-get update
+apt-get -y install ${core_packages}
+
+echo "root:devuan" | chpasswd
+sed -i -e 's/KERNEL\!=\"eth\*|/KERNEL\!=\"/' /lib/udev/rules.d/75-persistent-net-generator.rules
+rm -f /etc/udev/rules.d/70-persistent-net.rules
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get --yes --force-yes install ${base_packages}
+apt-get --yes --force-yes install ${system_packages}
+
+apt-get --yes --force-yes dist-upgrade
+
+apt-get --yes --force-yes autoremove
+
+rm -f /usr/sbin/policy-rc.d
+rm -f /usr/sbin/invoke-rc.d
+dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
+EOF
+}
+
+tar_bootstrap() {
+	fn tar_bootstrap
+
+	if [[ -f $R/tmp/${os}-${arch}.tgz ]]; then
+		return 0
+	else
+		pushd ${strapdir}
+		tar czf ${os}-${arch}.tgz ./*
+		mkdir -p $R/tmp
+		mv ${os}-${arch}.tgz $R/tmp/
+		popd
+	fi
+}
+
+tar_unpack() {
+	fn tar_unpack $@
+	local unpath="$1"
+	req=(unpath)
+	ckreq || return 1
+
+	tar xf $R/tmp/${os}-${arch}.tgz -C ${unpath}
+}

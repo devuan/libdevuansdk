@@ -1,0 +1,60 @@
+#!/usr/bin/env zsh
+#
+# Copyright (c) 2016 Dyne.org Foundation
+# libdevuansdk is written and maintained by
+#     Jaromil <jaromil@dyne.org>
+#     KatolaZ <katolaz@freaknet.org>
+#     parazyd <parazyd@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+## Helper functions that make your life easier
+
+escalate() {
+	fn escalate $@
+	local user="$1"
+	local cmnd="$2"
+	req=(user cmnd)
+	ckreq || return 1
+
+	if [[ `command -v sudo` ]]; then
+		sudo -E -u ${user} ${cmnd}
+	else
+		su -c ${cmnd} ${user}
+	fi
+}
+
+mountdevproc() {
+	fn mountdevproc $@
+	strapdir="$1"
+	req=(strapdir)
+	ckreq || return 1
+
+	escalate "root" "mount -t proc proc ${strapdir}/proc" && act "mounted /proc"
+	escalate "root" "mount -o bind /dev ${strapdir}/dev"  && act "mounted /dev"
+	escalate "root" "mount -o bind /dev/pts ${strapdir}/dev/pts" && act "mounted /dev/pts"
+}
+
+umountdevproc() {
+	fn umountdevproc $@
+	strapdir="$1"
+	req=(strapdir)
+	ckreq || return 1
+
+	escalate "root" "umount ${strapdir}/dev/pts" && act "unmounted /dev/pts" && sleep 2
+	escalate "root" "umount ${strapdir}/dev"  && act "unmounted /dev" && sleep 2
+	escalate "root" "umount ${strapdir}/proc" && act "unmounted /proc" && sleep 2
+}

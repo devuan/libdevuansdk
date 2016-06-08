@@ -1,0 +1,129 @@
+#!/usr/bin/env zsh
+#
+# Copyright (c) 2016 Dyne.org Foundation
+# libdevuansdk is written and maintained by
+#     Jaromil <jaromil@dyne.org>
+#     KatolaZ <katolaz@freaknet.org>
+#     parazyd <parazyd@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+## Default system configuration
+
+conf_print_debconf() {
+	fn conf_print_debconf
+
+	cat << EOF
+console-common console-data/keymap/policy select Select keymap from full list
+console-common console-data/keymap/full select en-latin1-nodeadkeys
+EOF
+}
+
+conf_print_fstab() {
+	fn conf_print_fstab
+
+	cat << EOF
+#<file system>        <mount point>        <type>    <options>            <dump>  <pass>
+proc                  /proc                proc      nodev,noexec,nosuid     0       0
+
+# rootfs
+/dev/sda2             /                    ext4      errors=remount-ro       0       1
+
+# boot
+/dev/sda1             /boot                ext2      noauto                  0       0
+EOF
+}
+
+conf_print_hostname() {
+	fn conf_print_hostname
+	req=(os)
+	ckreq || return 1
+
+	print ${os}
+}
+
+conf_print_hosts() {
+	fn conf_print_hosts
+	req=(os)
+	ckreq || return 1
+
+	cat << EOF
+127.0.0.1        ${os}                localhost
+::1              localhost            ip6-localhost ip6-loopback
+fe00::0          ip6-localnet
+fe00::0          ip6-mcastprefix
+fe02::1          ip6-allnodes
+fe02::1          ip6-allrouters
+EOF
+}
+
+conf_print_networkifaces() {
+	fn conf_print_networkifaces
+
+	cat << EOF
+# interfaces(5) file used by ifup(8) and ifdown(8)
+
+# Please note that this file is written to be used with dhcpcd
+# For static IP, consult /etc/dhcpcd.conf and 'man dhcpcd.conf'
+
+# Include files from /etc/network/interfaces.d:
+source-directory /etc/network/interfaces.d
+
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+
+# auto eth0
+# iface eth0 inet static
+#	address 10.0.1.10
+#	netmask 255.255.255.0
+
+# allow-hotplug wlan0
+# iface wlan0 inet manual
+#	wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+
+# allow-hotplug wlan1
+# iface wlan1 inet manual
+#	wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+EOF
+}
+
+conf_print_resolvconf() {
+	fn conf_print_resolvconf
+
+	cat << EOF
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+EOF
+}
+
+conf_print_sourceslist() {
+	fn conf_print_sourceslist
+	req=(mirror release section)
+	ckreq || return 1
+
+	cat << EOF
+deb ${mirror} ${release} ${section}
+deb ${mirror} ${release}-updates ${section}
+deb ${mirror} ${release}-security ${section}
+
+deb-src ${mirror} ${release} ${section}
+deb-src ${mirror} ${release}-updates ${section}
+deb-src ${mirror} ${release}-security ${section}
+EOF
+}
