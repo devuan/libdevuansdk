@@ -26,17 +26,33 @@
 vars+=(imgname imgpath)
 
 img_mkimage() {
-	fn img_mkimage
+	fn img_mkimage $@
 	imgpath=${strapdir}.img
-	req=(imgpath imgsize)
+	local mbrtype="$1"
+	req=(imgpath imgsize mbrtype)
 	ckreq || return 1
 
 	imgname=`basename ${imgpath}`
 
 	notice "Creating raw image..."
+	silly
 	dd if=/dev/zero \
 		of="${imgpath}" \
 		bs=1M count=${imgsize}
+
+	if [[ $mbrtype == "dos" ]]; then
+		img_partition_dos
+	elif [[ $mbrtype == "gpt" ]]; then
+		img_partition_gpt
+	else
+		error "No valid MBR type specified..."
+		zerr; zshexit
+	fi
+
+	img_mount
+	img_rsync_strapdir
+	img_install_bootloader
+	img_umount
 }
 
 img_partition_dos() {
@@ -93,12 +109,21 @@ img_partition_gpt() {
 	popd
 }
 
-img_bootloader_prepare() {
-	fn img_bootloader_prepare
+img_rsync_strapdir() {
+	fn img_rsync_strapdir
+	req=(workdir strapdir)
+	ckreq || return 1
+
+	notice "Rsyncing strapdir to raw image..."
+	silly
+	sudo rsync -HPavz -q ${strapdir}/* ${workdir}/rootp
 }
 
-img_bootloader_install() {
-	fn img_bootloader_install
+img_install_bootloader() {
+	fn img_install_bootloader
+
+	conf_install_kernel ${workdir}/rootp
+	conf_install_grub ${workdir}/rootp
 }
 
 img_mount() {
@@ -109,6 +134,7 @@ img_mount() {
 	mkdir -p ${workdir}/rootp
 
 	sudo mount ${rootpart} ${workdir}/rootp      && act "mounted root partition"
+	sudo mkdir -p ${workdir}/rootp/{boot,dev,proc,sys}
 	sudo mount ${bootpart} ${workdir}/rootp/boot && act "mounted boot partition"
 
 	mountdevproc ${workdir}/rootp
@@ -119,6 +145,8 @@ img_umount() {
 	req=(bootpart rootpart workdir)
 	ckreq || return 1
 
-	escalate root "umount ${workdir}/rootp/boot" && act "umounted boot partition"
-	escalate root "umount ${workdir}/rootp"      && act "umounted root partition"
+	umountdevproc ${workdir}/rootp
+
+	sudo umount ${workdir}/rootp/boot && act "umounted boot partition"
+	sudo umount ${workdir}/rootp      && act "umounted root partition"
 }
