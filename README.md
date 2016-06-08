@@ -45,7 +45,6 @@ Devuan SDK components are designed, written and maintained by:
 - Ivan J. <parazyd@dyne.org>
 - Denis Roio <jaromil@dyne.org>
 - Enzo Nicosia <katolaz@freaknet.org>
-- Fred Smith <fsmithred@gmail.com>
 
 This source code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

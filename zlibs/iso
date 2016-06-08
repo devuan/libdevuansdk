@@ -1,0 +1,70 @@
+#!/usr/bin/env zsh
+#
+# Copyright (c) 2016 Dyne.org Foundation
+# libdevuansdk is written and maintained by
+#     Jaromil <jaromil@dyne.org>
+#     KatolaZ <katolaz@freaknet.org>
+#     parazyd <parazyd@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+vars+=(iso isodir)
+
+iso_prepare() {
+    fn iso_prepare
+    req=(strapdir os release version arch)
+    root=$strapdir
+	freq=($strapdir/bin/bash)
+    # freq=($R/chroot/$chroot_arch/$iso/initrd.gz)
+    reqck || return 1
+
+    iso=$os_$release_$version_$arch.iso
+	isodir=$workdir/iso_$os_$release_$version_$arch
+    notice "Preparing ISO in $isodir"
+	mkdir -p $isodir
+	
+	[[ -r /usr/lib/ISOLINUX/isolinux.bin ]] || {
+		error "Isolinux binary not found"
+		zerr; zshexit }
+	[[ -r /usr/lib/ISOLINUX/isohdpfx.bin ]] || {
+		error "Isolinux binary not found"
+		zerr; zshexit }
+	cp /usr/lib/ISOLINUX/isolinux.bin $isodir
+}
+
+iso_mkinitrd() {
+	# TODO: mkinitrd here, Katolaz?
+}
+
+iso_mkusr() {
+	# TODO: mkusr here, Katolaz?
+}
+	
+iso_make() {
+	fn iso_make
+	req=(iso isodir)
+	freq=($isodir/isolinux.bin)
+	ckreq || return 1
+
+    xorriso -as mkisofs -output $outdir/$iso \
+        -iso-level 3 -full-iso9660-filenames -r -J -no-emul-boot -boot-load-size 4 \
+        -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin -partition_offset 16 \
+        -boot-info-table -b isolinux.bin -c boot.cat $isodir
+
+    notice "$iso ready"
+    ls -lh $outdir/$iso
+}
+
