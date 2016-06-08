@@ -4,18 +4,25 @@ libdevuansdk functions
 # zlibs/debootstrap
 
 ## bootstrap()
-Stages 1, 2, and 3 of debootstrap.
 
-## config_cleanup()
+Main function, goes through stages 1, 2, and 3 of debootstrap.
+
+Other internal functions are prefixed with `config_` and `tar_`
+
+### config_cleanup() ###
+
 Final cleanup of the rootfs.
 
-## config_thirdstage()
+### config_thirdstage() ###
+
 Shell script for the system's third debootstrap stage.
 
-## tar_bootstrap()
+### tar_bootstrap() ###
+
 Make a tarball of a base working system, ready to be worked on later.
 
-## tar_unpack()
+### tar_unpack() ###
+
 Unpack the tarball of a base working system to the strapdir.
 
 # zlibs/helpers
