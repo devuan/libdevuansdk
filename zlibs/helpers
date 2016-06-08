@@ -39,22 +39,22 @@ escalate() {
 
 mountdevproc() {
 	fn mountdevproc $@
-	strapdir="$1"
-	req=(strapdir)
+	local mntdir="$1"
+	req=(mntdir)
 	ckreq || return 1
 
-	escalate "root" "mount -t proc proc ${strapdir}/proc" && act "mounted /proc"
-	escalate "root" "mount -o bind /dev ${strapdir}/dev"  && act "mounted /dev"
-	escalate "root" "mount -o bind /dev/pts ${strapdir}/dev/pts" && act "mounted /dev/pts"
+	escalate "root" "mount -t proc proc ${mntdir}/proc" && act "mounted /proc"
+	escalate "root" "mount -o bind /dev ${mntdir}/dev"  && act "mounted /dev"
+	escalate "root" "mount -o bind /dev/pts ${mntdir}/dev/pts" && act "mounted /dev/pts"
 }
 
 umountdevproc() {
 	fn umountdevproc $@
-	strapdir="$1"
-	req=(strapdir)
+	local mntdir="$1"
+	req=(mntdir)
 	ckreq || return 1
 
-	escalate "root" "umount ${strapdir}/dev/pts" && act "unmounted /dev/pts" && sleep 2
-	escalate "root" "umount ${strapdir}/dev"  && act "unmounted /dev" && sleep 2
-	escalate "root" "umount ${strapdir}/proc" && act "unmounted /proc" && sleep 2
+	escalate "root" "umount ${mntdir}/dev/pts" && act "unmounted /dev/pts" && sleep 2
+	escalate "root" "umount ${mntdir}/dev"  && act "unmounted /dev" && sleep 2
+	escalate "root" "umount ${mntdir}/proc" && act "unmounted /proc" && sleep 2
 }

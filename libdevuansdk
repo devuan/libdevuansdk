@@ -34,8 +34,8 @@ H=${SDK_HOME:-$HOME/.devuan-sdk}
 E=${SDK_CONF:-/etc/devuan-sdk}
 
 [[ -r $R ]] || {
-    print "Devuan SDK is not installed in: $R"
-    print "export SDK_PREFIX if installed on a different path"
+	print "Devuan SDK is not installed in: $R"
+	print "export SDK_PREFIX if installed on a different path"
 }
 
 
@@ -43,7 +43,7 @@ E=${SDK_CONF:-/etc/devuan-sdk}
 ## Load Zuper extensions
 # conclude initialization
 if [[ -r   $R/zuper/zuper ]]; then
-    source $R/zuper/zuper
+	source $R/zuper/zuper
 else source ./zuper/zuper; fi
 
 DEBUG=${DEBUG:-0}
@@ -61,7 +61,7 @@ source $R/zlibs/sysconf
 
 # conclude initialization
 if [[ -r   $R/zuper/zuper.init ]]; then
-    source $R/zuper/zuper.init
+	source $R/zuper/zuper.init
 else source ./zuper/zuper.init; fi
 
 # add all other binaries to the path

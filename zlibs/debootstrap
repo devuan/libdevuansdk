@@ -69,6 +69,7 @@ bootstrap() {
 		mountdevproc ${strapdir}
 
 		escalate "root" "chroot ${strapdir} /thirdstage.sh"
+		escalate "root" "chroot ${strapdir} /cleanup.sh"
 
 		umountdevproc ${strapdir}
 
@@ -84,6 +85,8 @@ config_cleanup() {
 
 rm -f /debconf.set
 rm -f /thirdstage.sh
+rm -f /etc/ssh/*key
+rm -f /etc/ssh/*.pub
 EOF
 }
 
@@ -142,7 +145,6 @@ tar_bootstrap() {
 		popd
 	fi
 	ls -lh $bootstrap_tgz
-	
 }
 
 tar_unpack() {
