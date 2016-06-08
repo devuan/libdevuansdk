@@ -30,10 +30,10 @@ escalate() {
 	req=(user cmnd)
 	ckreq || return 1
 
-	if [[ `command -v sudo` ]]; then
-		sudo -E -u ${user} ${cmnd}
+	if isfound sudo; then
+		sudo -E -u ${user} ${=cmnd}
 	else
-		su -c ${cmnd} ${user}
+		su -c "${=cmnd}" ${user}
 	fi
 }
 

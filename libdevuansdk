@@ -23,11 +23,15 @@
 
 devuan_sdk_version=0.1
 
+setopt pushdsilent
+
+SDK_PREFIX=`pwd`
+SDK_HOME=`pwd`
+SDK_CONF=`pwd`
+
 R=${SDK_PREFIX:-/usr/local/devuan-sdk}
 H=${SDK_HOME:-$HOME/.devuan-sdk}
 E=${SDK_CONF:-/etc/devuan-sdk}
-
-R=`pwd` # NOTE: for development
 
 [[ -r $R ]] || {
     print "Devuan SDK is not installed in: $R"
@@ -50,7 +54,7 @@ LOG=${LOG:-""}
 vars+=(R H E)
 
 # source $R/zlibs/library
-source $R/config
+source $E/config
 source $R/zlibs/debootstrap
 source $R/zlibs/helpers
 source $R/zlibs/sysconf
@@ -67,6 +71,9 @@ rehash
 
 # For gettext
 TEXTDOMAIN=devuan
+
+# create mandatory workdirs
+mkdir -p ${strapdir}
 
 notice "Loading Devuan SDK library v$devuan_sdk_version"
 

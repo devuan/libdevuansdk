@@ -23,17 +23,21 @@
 
 ## Debootstrap things
 
+vars+=(bootstrap_tgz)
+
 bootstrap() {
 	fn bootstrap $@
 	arch="$1"
 	req=(os strapdir workdir arch release mirror)
 	ckreq || return 1
 
-	notice "Bootstrapping ${os} base"
+	notice "Bootstrapping ::1 OS:: base" ${os}
 
-	mkdir -p ${strapdir}
+	bootstrap_tgz=$H/tmp/${os}-${arch}.tgz
 
-	if [[ -f $R/tmp/${os}-${arch}.tgz ]]; then
+	if [[ -f $bootstrap_tgz ]]; then
+		notice "Using the existing bootstrap tarball found in ::1 tmpdir::" $H/tmp
+		ls -lh $bootstrap_tgz
 		tar_unpack ${strapdir}
 	else
 		# Debootstrap stage 1
@@ -123,23 +127,34 @@ EOF
 
 tar_bootstrap() {
 	fn tar_bootstrap
+	req=(bootstrap_tgz)
+	ckreq || return 1
 
-	if [[ -f $R/tmp/${os}-${arch}.tgz ]]; then
-		return 0
+	local _dest=`dirname $bootstrap_tgz`
+
+	if [[ -f $bootstrap_tgz ]]; then
+		act "tarball found already in ::1 dir::" $_dest
 	else
+		notice "Creating boostrap tarball in ::1 tgz::" $bootstrap_tgz
 		pushd ${strapdir}
-		tar czf ${os}-${arch}.tgz ./*
-		mkdir -p $R/tmp
-		mv ${os}-${arch}.tgz $R/tmp/
+		mkdir -p ${_dest}
+		escalate root "tar czf $bootstrap_tgz . --exclude=dev,sys,proc"
 		popd
 	fi
+	ls -lh $bootstrap_tgz
+	
 }
 
 tar_unpack() {
 	fn tar_unpack $@
 	local unpath="$1"
-	req=(unpath)
+	req=(unpath bootstrap_tgz)
 	ckreq || return 1
 
-	tar xf $R/tmp/${os}-${arch}.tgz -C ${unpath}
+	[[ -r ${unpath}/bin/bash ]] && {
+		warning "bootstrap already unpacked in ::1 dir::" $unpath
+		return 1 }
+
+	mkdir -p ${unpath}
+	tar xf $bootstrap_tgz -C ${unpath}
 }

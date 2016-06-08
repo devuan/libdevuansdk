@@ -38,6 +38,7 @@ mirror="http://packages.devuan.org/merged"
 # mirror repo section
 section="main"
 
+
 # core packages for the system
 core_packages=(devuan-keyring debian-keyring)
 core_packages+=(git-core binutils ca-certificates curl)
@@ -50,5 +51,10 @@ base_packages=(bzip2 dialog apt-utils fakeroot e2fsprogs parted)
 system_packages=(sysvinit ssh)
 
 ## libdevuansdk-specific settings
-workdir="$R/workdir"
+workdir="$H/workdir"
 strapdir="${workdir}/strapdir"
+
+
+# declare zuper globals
+vars+=(os release version mirror section)
+vars+=(workdir strapdir)
