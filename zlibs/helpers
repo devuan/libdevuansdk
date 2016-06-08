@@ -81,6 +81,47 @@ umountdevprocsys() {
 	sudo umount ${mntdir}/sys     && act "unmounted /sys"     && sleep 2
 }
 
+aptautostart() {
+	fn aptautostart $@
+	local watdo="$1"
+	local wheredo="$2"
+	req=(watdo wheredo)
+
+	case $watdo in
+		on)
+			aptautostart printon | sudo tee ${wheredo}/aptautostart.sh
+			sudo chmod +x ${wheredo}/aptautostart.sh
+			sudo chroot ${wheredo}  /aptautostart.sh
+			;;
+		off)
+			aptautostart printoff | sudo tee ${wheredo}/aptautostart.sh
+			sudo chmod +x ${wheredo}/aptautostart.sh
+			sudo chroot ${wheredo}  /aptautostart.sh
+			;;
+		printon)
+			cat << EOF
+#!/bin/sh
+rm -f /usr/sbin/policy-rc.d
+rm -f /usr/sbin/invoke-rc.d
+dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
+rm -f /aptautostart.sh
+EOF
+			;;
+		printoff)
+			cat << EOF
+#!/bin/sh
+dpkg-divert --add --local --divert /usr/sbin/invoke-rc.d.chroot --rename /usr/sbin/invoke-rc.d
+cp /bin/true /usr/sbin/invoke-rc.d
+echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
+chmod +x /usr/sbin/policy-rc.d
+EOF
+			;;
+		*)
+			error "Please pass a correct argument (on/off)"
+			;;
+	esac
+}
+
 silly() {
 	fn silly $@
 	local arg1="$1"

@@ -74,6 +74,11 @@ mountdevproc /path/to/bootstrapped/chroot
 ## umountdevprocsys()
 Does the opposite of `mountdevprocsys`.
 
+## aptautostart()
+enables/disables apt to autostart services after their packages are installed.
+takes args `on` or `off` as 1st argument, and `/path/to/chroot` as second
+argument
+
 ## silly()
 Because NSA
 
