@@ -88,6 +88,9 @@ rm -f /thirdstage.sh
 rm -f /etc/ssh/*key
 rm -f /etc/ssh/*.pub
 rm -f /root/.bash_history
+
+# our file for which we check the bootstrap is complete
+touch .done
 EOF
 }
 
@@ -162,8 +165,7 @@ bootstrap_tar_unpack() {
 	req=(unpath bootstrap_tgz)
 	ckreq || return 1
 
-	# TODO: hack, drop a real file at one point to note it's the actual thing
-	[[ -r ${unpath}/bin/bash ]] && {
+	[[ -f ${unpath}/.done ]] && {
 		warning "bootstrap already unpacked in ::1 dir::" $unpath
 		return 1
 	}
