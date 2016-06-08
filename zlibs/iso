@@ -106,7 +106,7 @@ iso_mkinitrd() {
 	freq=($isodir/isolinux/isolinux.bin)
 	ckreq || return 1
 
-	escalate root "chroot $strapdir update-initramfs -c -k all"
+	sudo chroot $strapdir update-initramfs -c -k all
 	cp -v $strapdir/initrd.img $isodir/isolinux/
 	cp -v $strapdir/vmlinuz    $isodir/isolinux/linux
 }
