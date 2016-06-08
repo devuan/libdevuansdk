@@ -57,6 +57,7 @@ vars+=(R H E)
 source $E/config
 source $R/zlibs/debootstrap
 source $R/zlibs/helpers
+source $R/zlibs/imaging
 source $R/zlibs/sysconf
 
 # conclude initialization

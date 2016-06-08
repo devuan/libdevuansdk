@@ -37,6 +37,23 @@ escalate() {
 	fi
 }
 
+findloopmapp() {
+	fn findloopmapp
+	req=(imgpath)
+	ckreq || return 1
+
+	loopdevice=`sudo losetup -f --show ${imgpath}`
+	mappdevice=`sudo kpartx -va $loopdevice | sed -E 's/.*(loop[0-9])p.*/\1/g' | head -1`
+	func "Loop device:   ::1 loopdev::" $loopdevice
+	func "Mapper device: ::1 mappdev::" $mappdevice
+
+	silly sleep
+
+	mappdevice="/dev/mapper/${mappdevice}"
+	bootpart=${mappdevice}p1
+	rootpart=${mappdevice}p2
+}
+
 mountdevproc() {
 	fn mountdevproc $@
 	local mntdir="$1"
@@ -57,4 +74,45 @@ umountdevproc() {
 	escalate "root" "umount ${mntdir}/dev/pts" && act "unmounted /dev/pts" && sleep 2
 	escalate "root" "umount ${mntdir}/dev"  && act "unmounted /dev" && sleep 2
 	escalate "root" "umount ${mntdir}/proc" && act "unmounted /proc" && sleep 2
+}
+
+silly() {
+	fn silly
+
+	# cheers mailpile!
+	funneh=("do not think of purple hippos"
+		"increasing entropy & scrambling bits"
+		"indexing kittens..."
+		"patching bugs..."
+		"spinning violently around the y-axis"
+		"warming up particle accelerator"
+		"this server is powered by a lemon and two electrodes"
+		"becoming self-aware"
+		"BCC-ing ALL THE SPIES!"
+		"all of your config settings & passwords are encrypted with AES-256"
+		"the most common e-mail password is 123456, hopefully yours is different"
+		"good things come to those who wait"
+		"Make Free Software and be happy"
+		"We like volcanos, do you like volcanos?"
+		"Crossing out swear words..."
+		"Informing David Cameron of suspicious ac^H^H^H ... naaah :)"
+		"Abandon all hope, ye who enter here"
+		"Compiling bullshit bingo grid..."
+		"Estimating chance of asteroid hitting Earth"
+		"Applying coupons..."
+		"Backing up the entire Internet..."
+		"Making you wait for no reason"
+		"Doing nothing"
+		"Pay no attention to the man behind the curtain"
+		"You are great just the way you are"
+		"Supplying monkeys with typewriters"
+		"Swapping time and space"
+		"Self potato"
+		"Hey, there is some Nigerian prince here who wants to give you twenty million dollars..."
+		"A million hamsters are spinning their wheels right now")
+
+	local rnd=`shuf -i1-30 -n 1`
+	act "${funneh[$rnd]}"
+
+	[[ $1 == "sleep" ]] && sleep 4
 }

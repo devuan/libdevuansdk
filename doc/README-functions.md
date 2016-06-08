@@ -7,8 +7,6 @@ libdevuansdk functions
 
 Main function, goes through stages 1, 2, and 3 of debootstrap.
 
-Other internal functions are prefixed with `config_` and `tar_`
-
 ### bootstrap_config_cleanup() ###
 
 Final cleanup of the rootfs.
@@ -25,6 +23,23 @@ Make a tarball of a base working system, ready to be worked on later.
 
 Unpack the tarball of a base working system to the strapdir.
 
+# zlibs/imaging
+
+## img_mkimage() ##
+Uses dd to dump zeroes into a raw .img of the preconfigured size.
+
+## img_partimage_dos() ##
+Partitions the raw image into dos format and formats (boot=ext2; root=ext4)
+
+## img_partimage_gpt() ##
+Partitions the raw image into gpt format and formats (boot=ext2; root=ext4)
+
+## img_mountimage() ##
+Mounts the root and boot partitions in `$workdir/rootp` in order to work on it.
+
+## img_umountimage() ##
+Undoes the above function.
+
 # zlibs/helpers
 
 ## escalate()
@@ -34,6 +49,10 @@ arguments, user and command in the style of:
 ```
 escalate root "chroot /somewhere/where/i/want/to"
 ```
+
+## findloopmapp()
+For the raw image. Finds a free loopdevice and makes a /dev/mapper device which
+is then kpartx-ed to give us partitions we can mount.
 
 ## mountdevproc()
 Mounts `/dev`, `/dev/pts`, and `/proc` where needed. Takes one argument, which
@@ -45,6 +64,9 @@ mountdevproc /path/to/bootstrapped/chroot
 
 ## umountdevproc()
 Does the opposite of `mountdevproc`.
+
+## silly()
+Because NSA
 
 # zlibs/sysconf
 NOTE: everything is printed to stdout. Pipe or redirect if you want to write on

@@ -1,0 +1,109 @@
+#!/usr/bin/env zsh
+#
+# Copyright (c) 2016 Dyne.org Foundation
+# libdevuansdk is written and maintained by
+#     Jaromil <jaromil@dyne.org>
+#     KatolaZ <katolaz@freaknet.org>
+#     parazyd <parazyd@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+## Imaging
+
+vars+=(imgname imgpath)
+
+img_mkimage() {
+	fn img_mkimage
+	imgpath=${strapdir}.img
+	req=(imgpath imgsize)
+	ckreq || return 1
+
+	imgname=`basename ${imgpath}`
+
+	notice "Creating raw image..."
+	dd if=/dev/zero \
+		of="${imgpath}" \
+		bs=1M count=${imgsize}
+}
+
+img_partimage_dos() {
+	fn img_partimage_dos
+	req=(imgname imgpath)
+	ckreq || return 1
+
+	notice "Partitioning with dos"
+
+	pushd ${workdir}
+
+	parted ${imgname} --script -- mklabel msdos
+	parted ${imgname} --script -- mkpart primary ${dos_boot_size}
+	parted ${imgname} --script -- mkpart primary ${dos_root_size}
+
+	# setup loopdevice and mappdevice (zlibs/helpers)
+	findloopmapp
+
+	notice "Formatting partitions..."
+	sudo mkfs.ext2 ${bootpart}
+	sudo mkfs.ext4 ${rootpart}
+
+	popd
+}
+
+img_partimage_gpt() {
+	fn img_partimage_gpt
+	req=(imgname imgpath)
+	ckreq || return 1
+
+	notice "Partitioning with gpt"
+
+	pushd ${workdir}
+
+	parted ${imgname} --script -- mklabel gpt
+	cgpt create -z ${imgname}
+	cgpt create ${imgname}
+	cgpt add -i 1 -t kernel -b 8192 -s 32768 -l kernel -S 1 -T 5 -P 10 ${imgname}
+	cgpt add -i 2 -t data -b 40960 -s `expr $(cgpt show ${imgname} \
+		| awk '/Sec GPT table/ {print \$1}') - 40960` -l Root ${imgname}
+
+	# setup loopdevice and mappdevice (zlibs/helpers)
+	findloopmapp
+
+	notice "Formatting partitions..."
+	sudo mkfs.ext2 -L bootfs $bootpart
+	sudo mkfs.ext4 -L rootfs $rootpart
+
+	popd
+}
+
+img_mountimage() {
+	fn img_mountimage
+	req=(bootpart rootpart workdir)
+	ckreq || return 1
+
+	mkdir -p ${workdir}/rootp
+
+	escalate root "mount ${rootpart} ${workdir}/rootp"      && act "mounted root partition"
+	escalate root "mount ${bootpart} ${workdir}/rootp/boot" && act "mounted root partition"
+}
+
+img_umountimage() {
+	fn img_umountimage
+	req=(bootpart rootpart workdir)
+	ckreq || return 1
+
+	escalate root "umount ${workdir}/rootp/boot" && act "umounted boot partition"
+	escalate root "umount ${workdir}/rootp"      && act "umounted root partition"
+}
