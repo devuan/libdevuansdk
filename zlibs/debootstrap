@@ -38,7 +38,7 @@ bootstrap() {
 	if [[ -f $bootstrap_tgz ]]; then
 		notice "Using the existing bootstrap tarball found in ::1 tmpdir::" $H/tmp
 		ls -lh $bootstrap_tgz
-		tar_unpack ${strapdir}
+		bootstrap_tar_unpack ${strapdir}
 	else
 		# Debootstrap stage 1
 		escalate "root" "debootstrap --foreign --arch ${arch} ${release} ${strapdir} ${mirror}"
@@ -56,8 +56,8 @@ bootstrap() {
 		conf_print_sourceslist | escalate "root" "tee ${strapdir}/etc/apt/sources.list"
 
 		# write third-stage for chroot
-		config_thirdstage | escalate "root" "tee ${strapdir}/thirdstage.sh"
-		config_cleanup | escalate "root" "tee ${strapdir}/cleanup.sh"
+		bootstrap_config_thirdstage | escalate "root" "tee ${strapdir}/thirdstage.sh"
+		bootstrap_config_cleanup | escalate "root" "tee ${strapdir}/cleanup.sh"
 		escalate "root" "chmod +x ${strapdir}/thirdstage.sh"
 		escalate "root" "chmod +x ${strapdir}/cleanup.sh"
 
@@ -73,11 +73,11 @@ bootstrap() {
 
 		umountdevproc ${strapdir}
 
-		tar_bootstrap
+		bootstrap_tar_pack
 	fi
 }
 
-config_cleanup() {
+bootstrap_config_cleanup() {
 	fn config_cleanup
 
 	cat << EOF
@@ -90,8 +90,8 @@ rm -f /etc/ssh/*.pub
 EOF
 }
 
-config_thirdstage() {
-	fn config_thirdstage
+bootstrap_config_thirdstage() {
+	fn bootstrap_config_thirdstage
 	req=(core_packages base_packages system_packages)
 	ckreq || return 1
 
@@ -128,8 +128,8 @@ dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
 EOF
 }
 
-tar_bootstrap() {
-	fn tar_bootstrap
+bootstrap_tar_pack() {
+	fn bootstrap_tar_pack
 	req=(bootstrap_tgz)
 	ckreq || return 1
 
@@ -147,15 +147,17 @@ tar_bootstrap() {
 	ls -lh $bootstrap_tgz
 }
 
-tar_unpack() {
-	fn tar_unpack $@
+bootstrap_tar_unpack() {
+	fn bootstrap_tar_unpack $@
 	local unpath="$1"
 	req=(unpath bootstrap_tgz)
 	ckreq || return 1
 
+	# TODO: hack, drop a real file at one point to note it's the actual thing
 	[[ -r ${unpath}/bin/bash ]] && {
 		warning "bootstrap already unpacked in ::1 dir::" $unpath
-		return 1 }
+		return 1
+	}
 
 	mkdir -p ${unpath}
 	tar xf $bootstrap_tgz -C ${unpath}

@@ -9,19 +9,19 @@ Main function, goes through stages 1, 2, and 3 of debootstrap.
 
 Other internal functions are prefixed with `config_` and `tar_`
 
-### config_cleanup() ###
+### bootstrap_config_cleanup() ###
 
 Final cleanup of the rootfs.
 
-### config_thirdstage() ###
+### bootstrap_config_thirdstage() ###
 
 Shell script for the system's third debootstrap stage.
 
-### tar_bootstrap() ###
+### bootstrap_tar_pack() ###
 
 Make a tarball of a base working system, ready to be worked on later.
 
-### tar_unpack() ###
+### bootstrap_tar_unpack() ###
 
 Unpack the tarball of a base working system to the strapdir.
 
