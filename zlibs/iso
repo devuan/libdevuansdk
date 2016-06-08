@@ -46,14 +46,6 @@ iso_prepare() {
 	mkdir -p $isodir/isolinux
 	cp /usr/lib/ISOLINUX/isolinux.bin              $isodir/isolinux
 	cp /usr/lib/syslinux/modules/bios/*.c32        $isodir/isolinux
-	# cp /usr/lib/syslinux/modules/bios/pwd.c32      $isodir/isolinux
-	# cp /usr/lib/syslinux/modules/bios/sysdump.c32  $isodir/isolinux
-	# cp /usr/lib/syslinux/modules/bios/meminfo.c32  $isodir/isolinux
-	# cp /usr/lib/syslinux/modules/bios/chain.c32    $isodir/isolinux
-	# cp /usr/lib/syslinux/modules/bios/ldlinux.c32  $isodir/isolinux
-	# cp /usr/lib/syslinux/modules/bios/libcom32.c32 $isodir/isolinux
-	# cp /usr/lib/syslinux/modules/bios/libutil.c32  $isodir/isolinux
-	# cp /usr/lib/syslinux/modules/bios/vesamenu.c32 $isodir/isolinux
 	cat <<EOF >  $isodir/isolinux/isolinux.cfg
 path
 include menu.cfg
@@ -96,8 +88,11 @@ EOF
 label default
 	menu label ^Boot Devuan $release $version $arch
 	kernel linux
-	append vga=788 initrd=initrd.img
+	append vga=788 initrd=initrd.img boot=live
 EOF
+#
+#	append vga=788 initrd=initrd.img boot=live toram=filesystem.squashfs
+
 }
 
 iso_mkinitrd() {
@@ -106,13 +101,45 @@ iso_mkinitrd() {
 	freq=($isodir/isolinux/isolinux.bin)
 	ckreq || return 1
 
-	sudo chroot $strapdir update-initramfs -c -k all
-	cp -v $strapdir/initrd.img $isodir/isolinux/
-	cp -v $strapdir/vmlinuz    $isodir/isolinux/linux
+	sudo chroot $strapdir apt-get install -y live-boot live-boot-initramfs-tools extlinux
+	# sudo chroot $strapdir update-initramfs -u
+	# sudo chroot $strapdir update-initramfs -c -k all
+	sudo chroot $strapdir live-update-initramfs -u
+
+	# latest kernel
+	local kernel=""
+	for i in ${(f)"$(ls -t $strapdir/boot)"}; do
+		[[ "$i" =~ "vmlinuz" ]] || continue
+		kernel=$strapdir/boot/$i
+	done
+	# latest ramdisk
+	local initrd=""
+	for i in ${(f)"$(ls -t $strapdir/boot)"}; do
+		[[ "$i" =~ "initrd" ]] || continue
+		initrd=$strapdir/boot/$i
+	done
+	
+	cp -v $kernel  $isodir/isolinux/linux
+	cp -v $initrd  $isodir/isolinux/initrd.img
+
 }
 
 iso_mkusr() {
-	# TODO: mkusr here, Katolaz?
+	fn iso_mkusr $@
+	req=(iso isodir)
+	ckreq || return 1
+
+	ztmp
+	conf_print_usrexcludes > $ztmpfile
+
+	usrdir=$workdir/usr_${os}_${release}_${version}_${arch}
+
+	mkdir -p $usrdir
+
+	rsync -av $strapdir/ $usrdir --exclude-from=$ztmpfile
+
+	mkdir -p $isodir/live
+	mksquashfs $usrdir/ $isodir/live/filesystem.squashfs
 }
 	
 iso_make() {
@@ -123,12 +150,11 @@ iso_make() {
 
 	mkdir -p $outdir
 
-    escalate root "
-xorriso -as mkisofs -r -J -joliet-long -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin
-        -partition_offset 16 -V DEVUAN
-        -b isolinux/isolinux.bin -c isolinux/boot.cat  -no-emul-boot -boot-load-size 4
-        -boot-info-table -o $outdir/$iso $isodir
-"
+    sudo xorriso \
+		 -as mkisofs -r -J -joliet-long -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+		 -partition_offset 16 -V DEVUAN \
+		 -b isolinux/isolinux.bin -c isolinux/boot.cat  -no-emul-boot -boot-load-size 4 \
+         -boot-info-table -o $outdir/$iso $isodir
 
     notice "$iso ready"
     ls -lh $outdir/$iso
