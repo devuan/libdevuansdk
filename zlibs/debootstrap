@@ -43,6 +43,8 @@ bootstrap() {
 		# Debootstrap stage 1
 		sudo debootstrap --foreign --arch ${arch} ${release} ${strapdir} ${mirror}
 
+		install-qemu
+
 		# Debootstrap stage 2
 		sudo chroot ${strapdir} /debootstrap/debootstrap --second-stage
 
@@ -66,12 +68,12 @@ bootstrap() {
 		export LC_ALL=C
 		export DEBIAN_FRONTEND=noninteractive
 
-		mountdevproc ${strapdir}
+		mountdevprocsys ${strapdir}
 
 		sudo chroot ${strapdir} /thirdstage.sh
 		sudo chroot ${strapdir} /cleanup.sh
 
-		umountdevproc ${strapdir}
+		umountdevprocsys ${strapdir}
 
 		bootstrap_tar_pack
 	fi
@@ -88,7 +90,6 @@ rm -f /thirdstage.sh
 rm -f /etc/ssh/*key
 rm -f /etc/ssh/*.pub
 rm -f /root/.bash_history
-rm -f /usr/bin/qemu*
 # our file for which we check the bootstrap is complete
 echo "1" > .done
 EOF

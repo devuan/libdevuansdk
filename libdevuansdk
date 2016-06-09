@@ -24,7 +24,7 @@
 devuan_sdk_version=0.1
 
 setopt pushdsilent
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
+# export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
 
 SDK_PREFIX=`pwd`
 SDK_HOME=`pwd`
