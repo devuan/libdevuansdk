@@ -29,7 +29,9 @@ img_mkimage() {
 	fn img_mkimage $@
 	imgpath=${strapdir}.img
 	local mbrtype="$1"
-	req=(imgpath imgsize mbrtype)
+	local bootfstype="$2"
+	local rootfstype="$3"
+	req=(imgpath imgsize mbrtype bootfstype rootfstype)
 	ckreq || return 1
 
 	imgname=`basename ${imgpath}`
@@ -41,9 +43,9 @@ img_mkimage() {
 		bs=1M count=${imgsize}
 
 	if [[ $mbrtype == "dos" ]]; then
-		img_partition_dos
+		img_partition_dos $bootfstype $rootfstype
 	elif [[ $mbrtype == "gpt" ]]; then
-		img_partition_gpt
+		img_partition_gpt $bootfstype $rootfstype
 	else
 		error "No valid MBR type specified..."
 		zerr; zshexit
@@ -56,8 +58,10 @@ img_mkimage() {
 }
 
 img_partition_dos() {
-	fn img_partition_dos
-	req=(imgname imgpath)
+	fn img_partition_dos $@
+	local bootfstype="$1"
+	local rootfstype="$2"
+	req=(imgname imgpath bootfstype rootfstype)
 	ckreq || return 1
 
 	notice "Partitioning with dos"
@@ -75,16 +79,29 @@ img_partition_dos() {
 	# setup loopdevice and mappdevice (zlibs/helpers)
 	findloopmapp
 
-	notice "Formatting partitions..."
-	sudo mkfs.ext2 ${bootpart}
-	sudo mkfs.ext4 ${rootpart}
+	img_format_partitions ${bootfstype} ${rootfstype}
 
 	popd
 }
 
+img_format_partitions() {
+	fn img_format_partitions $@
+	local bootfstype="$1"
+	local rootfstype="$2"
+	req=(bootfstype rootfstype bootpart rootpart)
+	ckreq || return 1
+
+	notice "Formatting partitions..."
+	sudo mkfs.${bootfstype} ${bootpart}
+	sudo mkfs.${rootfstype} ${rootpart}
+
+}
+
 img_partition_gpt() {
-	fn img_partition_gpt
-	req=(imgname imgpath)
+	fn img_partition_gpt $@
+	local bootfstype="$1"
+	local rootfstype="$2"
+	req=(imgname imgpath bootfstype rootfstype)
 	ckreq || return 1
 
 	notice "Partitioning with gpt"
@@ -102,9 +119,7 @@ img_partition_gpt() {
 	# setup loopdevice and mappdevice (zlibs/helpers)
 	findloopmapp
 
-	notice "Formatting partitions..."
-	sudo mkfs.ext2 -L bootfs $bootpart
-	sudo mkfs.ext4 -L rootfs $rootpart
+	img_format_partitions ${bootfstype} ${rootfstype}
 
 	popd
 }
