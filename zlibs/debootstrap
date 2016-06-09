@@ -88,7 +88,7 @@ rm -f /thirdstage.sh
 rm -f /etc/ssh/*key
 rm -f /etc/ssh/*.pub
 rm -f /root/.bash_history
-
+rm -f /usr/bin/qemu*
 # our file for which we check the bootstrap is complete
 echo "1" > .done
 EOF

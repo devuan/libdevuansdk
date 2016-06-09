@@ -155,7 +155,7 @@ cat <<EOF
 # version 9.2.0
 
 
-# Exclude some system files. These are required, and you probably 
+# Exclude some system files. These are required, and you probably
 # shouldn't change them.
 
 - /dev/*
@@ -186,9 +186,9 @@ cat <<EOF
 - /etc/initramfs-tools/conf.d/cryptroot  # see remove-cryptroot and nocrypt.sh
 - /home/snapshot
 
-# Added for newer version of live-config/live-boot in wheezy 
+# Added for newer version of live-config/live-boot in wheezy
 # These are only relevant here if you create a snapshot while
-# you're running a live-CD or live-usb. 
+# you're running a live-CD or live-usb.
 - /lib/live/overlay
 - /lib/live/image
 - /lib/live/rootfs
@@ -302,7 +302,7 @@ cat <<EOF
 - /home/devuan/[a-zA-Z0-9]*
 
 ###
-### ignore the symlink /initrd.img -> /boot/initrd.img-`uname -r` 
+### ignore the symlink /initrd.img -> /boot/initrd.img-`uname -r`
 ### -- KatolaZ -- 2016-05-21
 ###
 
