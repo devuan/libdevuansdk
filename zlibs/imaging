@@ -51,7 +51,7 @@ img_mkimage() {
 
 	img_mount
 	img_rsync_strapdir
-	img_install_bootloader
+	[[ -z $override_bootloader ]] && img_install_bootloader
 	img_umount
 }
 
@@ -69,8 +69,8 @@ img_partition_dos() {
 	pushd ${workdir}
 
 	parted ${imgname} --script -- mklabel msdos
-	parted ${imgname} --script -- mkpart primary ${dos_boot_size}
-	parted ${imgname} --script -- mkpart primary ${dos_root_size}
+	parted ${imgname} --script -- mkpart primary ${parted_boot}
+	parted ${imgname} --script -- mkpart primary ${parted_root}
 
 	# setup loopdevice and mappdevice (zlibs/helpers)
 	findloopmapp
