@@ -113,3 +113,7 @@ Prints the `/etc/resolv.conf` file.
 ## conf_print_sourceslist()
 Prints default `/etc/apt/sources.list`
 
+# zlibs/customise
+
+## install_default_kernel()
+Install the default kernel in the bootstrapped system
