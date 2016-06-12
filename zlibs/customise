@@ -48,3 +48,26 @@ install_default_kernel(){
 	umountdevprocsys ${root}
 	notice "default kernel installed"
 }
+
+
+make_qemu_img(){
+
+	fn make_qemu_img $@
+	local imgfile=$1
+	local imgsize=${2:-4G}
+	local imgformat=${3:-qcow2}
+	req=(strapdir os release version arch imgfile imgsize)
+    root=$strapdir
+	reqck || return 1
+	
+	
+	check_executable qemu-img || error "Could not find qemu-img!!!" && return 1
+	
+	qemu-img create -f ${imgformat} ${imgfile} ${imgsize}
+	
+	if [[ ! -z ${imgfile} ]]; then
+		notice "QEMU image created in ::1" ${imgfile}
+	else
+		warning "Unable to create QEMU image file in ::1" ${imgfile}
+	fi
+}
