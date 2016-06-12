@@ -306,7 +306,7 @@ cat <<EOF
 ### -- KatolaZ -- 2016-05-21
 ###
 
-- /initrd.img
+##- /initrd.img
 
 # Exclude ssh_host_keys. New ones will be generated upon live boot.
 # This fixes a security hole in all versions before 9.0.9-3.
@@ -329,10 +329,10 @@ cat <<EOF
 
 #### Exclude the large initramfs -- KatolaZ -- 2016-05-16
 
-- /boot/initrd.img*
+##- /boot/initrd.img*
 
 #### Exclude inittab backup files -- KatolaZ -- 2016-06-04
 
-- /etc/inittab.*
+##- /etc/inittab.*
 EOF
 }
