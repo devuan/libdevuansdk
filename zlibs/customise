@@ -30,6 +30,7 @@ install_default_kernel(){
 	reqck || return 1
 
 	local kernel_base=linux-image
+	local kernel=""
 	
 	case $arch in
 		amd64)
@@ -39,15 +40,22 @@ install_default_kernel(){
 			kernel=${kernel_base}-586
 			;;
 		*)
-			error "Architecture ::1 is not supported!!!" ${arch}
+			error "Architecture ::1 arch:: is not supported!!!" ${arch}
+			zerr; zshexit
 			;;
 	esac
 	
+	notice "Installing stock kernel for ::1 arch:: (::2 kernel::)" $arch $kernel
+
+
 	mountdevprocsys ${root}
-	sudo chroot ${root} apt-get install --no-install-recommends ${kernel}
+
+	sudo chroot ${root} apt-get --yes --force-yes --no-install-recommends install $kernel
+	
 	umountdevprocsys ${root}
 	notice "default kernel installed"
 }
+
 
 
 make_qemu_img(){
@@ -55,19 +63,58 @@ make_qemu_img(){
 	fn make_qemu_img $@
 	local imgfile=$1
 	local imgsize=${2:-4G}
-	local imgformat=${3:-qcow2}
+	local imgformat=${3:-raw}
 	req=(strapdir os release version arch imgfile imgsize)
     root=$strapdir
 	reqck || return 1
 	
-	
-	check_executable qemu-img || error "Could not find qemu-img!!!" && return 1
+	local blockskip=2050
+
+	## create the qemu image 
+	act "creating qemu image"
 	
 	qemu-img create -f ${imgformat} ${imgfile} ${imgsize}
+
+	sudo parted ${imgfile} --script -- mklabel msdos
+	sudo parted ${imgfile} --script -- mkpart primary ${blockskip}s -1s
+	sudo parted ${imgfile} --script -- set 1 boot on
+
+	## setup the loop device
+	loop1=`sudo losetup -f`
+	sudo losetup ${loop1} ${imgfile}
+	loop2=`sudo losetup -f`
+	sudo losetup -o $((${blockskip} * 512)) ${loop2} ${loop1}
 	
+
+	## now we create the fs
+	act "creating filesystem"
+	sudo mkfs.ext4 ${loop2}
+
+	## and we loop-mount it 
+	
+	ztmpd
+	mntdir=$ztmpdir
+	sudo mount -o loop ${loop2} ${mntdir}
+	
+	echo "mntdir: $mntdir strapdir: $strapdir"
+	
+
+	# now we rsync everything 
+	sudo rsync -av ${strapdir}/ $mntdir
+	
+	# we now install the grub bootloader
+	#_install_bootloader $mntdir
+	
+	
+	sync
+	sudo umount ${mntdir}
+
+	sudo losetup -d ${loop2}
+	sudo losetup -d ${loop1}
+
 	if [[ ! -z ${imgfile} ]]; then
-		notice "QEMU image created in ::1" ${imgfile}
+		notice "QEMU image created in ::1 imgfile::" ${imgfile}
 	else
-		warning "Unable to create QEMU image file in ::1" ${imgfile}
+		warning "Unable to create QEMU image file in ::1 imgfile::" ${imgfile}
 	fi
 }

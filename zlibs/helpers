@@ -179,7 +179,7 @@ check_executable() {
 	fn check_executable $@
 	progname=$1
 
-	if [[ `which $progname | grep "not found" | wc -l` -ge 1 ]]; then 
+	if [[ `which ${progname} | grep "not found" | wc -l` -ge 1 ]]; then 
 		return 0;
 	else
 		return 1;

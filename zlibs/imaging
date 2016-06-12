@@ -27,10 +27,11 @@ vars+=(imgname imgpath)
 
 img_mkimage() {
 	fn img_mkimage $@
-	imgpath=${strapdir}.img
-	local mbrtype="$1"
-	local bootfstype="$2"
-	local rootfstype="$3"
+	imgpath=${1:-${strapdir}.img}
+	local mbrtype="$2"
+	local bootfstype="$3"
+	local rootfstype="$4"
+	local imgsize=${5:-$imgsize}
 	req=(imgpath imgsize mbrtype bootfstype rootfstype)
 	ckreq || return 1
 

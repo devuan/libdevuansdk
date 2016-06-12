@@ -38,9 +38,25 @@ conf_install_kernel() {
 	chrootpath="$1"
 	req=(arch chrootpath)
 	ckreq || return 1
-
-	notice "Installing stock kernel (linux-image-$arch)"
-	sudo chroot ${chrootpath} apt-get --yes --force-yes install linux-image-$arch
+  
+  local kernel_base=linux-image
+  local kernel=""
+	
+	case $arch in
+		  amd64)
+			    kernel=${kernel_base}-amd64
+			    ;;
+		  i386)
+			    kernel=${kernel_base}-586
+			    ;;
+		  *)
+			    error "Architecture ::1 arch:: is not supported!!!" ${arch}
+          zerr; zshexit
+			    ;;
+	esac
+  
+	notice "Installing stock kernel for ::1 arch:: (::2 kernel::)" $arch $kernel
+	sudo chroot ${chrootpath} apt-get --yes --force-yes install $kernel
 }
 
 conf_print_debconf() {
