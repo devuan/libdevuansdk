@@ -117,3 +117,6 @@ Prints default `/etc/apt/sources.list`
 
 ## install_default_kernel()
 Install the default kernel in the bootstrapped system
+
+## make_qemu_image()
+Make a raw/qcow2 qemu image of workdir

@@ -56,6 +56,30 @@ install_default_kernel(){
 	notice "default kernel installed"
 }
 
+_install_bootloader(){
+	fn _install_bootloader $@
+	root=$1
+	install_dev=$2
+	
+	sudo chroot ${root} apt-get install --assume-yes --no-install-recommends grub-pc 
+	if [[ ! -d ${root}/boot/grub ]]; then 
+		sudo mkdir ${root}/boot/grub
+	fi
+
+	ztmp
+	devicemap=$ztmpfile
+
+
+	cat > ${devicemap} <<EOF
+(hd0)   /dev/loop0
+(hd0,1) /dev/loop1
+EOF
+ 	sudo cp ${devicemap} ${root}/boot/grub/device.map
+	sudo chroot ${root} grub-mkconfig -o /boot/grub/grub.cfg
+
+	sudo grub-install --root-directory=${root} --no-floppy \
+		--modules="ext2 part_msdos" ${install_dev}
+}
 
 
 make_qemu_img(){
@@ -103,8 +127,9 @@ make_qemu_img(){
 	sudo rsync -av ${strapdir}/ $mntdir
 	
 	# we now install the grub bootloader
-	#_install_bootloader $mntdir
-	
+	mountdevprocsys ${mntdir}
+	_install_bootloader $mntdir ${loop1}
+	umountdevprocsys ${mntdir}
 	
 	sync
 	sudo umount ${mntdir}
