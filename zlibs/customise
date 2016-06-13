@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-### customise 
+### customise
 
 kernel_x86_install_default(){
 	fn kernel_x86_install_default $@
@@ -32,7 +32,7 @@ kernel_x86_install_default(){
 
 	local kernel_base=linux-image
 	local kernel=""
-	
+
 	case $arch in
 		amd64)
 			kernel=${kernel_base}-amd64
@@ -45,13 +45,13 @@ kernel_x86_install_default(){
 			zerr; zshexit
 			;;
 	esac
-	
+
 	notice "Installing stock kernel for ::1 arch:: (::2 kernel::)" $arch $kernel
 
 	mountdevprocsys ${root}
 
 	sudo chroot ${root} apt-get --yes --force-yes --no-install-recommends install $kernel
-	
+
 	umountdevprocsys ${root}
 	notice "default kernel installed"
 }
@@ -66,7 +66,7 @@ grub_install_target_dev(){
 
 	# TODO: should we use qemu-chroot here for $arch = arm (parazyd?)
 	sudo chroot ${root} apt-get install --assume-yes --no-install-recommends grub-common
-	if [[ ! -d ${root}/boot/grub ]]; then 
+	if [[ ! -d ${root}/boot/grub ]]; then
 		sudo mkdir ${root}/boot/grub
 	fi
 
@@ -80,10 +80,10 @@ EOF
  	sudo cp ${devicemap} ${root}/boot/grub/device.map
 	sudo chroot ${root} grub-mkconfig -o /boot/grub/grub.cfg
 	## we now tamper with grub.cfg, to remove all references to
-	## loopback devices...  
+	## loopback devices...
 	## FIXME!!! This is a hack...
 	sudo -- sed -r -i -e 's/.*loop.*//g' ${root}/boot/grub/grub.cfg
-	
+
 	sudo grub-install --root-directory=${root} --no-floppy \
 		--modules="ext2 part_msdos" ${install_dev}
 }
@@ -99,12 +99,12 @@ qemu_make_img(){
     root=$strapdir
 	freq=($root/.done)
 	reqck || return 1
-	
+
 	local blockskip=2050
 
-	## create the qemu image 
+	## create the qemu image
 	notice "Creating qemu image: $imgfile"
-	
+
 	qemu-img create -f ${imgformat} ${imgfile} ${imgsize}
 	[[ $? = 0 ]] || {
 		error "failed: qemu-img create -f ${imgformat} ${imgfile} ${imgsize}"
@@ -130,7 +130,7 @@ qemu_make_img(){
 		sudo losetup -d ${loop1}
 		error "failed: losetup -o $((${blockskip} * 512)) ${loop2} ${loop1}"
 		zsherr; zshexit }
-	
+
 	## now we create the fs
 	act "creating filesystem"
 	sudo mkfs.ext4 ${loop2}
@@ -140,8 +140,8 @@ qemu_make_img(){
 		error "failed: mkfs.ext4 $loop2"
 		zsherr; zshexit }
 
-	## and we loop-mount it 
-	
+	## and we loop-mount it
+
 	ztmpd
 	mntdir=$ztmpdir
 	sudo mount -o loop ${loop2} ${mntdir}
@@ -150,11 +150,11 @@ qemu_make_img(){
 		sudo losetup -d ${loop1}
 		error "failed: mount -o loop ${loop2} ${mntdir}"
 		zsherr; zshexit }
-	
+
 	func "mntdir: $mntdir"
 	func "strapdir: $strapdir"
 
-	# now we rsync everything 
+	# now we rsync everything
 	sudo rsync -raX ${strapdir}/ ${mntdir}
 	[[ $? = 0 ]] || {
 		umount $mntdir
@@ -162,12 +162,12 @@ qemu_make_img(){
 		sudo losetup -d ${loop1}
 		error "failed: rsync -raX ${strapdir}/ ${mntdir}"
 		zsherr; zshexit }
-	
+
 	# we now install the grub bootloader
 	mountdevprocsys ${mntdir}
 	grub_install_target_dev ${mntdir} ${loop1}
 	umountdevprocsys ${mntdir}
-	
+
 	sync
 	sudo umount ${mntdir}
 
