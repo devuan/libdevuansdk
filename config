@@ -37,27 +37,3 @@ mirror="http://packages.devuan.org/merged"
 
 # mirror repo section
 section="main"
-
-# core packages for the system
-core_packages=(devuan-keyring debian-keyring)
-core_packages+=(initramfs-tools binutils ca-certificates curl)
-core_packages+=(console-common less nano vim)
-
-# base packages for the system
-base_packages=(bzip2 dialog apt-utils fakeroot e2fsprogs parted)
-
-# other system packages
-system_packages=(sysvinit ssh)
-
-# size of raw image file in MB
-imgsize=1337
-
-## libdevuansdk-specific settings
-workdir="$H/workdir"
-strapdir="${workdir}/${os}-${release}-${version}"
-outdir="$H/builds"
-
-# declare zuper globals
-vars+=(os release version mirror section)
-vars+=(workdir strapdir)
-vars+=(imgsize)

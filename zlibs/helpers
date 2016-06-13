@@ -73,10 +73,10 @@ mountdevprocsys() {
 	req=(mntdir)
 	ckreq || return 1
 
-	sudo mount -o bind /sys ${mntdir}/sys         && act "mounted /sys"
-	sudo mount -t proc proc ${mntdir}/proc        && act "mounted /proc"
-	sudo mount -o bind /dev ${mntdir}/dev         && act "mounted /dev"
-	sudo mount -o bind /dev/pts ${mntdir}/dev/pts && act "mounted /dev/pts"
+	sudo mount -o bind /sys ${mntdir}/sys         && act "mounted /sys in $mntdir"
+	sudo mount -t proc proc ${mntdir}/proc        && act "mounted /proc in $mntdir"
+	sudo mount -o bind /dev ${mntdir}/dev         && act "mounted /dev in $mntdir"
+	sudo mount -o bind /dev/pts ${mntdir}/dev/pts && act "mounted /dev/pts $mntdir"
 }
 
 umountdevprocsys() {
@@ -85,10 +85,10 @@ umountdevprocsys() {
 	req=(mntdir)
 	ckreq || return 1
 
-	sudo umount ${mntdir}/dev/pts && act "unmounted /dev/pts" && sleep 2
-	sudo umount ${mntdir}/dev     && act "unmounted /dev"     && sleep 2
-	sudo umount ${mntdir}/proc    && act "unmounted /proc"    && sleep 2
-	sudo umount ${mntdir}/sys     && act "unmounted /sys"     && sleep 2
+	sudo umount ${mntdir}/dev/pts && act "unmounted /dev/pts in $mntdir" && sleep 2
+	sudo umount ${mntdir}/dev     && act "unmounted /dev in $mntdir"     && sleep 2
+	sudo umount ${mntdir}/proc    && act "unmounted /proc in $mntdir"    && sleep 2
+	sudo umount ${mntdir}/sys     && act "unmounted /sys in $mntdir"     && sleep 2
 }
 
 aptautostart() {

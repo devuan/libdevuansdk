@@ -26,25 +26,44 @@ devuan_sdk_version=0.1
 setopt pushdsilent
 # export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
 
-SDK_PREFIX=`pwd`
-SDK_HOME=`pwd`
-SDK_CONF=`pwd`
+SDK_LIB=${SDK_LIB:-`pwd`}
 
-R=${SDK_PREFIX:-/usr/local/devuan-sdk}
-H=${SDK_HOME:-$HOME/.devuan-sdk}
-E=${SDK_CONF:-/etc/devuan-sdk}
+[[ "$core_packages" = "" ]] && {
+	# core packages for the system
+	core_packages=(devuan-keyring debian-keyring)
+	core_packages+=(initramfs-tools binutils ca-certificates curl)
+	core_packages+=(console-common less nano vim)
+}
+[[ "$base_packages" = "" ]] && {
+	# base packages for the system
+	base_packages=(bzip2 dialog apt-utils fakeroot e2fsprogs parted)
+}
+[[ "$system_packages" = "" ]] && {
+	# other system packages
+	system_packages=(sysvinit ssh)
+}
+# default size for an img
+imgsize=${imgsize:-1337}
 
-[[ -r $R ]] || {
-	print "Devuan SDK is not installed in: $R"
-	print "export SDK_PREFIX if installed on a different path"
+
+## libdevuansdk-specific settings
+workdir="$H/workdir"
+strapdir="${workdir}/${os}-${release}-${version}"
+outdir="$H/builds"
+
+
+
+[[ -r $SDK_LIB/libdevuansdk ]] || {
+	print "Devuan SDK is not installed in: $SDK_LIB"
+	print "export SDK_LIB if installed on a different path"
 }
 
 
 ########################
 ## Load Zuper extensions
 # conclude initialization
-if [[ -r   $R/zuper/zuper ]]; then
-	source $R/zuper/zuper
+if [[ -r   $SDK_LIB/zuper/zuper ]]; then
+	source $SDK_LIB/zuper/zuper
 else source ./zuper/zuper; fi
 
 DEBUG=${DEBUG:-0}
@@ -53,29 +72,35 @@ LOG=${LOG:-""}
 
 # path and debugging
 vars+=(R H E)
-vars+=(name_default)
-# source $R/zlibs/library
-source $E/config
-source $R/zlibs/bootstrap
-source $R/zlibs/helpers
-# source $R/zlibs/imaging
-source $R/zlibs/isolinux
-source $R/zlibs/kernel
-source $R/zlibs/qemu
-source $R/zlibs/sysconf
+vars+=(SDK_LIB SDK_PREFIX SDK_CONF SDK_HOME)
 
+# config globals
+vars+=(os release version mirror section)
+vars+=(workdir strapdir)
+vars+=(imgsize)
+
+# source $R/zlibs/library
+source $SDK_LIB/zlibs/bootstrap
+source $SDK_LIB/zlibs/helpers
+# source $R/zlibs/imaging
+source $SDK_LIB/zlibs/isolinux
+source $SDK_LIB/zlibs/kernel
+source $SDK_LIB/zlibs/qemu
+source $SDK_LIB/zlibs/grub
+source $SDK_LIB/zlibs/sysconf
+
+# name of target by default, omits arch
+vars+=(name_default)
+name_default=${os}_${release}_${version}
 
 
 # conclude initialization
-if [[ -r   $R/zuper/zuper.init ]]; then
-	source $R/zuper/zuper.init
+if [[ -r   $SDK_LIB/zuper/zuper.init ]]; then
+	source $SDK_LIB/zuper/zuper.init
 else source ./zuper/zuper.init; fi
 
-# name of target by default, omits arch
-name_default=${os}_${release}_${version}
-
 # add all other binaries to the path
-path+=($R/bin)
+path+=($SDK_LIB/bin)
 rehash
 
 
@@ -89,4 +114,13 @@ notice "Loading Devuan SDK library v$devuan_sdk_version"
 
 # ...
 
+req=(os release version mirror section)
+ckreq || { error "configuration is missing"; zshexit; return 1 }
+
 act "library succesfully loaded"
+
+# default operational paths
+R=${R:-$SDK_PREFIX}
+H=${H:-$SDK_HOME}
+E=${E:-$SDK_CONF}
+

@@ -22,12 +22,12 @@
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
 
-grub_install_target_dev(){
+grub_install_target_dev() {
 	fn grub_install_target_dev $@
 	root=$1
 	install_dev=$2
 	req=(root install_dev)
-	freq=($root/.done $root/dev/pts/0)
+	freq=($root/.done)
 	ckreq || return 1
 
 	# TODO: should we use qemu-chroot here for $arch = arm (parazyd?)

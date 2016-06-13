@@ -26,7 +26,7 @@ qemu_make_img(){
 
 	fn qemu_make_img $@
 	local imgfile=${1:-"$H/builds/${name_default}_${arch}.img"}
-	local imgsize=${2:-4G}
+	local imgsize=${2:-2G}
 	local imgformat=${3:-raw}
 	req=(strapdir os release version arch imgfile imgsize)
     root=$strapdir

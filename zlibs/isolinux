@@ -136,7 +136,7 @@ isolinux_mkusr() {
 
 	mkdir -p $usrdir
 
-	rsync -av $strapdir/ $usrdir --exclude-from=$ztmpfile
+	rsync -raX $strapdir/ $usrdir --exclude-from=$ztmpfile
 
 	mkdir -p $isodir/live
 	mksquashfs $usrdir/ $isodir/live/filesystem.squashfs -noappend
