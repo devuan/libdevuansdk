@@ -23,8 +23,8 @@
 
 vars+=(iso isodir)
 
-iso_prepare() {
-    fn iso_prepare $@
+isolinux_prepare() {
+    fn isolinux_prepare $@
     req=(strapdir os release version arch)
     root=$strapdir
 	freq=($strapdir/.done)
@@ -95,8 +95,8 @@ EOF
 
 }
 
-iso_mkinitrd() {
-	fn iso_mkinitrd $@
+isolinux_mkinitrd() {
+	fn isolinux_mkinitrd $@
 	req=(iso isodir arch)
 	freq=($isodir/isolinux/isolinux.bin)
 	ckreq || return 1
@@ -124,8 +124,8 @@ iso_mkinitrd() {
 
 }
 
-iso_mkusr() {
-	fn iso_mkusr $@
+isolinux_mkusr() {
+	fn isolinux_mkusr $@
 	req=(iso isodir)
 	ckreq || return 1
 
@@ -142,8 +142,8 @@ iso_mkusr() {
 	mksquashfs $usrdir/ $isodir/live/filesystem.squashfs -noappend
 }
 	
-iso_make() {
-	fn iso_make $@
+isolinux_make() {
+	fn isolinux_make $@
 	req=(iso isodir outdir)
 	freq=($isodir/isolinux/isolinux.bin)
 	ckreq || return 1
