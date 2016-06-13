@@ -56,12 +56,14 @@ vars+=(R H E)
 vars+=(name_default)
 # source $R/zlibs/library
 source $E/config
-source $R/zlibs/debootstrap
+source $R/zlibs/bootstrap
 source $R/zlibs/helpers
-source $R/zlibs/imaging
-source $R/zlibs/iso
+# source $R/zlibs/imaging
+source $R/zlibs/isolinux
+source $R/zlibs/kernel
+source $R/zlibs/qemu
 source $R/zlibs/sysconf
-source $R/zlibs/customise
+
 
 
 # conclude initialization

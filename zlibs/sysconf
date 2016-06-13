@@ -21,43 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-## Default system configuration
-
-conf_install_grub() {
-	fn conf_install_grub $@
-	chrootpath="$1"
-	req=(chrootpath)
-	ckreq || return 1
-
-	notice "Installing grub-pc"
-	sudo chroot ${chrootpath} apt-get --yes --force-yes install grub-pc
-}
-
-conf_install_kernel() {
-	fn conf_install_kernel $@
-	chrootpath="$1"
-	req=(arch chrootpath)
-	ckreq || return 1
-  
-  local kernel_base=linux-image
-  local kernel=""
-	
-	case $arch in
-		  amd64)
-			    kernel=${kernel_base}-amd64
-			    ;;
-		  i386)
-			    kernel=${kernel_base}-586
-			    ;;
-		  *)
-			    error "Architecture ::1 arch:: is not supported!!!" ${arch}
-          zerr; zshexit
-			    ;;
-	esac
-  
-	notice "Installing stock kernel for ::1 arch:: (::2 kernel::)" $arch $kernel
-	sudo chroot ${chrootpath} apt-get --yes --force-yes install $kernel
-}
+## base system configurations
 
 conf_print_debconf() {
 	fn conf_print_debconf
