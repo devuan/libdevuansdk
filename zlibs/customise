@@ -61,7 +61,7 @@ _install_bootloader(){
 	root=$1
 	install_dev=$2
 	
-	sudo chroot ${root} apt-get install --assume-yes --no-install-recommends grub-pc 
+	sudo chroot ${root} apt-get install --assume-yes --no-install-recommends grub-common
 	if [[ ! -d ${root}/boot/grub ]]; then 
 		sudo mkdir ${root}/boot/grub
 	fi
