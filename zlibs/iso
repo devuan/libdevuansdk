@@ -139,7 +139,7 @@ iso_mkusr() {
 	rsync -av $strapdir/ $usrdir --exclude-from=$ztmpfile
 
 	mkdir -p $isodir/live
-	mksquashfs $usrdir/ $isodir/live/filesystem.squashfs
+	mksquashfs $usrdir/ $isodir/live/filesystem.squashfs -noappend
 }
 	
 iso_make() {
