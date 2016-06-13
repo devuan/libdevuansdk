@@ -23,10 +23,11 @@
 
 ### customise 
 
-install_default_kernel(){
-	fn install_default_kernel $@
+kernel_x86_install_default(){
+	fn kernel_x86_install_default $@
 	req=(strapdir os release version arch)
     root=$strapdir
+	freq=($root/.done)
 	reqck || return 1
 
 	local kernel_base=linux-image
@@ -47,7 +48,6 @@ install_default_kernel(){
 	
 	notice "Installing stock kernel for ::1 arch:: (::2 kernel::)" $arch $kernel
 
-
 	mountdevprocsys ${root}
 
 	sudo chroot ${root} apt-get --yes --force-yes --no-install-recommends install $kernel
@@ -56,11 +56,15 @@ install_default_kernel(){
 	notice "default kernel installed"
 }
 
-_install_bootloader(){
-	fn _install_bootloader $@
+grub_install_target_dev(){
+	fn grub_install_target_dev $@
 	root=$1
 	install_dev=$2
-	
+	req=(root install_dev)
+	freq=($root/.done $root/dev/pts/0)
+	ckreq || return 1
+
+	# TODO: should we use qemu-chroot here for $arch = arm (parazyd?)
 	sudo chroot ${root} apt-get install --assume-yes --no-install-recommends grub-common
 	if [[ ! -d ${root}/boot/grub ]]; then 
 		sudo mkdir ${root}/boot/grub
@@ -85,53 +89,83 @@ EOF
 }
 
 
-make_qemu_img(){
+qemu_make_img(){
 
-	fn make_qemu_img $@
-	local imgfile=$1
+	fn qemu_make_img $@
+	local imgfile=${1:-"$H/builds/${name_default}_${arch}.img"}
 	local imgsize=${2:-4G}
 	local imgformat=${3:-raw}
 	req=(strapdir os release version arch imgfile imgsize)
     root=$strapdir
+	freq=($root/.done)
 	reqck || return 1
 	
 	local blockskip=2050
 
 	## create the qemu image 
-	act "creating qemu image"
+	notice "Creating qemu image: $imgfile"
 	
 	qemu-img create -f ${imgformat} ${imgfile} ${imgsize}
+	[[ $? = 0 ]] || {
+		error "failed: qemu-img create -f ${imgformat} ${imgfile} ${imgsize}"
+		zsherr; zshexit }
 
-	sudo parted ${imgfile} --script -- mklabel msdos
-	sudo parted ${imgfile} --script -- mkpart primary ${blockskip}s -1s
-	sudo parted ${imgfile} --script -- set 1 boot on
+	sudo parted ${imgfile} --script -- mklabel msdos &&
+		sudo parted ${imgfile} --script -- mkpart primary ${blockskip}s -1s &&
+		sudo parted ${imgfile} --script -- set 1 boot on
+	[[ $? = 0 ]] || {
+		error "failed: parted $imgfile scripts (mklabel, mkpart and setboot)"
+		zsherr; zshexit }
 
 	## setup the loop device
 	loop1=`sudo losetup -f`
 	sudo losetup ${loop1} ${imgfile}
+	[[ $? = 0 ]] || {
+		error "failed: losetup $loop2 $imgfile"
+		zsherr; zshexit }
+
 	loop2=`sudo losetup -f`
 	sudo losetup -o $((${blockskip} * 512)) ${loop2} ${loop1}
+	[[ $? = 0 ]] || {
+		sudo losetup -d ${loop1}
+		error "failed: losetup -o $((${blockskip} * 512)) ${loop2} ${loop1}"
+		zsherr; zshexit }
 	
-
 	## now we create the fs
 	act "creating filesystem"
 	sudo mkfs.ext4 ${loop2}
+	[[ $? = 0 ]] || {
+		sudo losetup -d ${loop2}
+		sudo losetup -d ${loop1}
+		error "failed: mkfs.ext4 $loop2"
+		zsherr; zshexit }
 
 	## and we loop-mount it 
 	
 	ztmpd
 	mntdir=$ztmpdir
 	sudo mount -o loop ${loop2} ${mntdir}
+	[[ $? = 0 ]] || {
+		sudo losetup -d ${loop2}
+		sudo losetup -d ${loop1}
+		error "failed: mount -o loop ${loop2} ${mntdir}"
+		zsherr; zshexit }
 	
-	echo "mntdir: $mntdir strapdir: $strapdir"
-	
+	func "mntdir: $mntdir"
+	func "strapdir: $strapdir"
 
 	# now we rsync everything 
-	sudo rsync -av ${strapdir}/ $mntdir
+	sudo rsync -raX ${strapdir}/ ${mntdir}
+	[[ $? = 0 ]] || {
+		umount $mntdir
+		sudo losetup -d ${loop2}
+		sudo losetup -d ${loop1}
+		error "failed: rsync -raX ${strapdir}/ ${mntdir}"
+		zsherr; zshexit }
 	
 	# we now install the grub bootloader
 	mountdevprocsys ${mntdir}
-	_install_bootloader $mntdir ${loop1}
+	grub_install_target_dev ${mntdir} ${loop1}
 	umountdevprocsys ${mntdir}
 	
 	sync

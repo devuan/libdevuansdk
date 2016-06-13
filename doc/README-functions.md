@@ -115,8 +115,8 @@ Prints default `/etc/apt/sources.list`
 
 # zlibs/customise
 
-## install_default_kernel()
+## kernel_x86_install_default()
 Install the default kernel in the bootstrapped system
 
-## make_qemu_img()
+## qemu_make_img()
 Make a raw/qcow2 qemu image of workdir

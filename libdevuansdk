@@ -53,7 +53,7 @@ LOG=${LOG:-""}
 
 # path and debugging
 vars+=(R H E)
-
+vars+=(name_default)
 # source $R/zlibs/library
 source $E/config
 source $R/zlibs/debootstrap
@@ -68,6 +68,9 @@ source $R/zlibs/customise
 if [[ -r   $R/zuper/zuper.init ]]; then
 	source $R/zuper/zuper.init
 else source ./zuper/zuper.init; fi
+
+# name of target by default, omits arch
+name_default=${os}_${release}_${version}
 
 # add all other binaries to the path
 path+=($R/bin)
