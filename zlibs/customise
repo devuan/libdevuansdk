@@ -72,11 +72,14 @@ _install_bootloader(){
 
 	cat > ${devicemap} <<EOF
 (hd0)   /dev/loop0
-(hd0,1) /dev/loop1
 EOF
  	sudo cp ${devicemap} ${root}/boot/grub/device.map
 	sudo chroot ${root} grub-mkconfig -o /boot/grub/grub.cfg
-
+	## we now tamper with grub.cfg, to remove all references to
+	## loopback devices...  
+	## FIXME!!! This is a hack...
+	sudo -- sed -r -i -e 's/.*loop.*//g' ${root}/boot/grub/grub.cfg
+	
 	sudo grub-install --root-directory=${root} --no-floppy \
 		--modules="ext2 part_msdos" ${install_dev}
 }
