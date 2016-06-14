@@ -28,99 +28,107 @@ setopt pushdsilent
 
 SDK_LIB=${SDK_LIB:-`pwd`}
 
-[[ "$core_packages" = "" ]] && {
+sdk_init(){
+    
+    fn sdk_init 
+	
+	req=(os release version mirror section)
+	ckreq || { error "configuration is missing"; zshexit; return 1 }
+    
+    # setting core, base, and other packages
+	
+    [[ "$core_packages" = "" ]] && {
 	# core packages for the system
-	core_packages=(devuan-keyring debian-keyring)
-	core_packages+=(initramfs-tools binutils ca-certificates curl)
-	core_packages+=(console-common less nano vim)
-}
-[[ "$base_packages" = "" ]] && {
+	    core_packages=(devuan-keyring debian-keyring)
+	    core_packages+=(initramfs-tools binutils ca-certificates curl)
+	    core_packages+=(console-common less nano vim)
+    }
+    [[ "$base_packages" = "" ]] && {
 	# base packages for the system
-	base_packages=(bzip2 dialog apt-utils fakeroot e2fsprogs parted)
-}
-[[ "$system_packages" = "" ]] && {
+	    base_packages=(bzip2 dialog apt-utils fakeroot e2fsprogs parted)
+    }
+    [[ "$system_packages" = "" ]] && {
 	# other system packages
-	system_packages=(sysvinit ssh)
-}
+	    system_packages=(sysvinit ssh)
+    }
+	
 # default size for an img
-imgsize=${imgsize:-1337}
-
-
+    imgsize=${imgsize:-1337M}
+    
+    
 ## libdevuansdk-specific settings
-workdir="$H/workdir"
-strapdir="${workdir}/${os}-${release}-${version}"
-outdir="$H/builds"
-
-
-
-[[ -r $SDK_LIB/libdevuansdk ]] || {
-	print "Devuan SDK is not installed in: $SDK_LIB"
-	print "export SDK_LIB if installed on a different path"
-}
-
-
+    workdir="$H/workdir"
+    strapdir="${workdir}/${os}-${release}-${version}"
+    outdir="$H/builds"
+    
+    
+	# KatolaZ  says: wtf????
+	[[ -r $SDK_LIB/libdevuansdk ]] || {
+		print "Devuan SDK is not installed in: $SDK_LIB"
+		print "export SDK_LIB if installed on a different path"
+	}
+	
 ########################
 ## Load Zuper extensions
 # conclude initialization
-if [[ -r   $SDK_LIB/zuper/zuper ]]; then
-	source $SDK_LIB/zuper/zuper
-else source ./zuper/zuper; fi
-
-DEBUG=${DEBUG:-0}
-QUIET=${QUIET:-0}
-LOG=${LOG:-""}
-
+	if [[ -r   $SDK_LIB/zuper/zuper ]]; then
+		source $SDK_LIB/zuper/zuper
+	else source ./zuper/zuper; fi
+	
+	DEBUG=${DEBUG:-0}
+	QUIET=${QUIET:-0}
+	LOG=${LOG:-""}
+	
 # path and debugging
-vars+=(R H E)
-vars+=(SDK_LIB SDK_PREFIX SDK_CONF SDK_HOME)
-
+	vars+=(R H E)
+	vars+=(SDK_LIB SDK_PREFIX SDK_CONF SDK_HOME)
+	
 # config globals
-vars+=(os release version mirror section)
-vars+=(workdir strapdir)
-vars+=(imgsize)
-
+	vars+=(os release version mirror section)
+	vars+=(workdir strapdir)
+	vars+=(imgsize)
+	
 # source $R/zlibs/library
-source $SDK_LIB/zlibs/bootstrap
-source $SDK_LIB/zlibs/helpers
+	source $SDK_LIB/zlibs/bootstrap
+	source $SDK_LIB/zlibs/helpers
 # source $R/zlibs/imaging
-source $SDK_LIB/zlibs/isolinux
-source $SDK_LIB/zlibs/kernel
-source $SDK_LIB/zlibs/qemu
-source $SDK_LIB/zlibs/grub
-source $SDK_LIB/zlibs/sysconf
-
+	source $SDK_LIB/zlibs/isolinux
+	source $SDK_LIB/zlibs/kernel
+	source $SDK_LIB/zlibs/qemu
+	source $SDK_LIB/zlibs/grub
+	source $SDK_LIB/zlibs/sysconf
+	
 # name of target by default, omits arch
-vars+=(name_default)
-name_default=${os}_${release}_${version}
-
-
+	vars+=(name_default)
+	name_default=${os}_${release}_${version}
+	
+	
 # conclude initialization
-if [[ -r   $SDK_LIB/zuper/zuper.init ]]; then
-	source $SDK_LIB/zuper/zuper.init
-else source ./zuper/zuper.init; fi
-
+	if [[ -r   $SDK_LIB/zuper/zuper.init ]]; then
+		source $SDK_LIB/zuper/zuper.init
+	else source ./zuper/zuper.init; fi
+	
 # add all other binaries to the path
-path+=($SDK_LIB/bin)
-rehash
-
-
+	path+=($SDK_LIB/bin)
+	rehash
+	
+	
 # For gettext
-TEXTDOMAIN=devuan
-
+	TEXTDOMAIN=devuan
+	
 # create mandatory workdirs
-mkdir -p ${strapdir}
-
-notice "Loading Devuan SDK library v$devuan_sdk_version"
-
+	mkdir -p ${strapdir}
+	
+	notice "Loading Devuan SDK library v$devuan_sdk_version"
+	
 # ...
-
-req=(os release version mirror section)
-ckreq || { error "configuration is missing"; zshexit; return 1 }
-
-act "library succesfully loaded"
-
+	
+	act "library succesfully loaded"
+	
 # default operational paths
-R=${R:-$SDK_PREFIX}
-H=${H:-$SDK_HOME}
-E=${E:-$SDK_CONF}
+	R=${R:-$SDK_PREFIX}
+	H=${H:-$SDK_HOME}
+	E=${E:-$SDK_CONF}
+	
+} # Closes sdk_init
 
