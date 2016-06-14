@@ -27,77 +27,77 @@ devuan_sdk_version=0.1
 setopt pushdsilent
 # export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
 
-SDK_LIB=${SDK_LIB:-`pwd`}
-
 ########################
 ## Load Zuper extensions
-	if [[ -r   $SDK_LIB/zuper/zuper ]]; then
-		source $SDK_LIB/zuper/zuper
-	else source ./zuper/zuper; fi
+if [[ -r   $SDK_LIB/zuper/zuper ]]; then
+    source $SDK_LIB/zuper/zuper
+else source ./zuper/zuper; fi
 
+
+vars+=(SDK_PREFIX SDK_HOME SDK_CONF SDK_LIB SDK_ARM SDK_VM SDK_LIVE)
 notice "Loading Devuan SDK library v$devuan_sdk_version"
+vars+=(os release version mirror section)
 
 sdk_init(){
-    
-    fn sdk_init 
+
+    fn sdk_init
+
 
 # default operational paths
+	vars+=(R H E)
 	R=${R:-$SDK_PREFIX}
 	H=${H:-$SDK_HOME}
 	E=${E:-$SDK_CONF}
-	
+
 	req=(os release version mirror section R H E)
+	freq=($SDK_LIB/zuper/zuper.init)
 	ckreq || { error "configuration is missing"; zshexit; return 1 }
-    
+
+	# name of target by default, omits arch
+	vars+=(name_default)
+	name_default=${os}_${release}_${version}
+	# For gettext
+	TEXTDOMAIN=devuan
+
     # setting core, base, and other packages
-	
+
     [[ "$core_packages" = "" ]] && {
 	# core packages for the system
+		arrs+=(core_packages)
 	    core_packages=(devuan-keyring debian-keyring)
 	    core_packages+=(initramfs-tools binutils ca-certificates curl)
 	    core_packages+=(console-common less nano vim)
     }
     [[ "$base_packages" = "" ]] && {
 	# base packages for the system
+		arrs+=(base_packages)
 	    base_packages=(bzip2 dialog apt-utils fakeroot e2fsprogs parted)
     }
     [[ "$system_packages" = "" ]] && {
 	# other system packages
+		arrs+=(system_packages)
 	    system_packages=(sysvinit ssh)
     }
-	
+
 # default size for an img
+	vars+=(imgsize)
     imgsize=${imgsize:-1337M}
-    
-    
+
+
 ## libdevuansdk-specific settings
-    workdir="$H/workdir"
-    strapdir="${workdir}/${os}-${release}-${version}"
-    outdir="$H/builds"
-    
-	
-    
-	# KatolaZ  says: wtf????
-	[[ -r $SDK_LIB/libdevuansdk ]] || {
-		print "Devuan SDK is not installed in: $SDK_LIB"
-		print "export SDK_LIB if installed on a different path"
-	}
-	
+	vars+=(workdir strapdir outdir)
+	outdir=${outdir:-$H/builds}
+    workdir=${workdir:-$H/workdir}
+    strapdir=${strapdir:-"${workdir}/${os}-${release}-${version}"}
+
 # conclude initialization
-	
+
 	DEBUG=${DEBUG:-0}
 	QUIET=${QUIET:-0}
 	LOG=${LOG:-""}
-	
-# path and debugging
-	vars+=(R H E)
-	vars+=(SDK_LIB SDK_PREFIX SDK_CONF SDK_HOME)
-	
+
 # config globals
-	vars+=(os release version mirror section)
-	vars+=(workdir strapdir)
-	vars+=(imgsize)
-	
+
 # source $R/zlibs/library
 	source $SDK_LIB/zlibs/bootstrap
 	source $SDK_LIB/zlibs/helpers
@@ -107,34 +107,31 @@ sdk_init(){
 	source $SDK_LIB/zlibs/qemu
 	source $SDK_LIB/zlibs/grub
 	source $SDK_LIB/zlibs/sysconf
-	
-# name of target by default, omits arch
-	vars+=(name_default)
-	name_default=${os}_${release}_${version}
-# For gettext
-	TEXTDOMAIN=devuan
-	
+
+
 # create mandatory workdirs
 	# $strapdir
 	mkdir -p ${strapdir}
 	# $outdir
 	mkdir -p ${outdir}
-	
+
 # conclude initialization
 	if [[ -r   $SDK_LIB/zuper/zuper.init ]]; then
 		source $SDK_LIB/zuper/zuper.init
 	else source ./zuper/zuper.init; fi
-	
-# add all other binaries to the path
-	path+=($SDK_LIB/bin)
-	rehash
-	
-	
-	
-# ...
-	
-	act "library succesfully loaded"
-	
-	
-} # Closes sdk_init
 
+# add all other binaries to the path
+	[[ -r $SDK_PREFIX/cli-sdk/sdk ]] &&
+	    path+=($SDK_PREFIX/cli-sdk) 
+		# export PATH=$PATH:$SDK_PREFIX/cli-sdk/sdk
+	# path+=($SDK_LIB/bin)
+	rehash
+
+
+
+# ...
+
+	act "library succesfully loaded"
+
+
+} # Closes sdk_init
