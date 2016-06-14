@@ -115,8 +115,10 @@ sdk_init(){
 	TEXTDOMAIN=devuan
 	
 # create mandatory workdirs
-	echo "Creating directory $strapdir"
+	# $strapdir
 	mkdir -p ${strapdir}
+	# $outdir
+	mkdir -p ${outdir}
 	
 # conclude initialization
 	if [[ -r   $SDK_LIB/zuper/zuper.init ]]; then
