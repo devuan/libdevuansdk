@@ -23,6 +23,8 @@
 
 devuan_sdk_version=0.1
 
+notice "Loading Devuan SDK library v$devuan_sdk_version"
+
 setopt pushdsilent
 # export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
 
@@ -38,8 +40,13 @@ SDK_LIB=${SDK_LIB:-`pwd`}
 sdk_init(){
     
     fn sdk_init 
+
+# default operational paths
+	R=${R:-$SDK_PREFIX}
+	H=${H:-$SDK_HOME}
+	E=${E:-$SDK_CONF}
 	
-	req=(os release version mirror section)
+	req=(os release version mirror section R H E)
 	ckreq || { error "configuration is missing"; zshexit; return 1 }
     
     # setting core, base, and other packages
@@ -68,6 +75,7 @@ sdk_init(){
     strapdir="${workdir}/${os}-${release}-${version}"
     outdir="$H/builds"
     
+	
     
 	# KatolaZ  says: wtf????
 	[[ -r $SDK_LIB/libdevuansdk ]] || {
@@ -119,18 +127,14 @@ sdk_init(){
 	TEXTDOMAIN=devuan
 	
 # create mandatory workdirs
+	act "Creating directory ::1 dir::" $strapdir
 	mkdir -p ${strapdir}
 	
-	notice "Loading Devuan SDK library v$devuan_sdk_version"
 	
 # ...
 	
 	act "library succesfully loaded"
 	
-# default operational paths
-	R=${R:-$SDK_PREFIX}
-	H=${H:-$SDK_HOME}
-	E=${E:-$SDK_CONF}
 	
 } # Closes sdk_init
 
