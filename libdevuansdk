@@ -42,6 +42,9 @@ sdk_init(){
 
     fn sdk_init
 
+	# defaults if less sofisticated dir
+	SDK_HOME=${SDK_HOME:-$SDK_PREFIX}
+	SDK_CONF=${SDK_CONF:-$SDK_PREFIX}
 
 # default operational paths
 	vars+=(R H E)
