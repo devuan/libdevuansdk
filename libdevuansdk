@@ -111,7 +111,12 @@ sdk_init(){
 # name of target by default, omits arch
 	vars+=(name_default)
 	name_default=${os}_${release}_${version}
+# For gettext
+	TEXTDOMAIN=devuan
 	
+# create mandatory workdirs
+	echo "Creating directory $strapdir"
+	mkdir -p ${strapdir}
 	
 # conclude initialization
 	if [[ -r   $SDK_LIB/zuper/zuper.init ]]; then
@@ -122,13 +127,6 @@ sdk_init(){
 	path+=($SDK_LIB/bin)
 	rehash
 	
-	
-# For gettext
-	TEXTDOMAIN=devuan
-	
-# create mandatory workdirs
-	act "Creating directory ::1 dir::" $strapdir
-	mkdir -p ${strapdir}
 	
 	
 # ...
