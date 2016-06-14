@@ -23,7 +23,6 @@
 
 devuan_sdk_version=0.1
 
-notice "Loading Devuan SDK library v$devuan_sdk_version"
 
 setopt pushdsilent
 # export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
@@ -36,6 +35,7 @@ SDK_LIB=${SDK_LIB:-`pwd`}
 		source $SDK_LIB/zuper/zuper
 	else source ./zuper/zuper; fi
 
+notice "Loading Devuan SDK library v$devuan_sdk_version"
 
 sdk_init(){
     
