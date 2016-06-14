@@ -28,6 +28,13 @@ setopt pushdsilent
 
 SDK_LIB=${SDK_LIB:-`pwd`}
 
+########################
+## Load Zuper extensions
+	if [[ -r   $SDK_LIB/zuper/zuper ]]; then
+		source $SDK_LIB/zuper/zuper
+	else source ./zuper/zuper; fi
+
+
 sdk_init(){
     
     fn sdk_init 
@@ -68,12 +75,7 @@ sdk_init(){
 		print "export SDK_LIB if installed on a different path"
 	}
 	
-########################
-## Load Zuper extensions
 # conclude initialization
-	if [[ -r   $SDK_LIB/zuper/zuper ]]; then
-		source $SDK_LIB/zuper/zuper
-	else source ./zuper/zuper; fi
 	
 	DEBUG=${DEBUG:-0}
 	QUIET=${QUIET:-0}
