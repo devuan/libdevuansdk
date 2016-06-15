@@ -27,11 +27,11 @@ vars+=(imgname imgpath)
 
 img_mkimage() {
 	fn img_mkimage $@
-	imgpath=${1:-${strapdir}.img}
-	local mbrtype="$2"
-	local bootfstype="$3"
-	local rootfstype="$4"
-	local imgsize=${5:-$imgsize}
+	imgpath=${strapdir}.img
+	local mbrtype="$1"
+	local bootfstype="$2"
+	local rootfstype="$3"
+	local imgsize="$4"
 	req=(imgpath imgsize mbrtype bootfstype rootfstype)
 	ckreq || return 1
 
@@ -54,7 +54,7 @@ img_mkimage() {
 
 	img_mount
 	img_rsync_strapdir
-	[[ -z $override_bootloader ]] && img_install_bootloader
+	# [[ -z $override_bootloader ]] && img_install_bootloader
 	img_umount
 }
 
