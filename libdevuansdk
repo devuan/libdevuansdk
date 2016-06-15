@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-devuan_sdk_version=0.1
+libdevuansdk_version=0.1
 
 
 setopt pushdsilent
@@ -29,14 +29,11 @@ setopt pushdsilent
 
 ########################
 ## Load Zuper extensions
-if [[ -r   $SDK_LIB/zuper/zuper ]]; then
-    source $SDK_LIB/zuper/zuper
-else source ./zuper/zuper; fi
-
+source $SDK_LIB/zuper/zuper
 
 vars+=(SDK_PREFIX SDK_HOME SDK_CONF SDK_LIB SDK_ARM SDK_VM SDK_LIVE)
 notice "Loading Devuan SDK library v$devuan_sdk_version"
-vars+=(os release version mirror section)
+vars+=(libdevuansdk_version os release version mirror section)
 
 sdk_init(){
 
