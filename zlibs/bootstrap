@@ -44,7 +44,7 @@ bootstrap() {
 		# Debootstrap stage 1
 		sudo debootstrap --foreign --arch ${arch} ${release} ${strapdir} ${mirror}
 
-		install-qemu
+		qemu_install_user
 
 		# Debootstrap stage 2
 		sudo chroot ${strapdir} /debootstrap/debootstrap --second-stage

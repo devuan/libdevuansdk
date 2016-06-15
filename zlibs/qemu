@@ -21,8 +21,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
+qemu_install_user() {
+	fn qemu_install_user
+	local cputype="$1"
 
-qemu_make_img(){
+	[[ -n $enable_qemu ]] && {
+		act "installing qemu-arm-static"
+		sudo cp -vf /usr/bin/qemu-arm-static $strapdir/usr/bin/
+	}
+
+	[[ -n $cputype ]] && {
+		act "compiling qemu wrapper"
+		cp $R/src/qemu-wrapper.c /tmp/qemu-wrapper.c
+		sed -i -e 's/cortex-a8/'$cputype'/' /tmp/qemu-wrapper.c
+		gcc -static /tmp/qemu-wrapper.c -O3 -s /tmp/qemu-wrapper
+		sudo mv -vf /tmp/qemu-wrapper $strapdir/usr/bin/
+
+		print ':arm:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/qemu-wrapper:' | sudo tee /proc/sys/fs/binfmt_misc/register
+	}
+}
+
+qemu_make_img() {
 
 	fn qemu_make_img $@
 	local imgfile=${1:-"$H/builds/${name_default}_${arch}.img"}

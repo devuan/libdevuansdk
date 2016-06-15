@@ -37,16 +37,6 @@ escalate() {
 	fi
 }
 
-install-qemu() {
-	fn install-qemu
-
-	[[ -n $enable_qemu ]] && {
-		sudo cp $qemu_bin $strapdir/usr/bin/
-		act "installed qemu-user-static"
-	}
-	return 0
-}
-
 findloopmapp() {
 	fn findloopmapp
 	req=(imgpath imgname workdir)
