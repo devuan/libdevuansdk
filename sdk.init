@@ -23,6 +23,10 @@
 
 fn libdevuansdk.init
 libdevuansdk_version=0.1
+notice "Initializing Devuan SDK library v$libdevuansdk_version"
+
+vars+=(SDK_PREFIX SDK_HOME SDK_CONF SDK_LIB SDK_ARM SDK_VM SDK_LIVE)
+vars+=(libdevuansdk_version os release version mirror section)
 
 # defaults if less sofisticated dir
 SDK_HOME=${SDK_HOME:-$SDK_PREFIX}
