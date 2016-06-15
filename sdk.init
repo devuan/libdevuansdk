@@ -77,7 +77,7 @@ imgsize=${imgsize:-1337M}
 vars+=(workdir strapdir outdir)
 outdir=${outdir:-$H/builds}
 workdir=${workdir:-$H/workdir}
-strapdir=${strapdir:-"${workdir}/${os}-${release}-${version}"}
+strapdir=${strapdir:-"${workdir}/${name_default}_${arch}"}
 
 # conclude initialization
 
