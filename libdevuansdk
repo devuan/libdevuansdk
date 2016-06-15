@@ -39,99 +39,99 @@ sdk_init(){
 
     fn sdk_init
 
-	# defaults if less sofisticated dir
-	SDK_HOME=${SDK_HOME:-$SDK_PREFIX}
-	SDK_CONF=${SDK_CONF:-$SDK_PREFIX}
+    # defaults if less sofisticated dir
+    SDK_HOME=${SDK_HOME:-$SDK_PREFIX}
+    SDK_CONF=${SDK_CONF:-$SDK_PREFIX}
 
-# default operational paths
-	vars+=(R H E)
-	R=${R:-$SDK_PREFIX}
-	H=${H:-$SDK_HOME}
-	E=${E:-$SDK_CONF}
+	# default operational paths
+    vars+=(R H E)
+    R=${R:-$SDK_PREFIX}
+    H=${H:-$SDK_HOME}
+    E=${E:-$SDK_CONF}
 
-	req=(os release version mirror section R H E)
-	freq=($SDK_LIB/zuper/zuper.init)
-	ckreq || { error "configuration is missing"; zshexit; return 1 }
+    req=(os release version mirror section R H E)
+    freq=($SDK_LIB/zuper/zuper.init)
+    ckreq || { error "configuration is missing"; zshexit; return 1 }
 
-	# name of target by default, omits arch
-	vars+=(name_default)
-	name_default=${os}_${release}_${version}
-	# For gettext
-	TEXTDOMAIN=devuan
+    # name of target by default, omits arch
+    vars+=(name_default)
+    name_default=${os}_${release}_${version}
+    # For gettext
+    TEXTDOMAIN=devuan
 
     # setting core, base, and other packages
 
     [[ "$core_packages" = "" ]] && {
-	# core packages for the system
-		arrs+=(core_packages)
-	    core_packages=(devuan-keyring debian-keyring)
-	    core_packages+=(initramfs-tools binutils ca-certificates curl)
-	    core_packages+=(console-common less nano vim)
+		# core packages for the system
+        arrs+=(core_packages)
+        core_packages=(devuan-keyring debian-keyring)
+        core_packages+=(initramfs-tools binutils ca-certificates curl)
+        core_packages+=(console-common less nano vim)
     }
     [[ "$base_packages" = "" ]] && {
-	# base packages for the system
-		arrs+=(base_packages)
-	    base_packages=(bzip2 dialog apt-utils fakeroot e2fsprogs parted)
+		# base packages for the system
+        arrs+=(base_packages)
+        base_packages=(bzip2 dialog apt-utils fakeroot e2fsprogs parted)
     }
     [[ "$system_packages" = "" ]] && {
-	# other system packages
-		arrs+=(system_packages)
-	    system_packages=(sysvinit ssh)
+		# other system packages
+        arrs+=(system_packages)
+        system_packages=(sysvinit ssh)
     }
 
-# default size for an img
-	vars+=(imgsize)
+	# default size for an img
+    vars+=(imgsize)
     imgsize=${imgsize:-1337M}
 
 
-## libdevuansdk-specific settings
-	vars+=(workdir strapdir outdir)
-	outdir=${outdir:-$H/builds}
+	## libdevuansdk-specific settings
+    vars+=(workdir strapdir outdir)
+    outdir=${outdir:-$H/builds}
     workdir=${workdir:-$H/workdir}
     strapdir=${strapdir:-"${workdir}/${os}-${release}-${version}"}
 
-# conclude initialization
+	# conclude initialization
 
-	DEBUG=${DEBUG:-0}
-	QUIET=${QUIET:-0}
-	LOG=${LOG:-""}
+    DEBUG=${DEBUG:-0}
+    QUIET=${QUIET:-0}
+    LOG=${LOG:-""}
 
-# config globals
+	# config globals
 
-# source $R/zlibs/library
-	source $SDK_LIB/zlibs/bootstrap
-	source $SDK_LIB/zlibs/helpers
-# source $R/zlibs/imaging
-	source $SDK_LIB/zlibs/isolinux
-	source $SDK_LIB/zlibs/kernel
-	source $SDK_LIB/zlibs/qemu
-	source $SDK_LIB/zlibs/grub
-	source $SDK_LIB/zlibs/sysconf
-
-
-# create mandatory workdirs
-	# $strapdir
-	mkdir -p ${strapdir}
-	# $outdir
-	mkdir -p ${outdir}
-
-# conclude initialization
-	if [[ -r   $SDK_LIB/zuper/zuper.init ]]; then
-		source $SDK_LIB/zuper/zuper.init
-	else source ./zuper/zuper.init; fi
-
-# add all other binaries to the path
-	[[ -r $SDK_PREFIX/cli-sdk/sdk ]] &&
-	    path+=($SDK_PREFIX/cli-sdk) 
-		# export PATH=$PATH:$SDK_PREFIX/cli-sdk/sdk
-	# path+=($SDK_LIB/bin)
-	rehash
+	# source $R/zlibs/library
+    source $SDK_LIB/zlibs/bootstrap
+    source $SDK_LIB/zlibs/helpers
+	# source $R/zlibs/imaging
+    source $SDK_LIB/zlibs/isolinux
+    source $SDK_LIB/zlibs/kernel
+    source $SDK_LIB/zlibs/qemu
+    source $SDK_LIB/zlibs/grub
+    source $SDK_LIB/zlibs/sysconf
 
 
+	# create mandatory workdirs
+    # $strapdir
+    mkdir -p ${strapdir}
+    # $outdir
+    mkdir -p ${outdir}
 
-# ...
+	# conclude initialization
+    if [[ -r   $SDK_LIB/zuper/zuper.init ]]; then
+        source $SDK_LIB/zuper/zuper.init
+    else source ./zuper/zuper.init; fi
 
-	act "library succesfully loaded"
+	# add all other binaries to the path
+    [[ -r $SDK_PREFIX/cli-sdk/sdk ]] &&
+        path+=($SDK_PREFIX/cli-sdk)
+    # export PATH=$PATH:$SDK_PREFIX/cli-sdk/sdk
+    # path+=($SDK_LIB/bin)
+    rehash
+
+
+
+	# ...
+
+    act "library succesfully loaded"
 
 
 } # Closes sdk_init
