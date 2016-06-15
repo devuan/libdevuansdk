@@ -26,7 +26,7 @@ libdevuansdk_version=0.1
 notice "Initializing Devuan SDK library v$libdevuansdk_version"
 
 vars+=(SDK_PREFIX SDK_HOME SDK_CONF SDK_LIB SDK_ARM SDK_VM SDK_LIVE)
-vars+=(libdevuansdk_version os release version mirror section)
+vars+=(libdevuansdk_version os release version mirror section arch)
 
 # defaults if less sofisticated dir
 SDK_HOME=${SDK_HOME:-$SDK_PREFIX}
@@ -77,7 +77,7 @@ imgsize=${imgsize:-1337M}
 vars+=(workdir strapdir outdir)
 outdir=${outdir:-$H/builds}
 workdir=${workdir:-$H/workdir}
-strapdir=${strapdir:-"${workdir}/${name_default}_${arch}"}
+strapdir="${workdir}/${name_default}_${arch}"
 
 # conclude initialization
 
