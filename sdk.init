@@ -97,6 +97,8 @@ source $SDK_LIB/zlibs/qemu
 source $SDK_LIB/zlibs/grub
 source $SDK_LIB/zlibs/sysconf
 
+source $SDK_LIB/zlibs/blends
+source $SDK_LIB/zlibs/packages
 
 # create mandatory workdirs
 # $strapdir
