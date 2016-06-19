@@ -50,5 +50,6 @@ EOF
 	sudo -- sed -r -i -e 's/.*loop.*//g' ${root}/boot/grub/grub.cfg
 
 	sudo grub-install --root-directory=${root} --no-floppy \
-		--modules="ext2 part_msdos" ${install_dev}
+		 --modules="ext2 part_msdos" --target=i386-pc --boot-directory=${root}/boot \
+		 ${install_dev}
 }
