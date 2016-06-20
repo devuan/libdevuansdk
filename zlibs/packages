@@ -22,8 +22,8 @@
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
 
-pkg_install_chroot(){
-	fn pkg_install_chroot $@
+pkg_install(){
+	fn pkg_install $@
 
 	pkg_name=$1
     root=${2:-$strapdir}
@@ -32,7 +32,7 @@ pkg_install_chroot(){
 
 	mountdevprocsys ${root}
 
-	sudo chroot ${root} apt-get --yes --force-yes install $kernel
+	sudo chroot ${root} apt-get --yes --force-yes install ${pkg_name}
 
 	umountdevprocsys ${root}
 
@@ -46,7 +46,7 @@ pkg_install_ssh(){
 }
 
 
-pkg_remove_chroot(){
+pkg_remove(){
 
 
 }
@@ -58,7 +58,58 @@ pkg_remove_ssh(){
 }
 
 
-pkg_set_package_list(){
+pkg_set_list(){
+
+	fn pkg_set_list $@
+
+	pkglist=$1
+    root=${2:-$strapdir}
+	req=(pkglist root)
+	reqck || return 1
 
 
+	scriptfilebase=set_package_list.sh
+	scriptfile=${root}/${scriptfilebase}
+
+	pkg_config_set_list ${pkglist} | sudo tee ${scriptfile}
+	sudo chmod u+x  ${scriptfile}
+	sudo cp ${pkglist} ${root}/`basename ${pkglist}`
+
+	[[ $? = 0 ]] || {
+		error "failed: _pkg_config_set_list ${pkglist} ${scriptfile}"
+		zsherr; zshexit 
+	}
+	
+	mountdevprocsys ${root}
+
+	sudo chroot ${root} ./${scriptfilebase}
+
+	umountdevprocsys ${root}
+
+	sudo rm ${scriptfile} ${root}/`basename ${pkglist}`
+
+}
+
+pkg_config_set_list() {
+
+	fn _pkg_config_set_list $@
+
+	pkglist=`basename $1`
+	req=(pkglist)
+	reqck || return 1
+	
+	cat <<EOF 
+apt-get install dselect
+dpkg --get-selections > selections.bak
+dpkg --clear-selections
+dselect update
+dpkg --set-selections < ${pkglist}
+dselect install
+dselect config
+dselect remove
+
+## Now we purge all the packages marked as "deinstall"
+apt-get purge `dpkg --get-selections | grep "deinstall$" | cut -f 1`
+
+EOF
 }

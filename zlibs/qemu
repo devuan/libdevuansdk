@@ -107,7 +107,12 @@ qemu_make_img() {
 	func "strapdir: $strapdir"
 
 	# now we rsync everything
-	sudo rsync -raX ${strapdir}/ ${mntdir}
+	notice "Copying filesystem into image"
+	# ztmp
+	# excludefile=${ztmp}
+	# qemu_config_exclude | sudo tee ${excludefile}
+	# sudo rsync -raX --exclude-from=${excludefile} ${strapdir}/ ${mntdir} 
+	sudo rsync -raX  ${strapdir}/ ${mntdir} 
 	[[ $? = 0 ]] || {
 		umount $mntdir
 		sudo losetup -d ${loop2}
@@ -131,4 +136,124 @@ qemu_make_img() {
 	else
 		warning "Unable to create QEMU image file in ::1 imgfile::" ${imgfile}
 	fi
+}
+
+qemu_config_esclude(){
+	fn qemu_config_exclude
+
+	cat <<EOF
+- /proc/*
+- /sys/*
+- /dev/*
+- /tmp/*
+- /mnt/*
+- /live
+- /persistence.conf
+- /boot/grub/grub.cfg
+- /boot/grub/menu.lst
+- /boot/grub/device.map
+- /boot/*.bak
+- /boot/*.old-dkms
+- /etc/udev/rules.d/70-persistent-cd.rules
+- /etc/udev/rules.d/70-persistent-net.rules
+- /etc/fstab
+- /etc/fstab.d/*
+- /etc/mtab
+- /etc/blkid.tab
+- /etc/blkid.tab.old
+- /etc/apt/sources.list~
+- /etc/crypttab
+- /etc/initramfs-tools/conf.d/resume     # see remove-cryptroot and nocrypt.sh
+- /etc/initramfs-tools/conf.d/cryptroot  # see remove-cryptroot and nocrypt.sh
+- /home/snapshot
+- /var/log/*
+- /var/log/[a-b,A-Z]*
+- /var/log/[d-f]*
+- /var/log/[h-z]*
+- /var/log/*gz
+
+- /var/cache/apt/archives/*.deb
+- /var/cache/apt/pkgcache.bin
+- /var/cache/apt/srcpkgcache.bin
+- /var/cache/apt/apt-file/*
+- /var/cache/debconf/*~old
+- /var/lib/apt/lists/*
+- /var/lib/apt/*~
+- /var/lib/apt/cdroms.list
+- /var/lib/aptitude/*.old
+- /var/lib/dhcp/*
+- /var/lib/dpkg/*~old
+- /var/spool/mail/*
+- /var/mail/*
+- /var/backups/*.gz
+#- /var/backups/*.bak
+- /var/lib/dbus/machine-id
+- /var/lib/live/config/*
+
+- /usr/share/icons/*/icon-theme.cache
+
+- /root/.aptitude
+- /root/.bash_history
+- /root/.disk-manager.conf
+- /root/.fstab.log
+- /root/.lesshst
+- /root/*/.log
+- /root/.local/share/*
+- /root/.nano_history
+- /root/.synaptic
+- /root/.VirtualBox
+- /root/.ICEauthority
+- /root/.Xauthority
+- /root/.links2
+
+- /root/.ssh
+- /root/[a-zA-Z0-9]*
+
+- /home/*/.Trash*
+- /home/*/.local/share/Trash/*
+- /home/*/.mozilla/*/Cache/*
+- /home/*/.mozilla/*/urlclassifier3.sqlite
+- /home/*/.mozilla/*/places.sqlite
+- /home/*/.mozilla/*/cookies.sqlite
+- /home/*/.mozilla/*/signons.sqlite
+- /home/*/.mozilla/*/formhistory.sqlite
+- /home/*/.mozilla/*/downloads.sqlite
+- /home/*/.adobe
+- /home/*/.aptitude
+- /home/*/.bash_history
+- /home/*/.cache
+- /home/*/.dbus
+- /home/*/.gksu*
+- /home/*/.gvfs
+- /home/*/.lesshst
+- /home/*/.log
+- /home/*/.macromedia
+- /home/*/.nano_history
+- /home/*/.pulse*
+- /home/*/.recently-used
+- /home/*/.recently-used.xbel
+- /home/*/.local/share/recently-used.xbel
+- /home/*/.thumbnails/large/*
+- /home/*/.thumbnails/normal/*
+- /home/*/.thumbnails/fail/*
+- /home/*/.vbox*
+- /home/*/.VirtualBox
+- /home/*/VirtualBox\ VMs
+#- /home/*/.wine
+- /home/*/.xsession-errors*
+- /home/*/.ICEauthority
+- /home/*/.Xauthority
+
+# You might want to comment these out if you're making a snapshot for
+# your own personal use, not to be shared with others.
+- /home/*/.gnupg
+- /home/*/.ssh
+- /home/*/.xchat2
+
+### ignore all non-hidden files in /home/devuan -- KatolaZ -- 2016-05-21
+
+- /home/devuan/[a-zA-Z0-9]*
+
+
+EOF
 }
