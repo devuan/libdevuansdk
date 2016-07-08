@@ -33,7 +33,7 @@ bootstrap() {
 
 	notice "Bootstrapping ::1 OS:: base" ${os}
 
-	bootstrap_tgz=$H/tmp/${name_default}_${arch}.tgz
+	bootstrap_tgz=$H/builds/${name_default}_${arch}.tgz
 	strapdir=${workdir}/${name_default}_${arch}
 
 	if [[ -f $bootstrap_tgz ]]; then
