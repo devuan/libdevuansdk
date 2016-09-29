@@ -1,0 +1,181 @@
+#!/usr/bin/env zsh
+#
+# Copyright (c) 2016 Dyne.org Foundation
+# libdevuansdk is written and maintained by Ivan J. <parazyd@dyne.org>
+# with code contributions from KatolaZ <katolaz@freaknet.org>
+#                          and Jaromil <jaromil@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+vars+=(bootstrap_tgz)
+
+bootstrap() {
+	fn bootstrap "$@"
+	req=(arch)
+	ckreq || return 1
+
+	notice "bootstrapping $os $arch base"
+
+	bootstrap_tgz="$R/tmp/bootstrap-${os}-${arch}.tgz"
+
+	[[ -f $bootstrap_tgz ]] && {
+		notice "using the existing bootstrap tarball found in $R/tmp"
+		bootstrap_tar_unpack $strapdir || { die "failed to extract"; zerr }
+		return 0
+	}
+	notice "running debootstrap stage 1"
+	## deboostrap stage 1
+	sudo debootstrap \
+		--foreign \
+		--arch $arch $release $strapdir $mirror || zerr
+
+	[[ $arch =~ "^arm.." ]] && qemu_install_user
+
+	## debootstrap stage 2
+	notice "running debootstrap stage 2"
+	sudo chroot $strapdir \
+		/debootstrap/debootstrap --second-stage || zerr
+
+	## write all system configuration
+	notice "writing system configuration"
+	conf_print_debconf        | sudo tee $strapdir/debconf.set
+	conf_print_fstab          | sudo tee $strapdir/etc/fstab
+	conf_print_hostname       | sudo tee $strapdir/etc/hostname
+	conf_print_hosts          | sudo tee $strapdir/etc/hosts
+	conf_print_networkifaces  | sudo tee $strapdir/etc/network/interfaces
+	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf
+	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list
+
+	## write third-stage for chroot
+	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage
+	bootstrap_config_cleanup    | sudo tee $strapdir/cleanup
+	sudo chmod +x $strapdir/thirdstage
+	sudo chmod +x $strapdir/cleanup
+
+	## chroot into it and configure further
+	## debootstrap stage 3
+	notice "running debootstrap stage 3"
+	export LANG=C
+	export LC_ALL=C
+	export DEBIAN_FRONTEND=noninteractive
+
+	devprocsys mount $strapdir || zerr
+
+	sudo chroot $strapdir /thirdstage || zerr
+	sudo chroot $strapdir /cleanup || zerr
+
+	sleep 1 && devprocsys umount $strapdir || zerr
+
+	bootstrap_tar_pack || zerr
+}
+
+bootstrap_config_cleanup() {
+	fn config_cleanup
+
+	cat << EOF
+#!/bin/sh
+rm -f /debconf.set
+rm -f /thirdstage
+rm -f /etc/ssh/*_key
+rm -f /etc/ssh/*.pub
+rm -f /root/.bash_history
+## our file for which we check the bootstrap is complete
+echo "1" > .done
+EOF
+}
+
+bootstrap_config_thirdstage() {
+	fn bootstrap_config_thirdstage
+	req=(core_packages base_packages system_packages)
+	ckreq || return 1
+
+	cat << EOF
+#!/bin/sh
+dpkg-divert --add --local \
+	--divert /usr/sbin/invoke-rc.d.chroot --rename /usr/sbin/invoke-rc.d
+cp /bin/true /usr/sbin/invoke-rc.d
+echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
+chmod +x /usr/sbin/policy-rc.d
+
+apt-get update
+apt-get --yes --force-yes install locales-all
+debconf-set-selections /debconf.set
+
+apt-get update
+apt-get -y install ${core_packages}
+
+echo "root:${os}" | chpasswd
+sed -i -e 's/KERNEL\!=\"eth\*|/KERNEL\!=\"/' \
+	/lib/udev/rules.d/75-persistent-net-generator.rules
+rm -f /etc/udev/rules.d/70-persistent-net.rules
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get --yes --force-yes install \
+	${base_packages} \
+	${system_packages} \
+	${extra_packages}
+apt-get --yes --force-yes dist-upgrade
+apt-get --yes --force-yes autoremove
+
+apt-get clean
+
+rm -f /usr/sbin/policy-rc.d
+rm -f /usr/sbin/invoke-rc.d
+dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
+EOF
+}
+
+bootstrap_tar_pack() {
+	fn bootstrap_tar_pack
+	req=(bootstrap_tgz)
+	ckreq || return 1
+
+	local _dest=`dirname $bootstrap_tgz`
+
+	if [[ -f $bootstrap_tgz ]]; then
+		act "tarball found already in $_dest"
+	else
+		notice "Creating boostrap tarball in $bootstrap_tgz"
+		silly
+
+		pushd ${strapdir}
+
+		mkdir -p ${_dest}
+		silly
+		sudo tar czf $bootstrap_tgz \
+			--exclude={./boot,./dev,./sys,./proc} \
+			./
+
+		popd
+	fi
+}
+
+bootstrap_tar_unpack() {
+	fn bootstrap_tar_unpack $@
+	local unpath="$1"
+	req=(unpath bootstrap_tgz)
+	ckreq || return 1
+
+	[[ -f ${unpath}/.done ]] && {
+		warning "bootstrap already unpacked in $unpath"
+		return 1
+	}
+
+	mkdir -p ${unpath}
+	silly
+	sudo tar xf $bootstrap_tgz -C ${unpath}
+	sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
+}
