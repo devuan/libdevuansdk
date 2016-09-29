@@ -19,8 +19,8 @@
 
 vars+=(bootstrap_tgz)
 
-bootstrap() {
-	fn bootstrap "$@"
+bootstrap_complete_base() {
+	fn bootstrap_complete_base "$@"
 	req=(arch)
 	ckreq || return 1
 
@@ -55,6 +55,9 @@ bootstrap() {
 	conf_print_networkifaces  | sudo tee $strapdir/etc/network/interfaces
 	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf
 	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list
+	## below typically used in arm-sdk
+	[[ -n $inittap ]] && { print $inittab | sudo tee -a $strapdir/etc/inittab }
+	for i in $custmodules; do print $i | sudo tee -a $strapdir/etc/modules; done
 
 	## write third-stage for chroot
 	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage

@@ -28,6 +28,8 @@ version="1.0.0-beta"
 mirror="http://packages.devuan.org/merged"
 section="main"
 
+image_name=${image_name:-$os_$release_$version_$arch.img}
+
 core_packages=(
 	devuan_keyring
 	debian_keyring

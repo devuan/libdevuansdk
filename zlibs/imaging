@@ -1,0 +1,92 @@
+#!/usr/bin/env zsh
+# Copyright (c) 2016 Dyne.org Foundation
+# libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+## imagine images
+
+vars+=(image_name bootpart rootpart)
+
+image_prepare_raw() {
+	fn image_prepare_raw
+	req=(workdir size image_name)
+	ckreq || return 1
+
+	notice "creating raw image file from zeroes..."
+
+	dd if=/dev/zero \
+		of=$workdir/${image_name}.img \
+		bs=1M \
+		count=$size
+}
+
+image_partition_raw_dos() {
+	fn image_partition_raw_dos
+	req=(workdir image_name parted_boot parted_root)
+	ckreq || return 1
+
+	notice "partitioning raw dos image..."
+
+	parted $workdir/${image_name}.img --script -- mklabel msdos
+	parted $workdir/${image_name}.img --script -- mkpart primary ${parted_boot}
+	parted $workdir/${image_name}.img --script -- mkpart primary ${parted_root}
+
+	## get loopdevice and mapper device (see ./helpers)
+	findloopmapp
+
+	mappdevice="/dev/mapper/$mappdevice"
+	bootpart=${mappdevice}p1
+	rootpart=${mappdevice}p2
+
+	notice "formatting partitions..."
+	sudo mkfs.vfat $bootpart
+	sudo mkfs.ext4 $rootpart
+}
+
+image_partition_raw_gpt() {
+	fn image_partition_raw_gpt
+	req=(workdir image_name)
+	ckreq || return 1
+
+	notice "partitioning raw gpt image..."
+
+	parted $workdir/${image_name}.img --script -- mklabel gpt
+	cgpt create -z ${image_name}.img
+	cgpt create ${image_name}.img
+	cgpt add -i 1 -t kernel -b 8192 -s 32768 -l kernel -S 1 -T 5 -P 10 ${image_name}.img
+	cgpt add -i 2 -t data -b 40960 -s $(expr $(cgpt show ${image_name}.img \
+		| awk '/Sec GPT table/ {print \$1}') - 40960) -l Root ${image_name}.img
+
+	findloopmapp
+
+	mappdevice="/dev/mapper/${mappdevice}"
+	bootpart=${mappdevice}p1
+	rootpart=${mappdevice}p2
+
+	notice "formatting partitions..."
+	sudo mkfs.ext4 -L rootfs $rootpart
+}
+
+image_raw_mount() {
+	fn image_raw_mount
+	req=(workdir bootpart rootpart)
+	ckreq || return 1
+
+	mkdir -p $workdir/boot $workdir/root
+	sudo mount $bootpart $workdir/boot && act "mounted boot partition" || zerr
+	sudo mount $rootpart $workdir/root && act "mounted root partition" || zerr
+}
