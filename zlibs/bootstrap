@@ -1,9 +1,6 @@
 #!/usr/bin/env zsh
-#
 # Copyright (c) 2016 Dyne.org Foundation
-# libdevuansdk is written and maintained by Ivan J. <parazyd@dyne.org>
-# with code contributions from KatolaZ <katolaz@freaknet.org>
-#                          and Jaromil <jaromil@dyne.org>
+# libdevuansdk maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
 #
@@ -94,6 +91,7 @@ rm -f /etc/ssh/*.pub
 rm -f /root/.bash_history
 ## our file for which we check the bootstrap is complete
 echo "1" > .done
+rm -f /cleanup
 EOF
 }
 
