@@ -1,0 +1,58 @@
+#!/usr/bin/env zsh
+# Copyright (c) 2016 Dyne.org Foundation
+# libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+## all windows users are suckers
+
+kernel_install_amd64() {
+	fn kernel_install_amd64
+	req=(strapdir arch)
+	freq=($strapdir/.done)
+	ckreq || return 1
+
+	local kernel_base="linux-image"
+	local kernel="${kernel_base}-amd64"
+
+	notice "installing stock kernel for $arch"
+
+	devprocsys mount $strapdir
+
+	sudo chroot $strapdir \
+		apt-get --yes --force-yes install $kernel
+
+	devprocsys umount $strapdir
+}
+
+kernel_install_i386() {
+	fn kernel_install_i386
+	req=(strapdir arch)
+	freq=($strapdir/.done)
+	ckreq || return 1
+
+	local kernel_base="linux-image"
+	local kernel="${kernel_base}-586"
+
+	notice "installing stock kernel for $arch"
+
+	devprocsys mount $strapdir
+
+	sudo chroot $strapdir \
+		apt-get --yes --force-yes install $kernel
+
+	devprocsys umount $strapdir
+}

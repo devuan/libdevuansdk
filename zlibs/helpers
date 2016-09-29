@@ -27,16 +27,19 @@ devprocsys() {
 	ckreq || return 1
 
 	if [[ $watdo = mount ]]; then
-		sudo mount -o bind /sys $werdo/sys         && act "mounted sys"
-		sudo mount -t proc proc $werdo/proc        && act "mounted proc"
-		sudo mount -o bind /dev $werdo/dev         && act "mounted dev"
-		sudo mount -o bind /dev/pts $werdo/dev/pts && act "mounted dev/pts"
+		sudo mount -o bind /sys $werdo/sys         && act "mounted sys" && \
+		sudo mount -t proc proc $werdo/proc        && act "mounted proc" && \
+		sudo mount -o bind /dev $werdo/dev         && act "mounted dev" && \
+		sudo mount -o bind /dev/pts $werdo/dev/pts && act "mounted dev/pts" && \
+		return 0
 	elif [[ $watdo = umount ]]; then
-		sudo umount $werdo/dev/pts  && act "umounted dev/pts" && sleep 2
-		sudo umount $werdo/dev      && act "umounted dev"     && sleep 2
-		sudo umount $werdo/proc     && act "umounted proc"    && sleep 2
-		sudo umount $werdo/sys      && act "umounted sys"     && sleep 2
+		sudo umount $werdo/dev/pts  && act "umounted dev/pts" && sleep 1 && \
+		sudo umount $werdo/dev      && act "umounted dev"     && sleep 1 && \
+		sudo umount $werdo/proc     && act "umounted proc"    && sleep 1 && \
+		sudo umount $werdo/sys      && act "umounted sys"     && sleep 1 && \
+		return 0
 	fi
+	return 1
 }
 
 findloopmapp() {
@@ -85,7 +88,7 @@ silly() {
 		"Supplying monkeys with typewriters"
 		"Swapping time and space"
 		"Self potato"
-		"it's all lies"
+		"god is porco"
 		"A million hamsters are spinning their wheels right now"
 	)
 	local rnd=$(shuf -i1-30 -n 1)
