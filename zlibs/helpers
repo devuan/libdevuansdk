@@ -55,6 +55,15 @@ findloopmapp() {
 	func "mappdevice: $mappdevice"
 }
 
+qemu_install_user() {
+	fn qemu_install_user
+	req=(qemu_bin strapdir)
+	ckreq || return 1
+
+	notice "installing qemu-user-static"
+	sudo cp $qemu_bin $strapdir/usr/bin
+}
+
 silly() {
 	fn silly "$@"
 	local arg1="$1"
