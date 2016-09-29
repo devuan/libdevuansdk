@@ -99,13 +99,14 @@ EOF
 
 bootstrap_config_thirdstage() {
 	fn bootstrap_config_thirdstage
-	req=(core_packages base_packages system_packages)
+	req=(core_packages base_packages)
 	ckreq || return 1
 
 	cat << EOF
 #!/bin/sh
 dpkg-divert --add --local \
-	--divert /usr/sbin/invoke-rc.d.chroot --rename /usr/sbin/invoke-rc.d
+	--divert /usr/sbin/invoke-rc.d.chroot \
+	--rename /usr/sbin/invoke-rc.d
 cp /bin/true /usr/sbin/invoke-rc.d
 echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
 chmod +x /usr/sbin/policy-rc.d
@@ -115,7 +116,7 @@ apt-get --yes --force-yes install locales-all
 debconf-set-selections /debconf.set
 
 apt-get update
-apt-get -y install ${core_packages}
+apt-get --yes --force-yes install ${core_packages}
 
 echo "root:${os}" | chpasswd
 sed -i -e 's/KERNEL\!=\"eth\*|/KERNEL\!=\"/' \
@@ -125,7 +126,6 @@ export DEBIAN_FRONTEND=noninteractive
 
 apt-get --yes --force-yes install \
 	${base_packages} \
-	${system_packages} \
 	${extra_packages}
 apt-get --yes --force-yes dist-upgrade
 apt-get --yes --force-yes autoremove

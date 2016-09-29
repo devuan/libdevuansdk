@@ -23,7 +23,7 @@
 ## libdevuansdk configuration
 
 vars+=(release version mirror section)
-arrs+=(core_packages base_packages system_packages)
+arrs+=(core_packages base_packages)
 
 os="devuan"
 release="jessie"
@@ -34,6 +34,7 @@ section="main"
 core_packages=(
 	devuan_keyring
 	debian_keyring
+	bzip2
 	initramfs-tools
 	binutils
 	ca-certificates
@@ -45,15 +46,11 @@ core_packages=(
 )
 
 base_packages=(
-	bzip2
 	dialog
 	apt-utils
 	fakeroot
 	e2fsprogs
 	parted
-)
-
-system_packages=(
-	sysvinit
 	ssh
+	sysvinit
 )
