@@ -24,6 +24,8 @@ source $LIBPATH/config
 source $LIBPATH/zlibs/bootstrap
 source $LIBPATH/zlibs/helpers
 source $LIBPATH/zlibs/imaging
+source $LIBPATH/zlibs/kernel
+source $LIBPATH/zlibs/rsync
 source $LIBPATH/zlibs/sysconf
 
 vars+=(libdevuansdk_version)

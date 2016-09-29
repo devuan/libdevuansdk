@@ -25,10 +25,11 @@ arrs+=(core_packages base_packages)
 os="devuan"
 release="jessie"
 version="1.0.0-beta"
-mirror="http://packages.devuan.org/merged"
+mirror="http://auto.mirror.devuan.org/merged"
 section="main"
 
-image_name=${image_name:-$os_$release_$version_$arch.img}
+image_name="$os_$release_$version_$arch"
+[[ -n $device_name ]] && image_name="${image_name}_${device_name}"
 
 core_packages=(
 	devuan_keyring
