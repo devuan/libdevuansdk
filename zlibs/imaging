@@ -48,13 +48,15 @@ image_partition_raw_dos() {
 	## get loopdevice and mapper device (see ./helpers)
 	findloopmapp
 
-	mappdevice="/dev/mapper/$mappdevice"
+	mappdevice="/dev/mapper/${mappdevice}"
 	bootpart=${mappdevice}p1
 	rootpart=${mappdevice}p2
 
+	sleep 1
+
 	notice "formatting partitions..."
-	sudo mkfs.vfat $bootpart
-	sudo mkfs.ext4 $rootpart
+	sudo mkfs.vfat ${bootpart}
+	sudo mkfs.ext4 ${rootpart}
 }
 
 image_partition_raw_gpt() {
@@ -78,7 +80,7 @@ image_partition_raw_gpt() {
 	rootpart=${mappdevice}p2
 
 	notice "formatting partitions..."
-	sudo mkfs.ext4 -L rootfs $rootpart
+	sudo mkfs.ext4 -L rootfs ${rootpart}
 }
 
 image_pack_dist() {
