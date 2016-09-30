@@ -19,6 +19,23 @@
 
 ## helper functions that make your life easier
 
+build_image_dist() {
+	fn build_image_dist
+	req=(arch size parted_boot parted_root parted_type)
+	req+=(workdir strapdir image_name)
+	ckreq || return 1
+
+	notice "building complete dist image"
+	act "$image_name"
+
+	bootstrap_complete_base            || zerr
+	image_prepare_raw                  || zerr
+	image_partition_raw_${parted_type} || zerr
+	build_kernel_${arch}               || zerr
+	rsync_to_raw_image                 || zerr
+	image_pack_dist                    || zerr
+}
+
 devprocsys() {
 	fn devprocsys "$@"
 	local watdo="$1"

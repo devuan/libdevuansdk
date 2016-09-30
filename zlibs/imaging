@@ -81,8 +81,8 @@ image_partition_raw_gpt() {
 	sudo mkfs.ext4 -L rootfs $rootpart
 }
 
-image_package_dist() {
-	fn image_package_dist
+image_pack_dist() {
+	fn image_pack_dist
 	req=(mappdevice loopdevice image_name strapdir workdir)
 	ckreq || return 1
 
