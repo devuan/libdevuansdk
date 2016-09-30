@@ -28,7 +28,7 @@ rsync_to_raw_image() {
 
 	silly
 	pushd $strapdir
-	rm -f .done
+	sudo rm -f .done
 	sudo rsync -HPavz -q --exclude={./boot} ./* $workdir/root
 	sudo rsync -HPavz -q ./boot/* $workdir/boot
 	popd
