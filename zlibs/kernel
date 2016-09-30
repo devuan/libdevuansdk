@@ -19,8 +19,8 @@
 
 ## all windows users are suckers
 
-kernel_install_amd64() {
-	fn kernel_install_amd64
+build_kernel_amd64() {
+	fn build_kernel_amd64
 	req=(strapdir arch)
 	freq=($strapdir/.done)
 	ckreq || return 1
@@ -38,8 +38,8 @@ kernel_install_amd64() {
 	devprocsys umount $strapdir
 }
 
-kernel_install_i386() {
-	fn kernel_install_i386
+build_kernel_i386() {
+	fn build_kernel_i386
 	req=(strapdir arch)
 	freq=($strapdir/.done)
 	ckreq || return 1
