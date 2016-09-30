@@ -52,8 +52,6 @@ image_partition_raw_dos() {
 	bootpart=${mappdevice}p1
 	rootpart=${mappdevice}p2
 
-	sleep 1
-
 	notice "formatting partitions..."
 	sudo mkfs.vfat ${bootpart}
 	sudo mkfs.ext4 ${rootpart}

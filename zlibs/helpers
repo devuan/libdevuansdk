@@ -70,6 +70,8 @@ findloopmapp() {
 	mappdevice=$(sudo kpartx -va $loopdevice | sed -E 's/.*(loop[0-9])p.*/\1/g' | sed 1q)
 	func "loopdevice: $loopdevice"
 	func "mappdevice: $mappdevice"
+
+	silly sleep 4
 }
 
 qemu_install_user() {

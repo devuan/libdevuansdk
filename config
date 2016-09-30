@@ -29,7 +29,7 @@ mirror="http://auto.mirror.devuan.org/merged"
 section="main"
 
 image_name="$os_$release_$version_$arch"
-[[ -n $device_name ]] && image_name="${image_name}_${device_name}"
+[[ -n $device_name ]] && image_name+="_${device_name}"
 
 core_packages=(
 	devuan-keyring
