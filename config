@@ -32,8 +32,8 @@ image_name="$os_$release_$version_$arch"
 [[ -n $device_name ]] && image_name="${image_name}_${device_name}"
 
 core_packages=(
-	devuan_keyring
-	debian_keyring
+	devuan-keyring
+	debian-keyring
 	bzip2
 	initramfs-tools
 	binutils
@@ -42,7 +42,7 @@ core_packages=(
 	console-common
 	less
 	nano
-	vi
+	vim
 )
 
 base_packages=(
