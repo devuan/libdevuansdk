@@ -39,7 +39,7 @@ bootstrap_complete_base() {
 		--foreign \
 		--arch $arch $release $strapdir $mirror || zerr
 
-	[[ $arch =~ "^arm.." ]] && qemu_install_user
+	[[ $arch =~ "^arm.." ]] && { qemu_install_user || zerr }
 
 	## debootstrap stage 2
 	notice "running debootstrap stage 2"
@@ -56,7 +56,7 @@ bootstrap_complete_base() {
 	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf
 	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list
 	## below typically used in arm-sdk
-	[[ -n $inittap ]] && { print $inittab | sudo tee -a $strapdir/etc/inittab }
+	[[ -n $inittab ]] && { print $inittab | sudo tee -a $strapdir/etc/inittab }
 	for i in $custmodules; do print $i | sudo tee -a $strapdir/etc/modules; done
 
 	## write third-stage for chroot
