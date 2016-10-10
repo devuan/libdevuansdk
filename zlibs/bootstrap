@@ -48,24 +48,24 @@ bootstrap_complete_base() {
 
 	## write all system configuration
 	notice "writing system configuration"
-	conf_print_debconf        | sudo tee $strapdir/debconf.set ${TEEVERBOSE}
-	conf_print_fstab          | sudo tee $strapdir/etc/fstab ${TEEVERBOSE}
-	conf_print_hostname       | sudo tee $strapdir/etc/hostname ${TEEVERBOSE}
-	conf_print_hosts          | sudo tee $strapdir/etc/hosts ${TEEVERBOSE}
-	conf_print_networkifaces  | sudo tee $strapdir/etc/network/interfaces ${TEEVERBOSE}
-	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf ${TEEVERBOSE}
-	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list ${TEEVERBOSE}
+	conf_print_debconf        | sudo tee $strapdir/debconf.set
+	conf_print_fstab          | sudo tee $strapdir/etc/fstab
+	conf_print_hostname       | sudo tee $strapdir/etc/hostname
+	conf_print_hosts          | sudo tee $strapdir/etc/hosts
+	conf_print_networkifaces  | sudo tee $strapdir/etc/network/interfaces
+	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf
+	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list
 	## below typically used in arm-sdk
 	[[ -n $inittab ]] && {
-		print $inittab | sudo tee -a $strapdir/etc/inittab ${TEEVERBOSE}
+		print $inittab | sudo tee -a $strapdir/etc/inittab
 	}
 	for i in $custmodules; do
-		print $i | sudo tee -a $strapdir/etc/modules ${TEEVERBOSE}
+		print $i | sudo tee -a $strapdir/etc/modules
 	done
 
 	## write third-stage for chroot
-	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage ${TEEVERBOSE}
-	bootstrap_config_cleanup    | sudo tee $strapdir/cleanup ${TEEVERBOSE}
+	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage
+	bootstrap_config_cleanup    | sudo tee $strapdir/cleanup
 	sudo chmod +x $strapdir/thirdstage
 	sudo chmod +x $strapdir/cleanup
 
@@ -154,7 +154,7 @@ bootstrap_tar_pack() {
 		sed -i -e 's/$i//g' $strapdir/etc/modules
 	done
 
-	cat <<EOF | sudo tee ${strapdir}/prepack ${TEEVERBOSE}
+	cat <<EOF | sudo tee ${strapdir}/prepack
 #!/bin/sh
 apt-get --yes --force-yes purge ${extra_packages}
 EOF
@@ -196,7 +196,7 @@ bootstrap_tar_unpack() {
 	sudo tar xf $bootstrap_tgz -C ${unpath}
 	sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
 
-	cat <<EOF | sudo tee ${strapdir}/postunpack ${TEEVERBOSE}
+	cat <<EOF | sudo tee ${strapdir}/postunpack
 #!/bin/sh
 dpkg-divert --add --local \
 	--divert /usr/sbin/invoke-rc.d.chroot \
@@ -221,6 +221,6 @@ EOF
 	sudo chroot $strapdir  /postunpack || zerr
 
 	for i in $custmodules; do
-		print $i | sudo tee -a $strapdir/etc/modules ${TEEVERBOSE}
+		print $i | sudo tee -a $strapdir/etc/modules
 	done
 }

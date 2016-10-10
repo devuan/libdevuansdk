@@ -22,7 +22,7 @@
 conf_print_debconf() {
 	fn conf_print_debconf
 
-	cat << EOF
+	cat <<EOF
 console-common console-data/keymap/policy select Select keymap from full list
 console-common console-data/keymap/full select en-latin1-nodeadkeys
 EOF
@@ -31,7 +31,7 @@ EOF
 conf_print_fstab() {
 	fn conf_print_fstab
 
-	cat << EOF
+	cat <<EOF
 #<file system>  <mount point>  <type>  <options>            <dump> <pass>
 proc            /proc          proc    nodev,noexec,nosuid    0      0
 
@@ -56,7 +56,7 @@ conf_print_hosts() {
 	req=(os)
 	ckreq || return 1
 
-	cat << EOF
+	cat <<EOF
 127.0.0.1        ${os}                localhost
 ::1              localhost            ip6-localhost ip6-loopback
 fe00::0          ip6-localnet
@@ -69,7 +69,7 @@ EOF
 conf_print_networkifaces() {
 	fn conf_print_networkifaces
 
-	cat << EOF
+	cat <<EOF
 # interfaces(5) file used by ifup(8) and ifdown(8)
 
 # Please note that this file is written to be used with dhcpcd
@@ -102,7 +102,7 @@ EOF
 conf_print_resolvconf() {
 	fn conf_print_resolvconf
 
-	cat << EOF
+	cat <<EOF
 ## google's nameservers
 nameserver 8.8.8.8
 nameserver 8.8.4.4
@@ -114,7 +114,7 @@ conf_print_sourceslist() {
 	req=(mirror release section)
 	ckreq || return 1
 
-	cat << EOF
+	cat <<EOF
 ## package repositories
 deb ${mirror} ${release} ${section}
 deb ${mirror} ${release}-updates ${section}
