@@ -67,9 +67,10 @@ image_partition_raw_gpt() {
 	parted $workdir/${image_name}.img --script -- mklabel gpt
 	cgpt create -z ${image_name}.img
 	cgpt create ${image_name}.img
-	cgpt add -i 1 -t kernel -b 8192 -s 32768 -l kernel -S 1 -T 5 -P 10 ${image_name}.img
-	cgpt add -i 2 -t data -b 40960 -s $(expr $(cgpt show ${image_name}.img \
-		| awk '/Sec GPT table/ {print \$1}') - 40960) -l Root ${image_name}.img
+	cgpt add -i 1 -t kernel -b ${gpt_boot[1]} -s ${gpt_boot[2]} \
+		-l kernel -S 1 -T 5 -P 10 ${image_name}.img
+	cgpt add -i 2 -t data -b ${gpt_root[1]} -s $(expr $(cgpt show ${image_name}.img \
+		| awk '/Sec GPT table/ {print \$1}') - ${gpt_root[1]}) -l Root ${image_name}.img
 
 	findloopmapp
 
@@ -94,11 +95,10 @@ image_pack_dist() {
 
 	sleep 2
 
-	# TODO: decide how to check gpt
-	# [[ $gpt = 0 ]] || {
-	#	sudo cgpt repair $loopdevice
-	#	sleep 2
-	# }
+	[[ $parted_type = gpt ]] && {
+		sudo cgpt repair $loopdevice
+		sleep 1
+	}
 
 	sudo kpartx -dv $loopdevice || { die "kpartx  failed to remove $loopdevice"; zerr }
 	sudo losetup -d $loopdevice || { die "losetup failed to remove $loopdevice"; zerr }

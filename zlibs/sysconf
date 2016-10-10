@@ -121,8 +121,8 @@ deb ${mirror} ${release}-updates ${section}
 deb ${mirror} ${release}-security ${section}
 
 ## source repositories
-# deb-src ${mirror} ${release} ${section}
-# deb-src ${mirror} ${release}-updates ${section}
-# deb-src ${mirror} ${release}-security ${section}
+#deb-src ${mirror} ${release} ${section}
+#deb-src ${mirror} ${release}-updates ${section}
+#deb-src ${mirror} ${release}-security ${section}
 EOF
 }

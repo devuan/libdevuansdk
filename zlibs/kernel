@@ -22,7 +22,7 @@
 build_kernel_amd64() {
 	fn build_kernel_amd64
 	req=(strapdir arch)
-	freq=($strapdir/.done)
+	#freq=($strapdir/.done)
 	ckreq || return 1
 
 	local kernel_base="linux-image"
@@ -41,7 +41,7 @@ build_kernel_amd64() {
 build_kernel_i386() {
 	fn build_kernel_i386
 	req=(strapdir arch)
-	freq=($strapdir/.done)
+	#freq=($strapdir/.done)
 	ckreq || return 1
 
 	local kernel_base="linux-image"
