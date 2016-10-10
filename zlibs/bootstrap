@@ -150,7 +150,19 @@ bootstrap_tar_pack() {
 	req=(bootstrap_tgz)
 	ckreq || return 1
 
-	local _dest=`dirname $bootstrap_tgz`
+	for i in $custmodules; do
+		sed -i -e 's/$i//g' $strapdir/etc/modules
+	done
+
+	cat <<EOF | sudo tee ${strapdir}/prepack ${TEEVERBOSE}
+#!/bin/sh
+apt-get --yes --force-yes purge ${extra_packages}
+EOF
+
+	sudo chmod +x $strapdir/prepack || zerr
+	sudo chroot $strapdir  /prepack || zerr
+
+	local _dest=$(dirname $bootstrap_tgz)
 
 	if [[ -f $bootstrap_tgz ]]; then
 		act "tarball found already in $_dest"
@@ -159,13 +171,11 @@ bootstrap_tar_pack() {
 		silly
 
 		pushd ${strapdir}
-
 		mkdir -p ${_dest}
 		silly
 		sudo tar czf $bootstrap_tgz \
 			--exclude={./boot,./dev,./sys,./proc} \
 			./
-
 		popd
 	fi
 }
@@ -185,4 +195,32 @@ bootstrap_tar_unpack() {
 	silly
 	sudo tar xf $bootstrap_tgz -C ${unpath}
 	sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
+
+	cat <<EOF | sudo tee ${strapdir}/postunpack ${TEEVERBOSE}
+#!/bin/sh
+dpkg-divert --add --local \
+	--divert /usr/sbin/invoke-rc.d.chroot \
+	--rename /usr/sbin/invoke-rc.d
+cp /bin/true /usr/sbin/invoke-rc.d
+echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
+chmod +x /usr/sbin/policy-rc.d
+
+apt-get update
+apt-get --yes --force-yes install ${extra_packages}
+apt-get --yes --force-yes dist-upgrade
+apt-get --yes --force-yes autoremove
+
+apt-get clean
+
+rm -f /usr/sbin/policy-rc.d
+rm -f /usr/sbin/invoke-rc.d
+dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
+EOF
+
+	sudo chmod +x $strapdir/postunpack || zerr
+	sudo chroot $strapdir  /postunpack || zerr
+
+	for i in $custmodules; do
+		print $i | sudo tee -a $strapdir/etc/modules ${TEEVERBOSE}
+	done
 }
