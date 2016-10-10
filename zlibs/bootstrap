@@ -48,10 +48,10 @@ bootstrap_complete_base() {
 
 	## write all system configuration
 	notice "writing system configuration"
-	conf_print_debconf        | sudo tee $strapdir/debconf.set  ${TEEVERBOSE}
-	conf_print_fstab          | sudo tee $strapdir/etc/fstab    ${TEEVERBOSE}
+	conf_print_debconf        | sudo tee $strapdir/debconf.set ${TEEVERBOSE}
+	conf_print_fstab          | sudo tee $strapdir/etc/fstab ${TEEVERBOSE}
 	conf_print_hostname       | sudo tee $strapdir/etc/hostname ${TEEVERBOSE}
-	conf_print_hosts          | sudo tee $strapdir/etc/hosts    ${TEEVERBOSE}
+	conf_print_hosts          | sudo tee $strapdir/etc/hosts ${TEEVERBOSE}
 	conf_print_networkifaces  | sudo tee $strapdir/etc/network/interfaces ${TEEVERBOSE}
 	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf ${TEEVERBOSE}
 	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list ${TEEVERBOSE}
@@ -65,7 +65,7 @@ bootstrap_complete_base() {
 
 	## write third-stage for chroot
 	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage ${TEEVERBOSE}
-	bootstrap_config_cleanup    | sudo tee $strapdir/cleanup    ${TEEVERBOSE}
+	bootstrap_config_cleanup    | sudo tee $strapdir/cleanup ${TEEVERBOSE}
 	sudo chmod +x $strapdir/thirdstage
 	sudo chmod +x $strapdir/cleanup
 
