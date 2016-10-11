@@ -35,7 +35,11 @@ bootstrap_complete_base() {
 	}
 	notice "running debootstrap stage 1"
 	## deboostrap stage 1
-	sudo debootstrap \
+	export LANG=C
+	export LC_ALL=C
+	export DEBIAN_FRONTEND=noninteractive
+
+	sudo -E debootstrap \
 		--foreign \
 		--arch $arch $release $strapdir $mirror || zerr
 
@@ -43,7 +47,7 @@ bootstrap_complete_base() {
 
 	## debootstrap stage 2
 	notice "running debootstrap stage 2"
-	sudo chroot $strapdir \
+	sudo -E chroot $strapdir \
 		/debootstrap/debootstrap --second-stage || zerr
 
 	## write all system configuration
@@ -69,14 +73,13 @@ bootstrap_complete_base() {
 	## chroot into it and configure further
 	## debootstrap stage 3
 	notice "running debootstrap stage 3"
-	export LANG=C
-	export LC_ALL=C
-	export DEBIAN_FRONTEND=noninteractive
 
 	devprocsys mount $strapdir || zerr
 
-	sudo chroot $strapdir /thirdstage || zerr
-	sudo chroot $strapdir /cleanup    || zerr
+	dpkgdivert on  $strapdir
+	sudo -E chroot $strapdir /thirdstage || zerr
+	sudo -E chroot $strapdir /cleanup    || zerr
+	dpkgdivert off $strapdir
 
 	sleep 1
 	devprocsys umount $strapdir || zerr
@@ -130,17 +133,16 @@ bootstrap_tar_pack() {
 	req=(bootstrap_tgz)
 	ckreq || return 1
 
-	for i in $custmodules; do
-		sed -i -e 's/$i//g' $strapdir/etc/modules
-	done
+	for i in $custmodules; do sed -i -e 's/$i//' $strapdir/etc/modules; done
 
 	cat <<EOF | sudo tee ${strapdir}/prepack
 #!/bin/sh
 apt-get --yes --force-yes purge ${extra_packages}
+apt-get --yes --force-yes autoremove
 EOF
 
 	sudo chmod +x $strapdir/prepack || zerr
-	sudo chroot $strapdir  /prepack || zerr
+	sudo -E chroot $strapdir  /prepack || zerr
 
 	local _dest=$(dirname $bootstrap_tgz)
 
