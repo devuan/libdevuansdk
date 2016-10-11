@@ -133,12 +133,13 @@ bootstrap_tar_pack() {
 	req=(bootstrap_tgz)
 	ckreq || return 1
 
-	for i in $custmodules; do sed -i -e 's/$i//' $strapdir/etc/modules; done
+	for i in $custmodules;do sudo sed -i -e 's/$i//' $strapdir/etc/modules;done
 
 	cat <<EOF | sudo tee ${strapdir}/prepack
 #!/bin/sh
 apt-get --yes --force-yes purge ${extra_packages}
 apt-get --yes --force-yes autoremove
+apt-get clean
 EOF
 
 	sudo chmod +x $strapdir/prepack || zerr
