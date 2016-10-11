@@ -55,13 +55,10 @@ bootstrap_complete_base() {
 	conf_print_networkifaces  | sudo tee $strapdir/etc/network/interfaces
 	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf
 	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list
+
 	## below typically used in arm-sdk
-	[[ -n $inittab ]] && {
-		print $inittab | sudo tee -a $strapdir/etc/inittab
-	}
-	for i in $custmodules; do
-		print $i | sudo tee -a $strapdir/etc/modules
-	done
+	[[ -n $inittab ]] && { print $inittab | sudo tee -a $strapdir/etc/inittab }
+	for i in $custmodules;do print $i | sudo tee -a $strapdir/etc/modules; done
 
 	## write third-stage for chroot
 	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage
@@ -156,7 +153,7 @@ EOF
 		pushd ${strapdir}
 		mkdir -p ${_dest}
 		silly
-		sudo tar czf $bootstrap_tgz \
+		sudo tar czfp $bootstrap_tgz \
 			--exclude={./boot,./dev,./sys,./proc} \
 			./
 		popd

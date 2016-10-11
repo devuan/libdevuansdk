@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-libdevuansdk_version="0.2-dev"
+libdevuansdk_version="0.2"
 LIBPATH=${LIBPATH:-`dirname $0`}
 
 source $LIBPATH/config
@@ -31,4 +31,4 @@ source $LIBPATH/zlibs/sysconf
 vars+=(libdevuansdk_version)
 vars+=(LIBPATH)
 
-notice "libdevuansdk-v$libdevuansdk_version loaded"
+act "libdevuansdk v$libdevuansdk_version loaded"
