@@ -20,7 +20,7 @@
 ## libdevuansdk configuration
 
 vars+=(release version mirror section)
-arrs+=(core_packages base_packages)
+arrs+=(core_packages base_packages purge_packages)
 
 os="devuan"
 release="jessie"
@@ -34,23 +34,34 @@ image_name="${os}_${release}_${version}_${arch}"
 core_packages=(
 	devuan-keyring
 	debian-keyring
-	bzip2
-	initramfs-tools
-	binutils
 	ca-certificates
+	initramfs-tools
+	e2fsprogs
+	bzip2
 	curl
-	console-common
 	less
-	nano
-	vim
+	vim-tiny
+	nano-tiny
+	sysvinit
 )
 
 base_packages=(
-	dialog
 	apt-utils
-	fakeroot
-	e2fsprogs
 	parted
-	ssh
-	sysvinit
+	openssh-server
+	openssh-client
+	sudo
+	alsa-base
+	alsa-utils
+	gawk
+	tmux
+	rdate
+	wpasupplicant
+	wireless-tools
+	elinks
+)
+
+purge_packages=(
+	dbus
+	nano
 )
