@@ -111,37 +111,20 @@ bootstrap_config_thirdstage() {
 
 	cat << EOF
 #!/bin/sh
-dpkg-divert --add --local \
-	--divert /usr/sbin/invoke-rc.d.chroot \
-	--rename /usr/sbin/invoke-rc.d
-cp /bin/true /usr/sbin/invoke-rc.d
-echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
-chmod +x /usr/sbin/policy-rc.d
-
 apt-get update
-apt-get --yes --force-yes install locales-all
 debconf-set-selections /debconf.set
 
-apt-get update
-apt-get --yes --force-yes install ${core_packages}
-
-echo "root:${os}" | chpasswd
+echo "root:toor" | chpasswd
 sed -i -e 's/KERNEL\!=\"eth\*|/KERNEL\!=\"/' \
 	/lib/udev/rules.d/75-persistent-net-generator.rules
 rm -f /etc/udev/rules.d/70-persistent-net.rules
 export DEBIAN_FRONTEND=noninteractive
 
-apt-get --yes --force-yes install \
-	${base_packages} \
-	${extra_packages}
-apt-get --yes --force-yes dist-upgrade
+apt-get --yes --force-yes install ${core_packages}
+apt-get --yes --force-yes install ${base_packages}
+apt-get --yes --force-yes purge  ${purge_packages}
 apt-get --yes --force-yes autoremove
-
 apt-get clean
-
-rm -f /usr/sbin/policy-rc.d
-rm -f /usr/sbin/invoke-rc.d
-dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
 EOF
 }
 
@@ -187,40 +170,26 @@ bootstrap_tar_unpack() {
 	ckreq || return 1
 
 	[[ -f ${unpath}/.done ]] && {
-		warning "bootstrap already unpacked in $unpath"
-		return 1
-	}
+		warn "bootstrap already unpacked in $unpath"
+		return 1 }
 
 	mkdir -p ${unpath}
 	silly
-	sudo tar xf $bootstrap_tgz -C ${unpath}
+	sudo tar xfp $bootstrap_tgz -C ${unpath}
 	sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
 
 	cat <<EOF | sudo tee ${strapdir}/postunpack
 #!/bin/sh
-dpkg-divert --add --local \
-	--divert /usr/sbin/invoke-rc.d.chroot \
-	--rename /usr/sbin/invoke-rc.d
-cp /bin/true /usr/sbin/invoke-rc.d
-echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
-chmod +x /usr/sbin/policy-rc.d
-
 apt-get update
 apt-get --yes --force-yes install ${extra_packages}
-apt-get --yes --force-yes dist-upgrade
 apt-get --yes --force-yes autoremove
-
 apt-get clean
-
-rm -f /usr/sbin/policy-rc.d
-rm -f /usr/sbin/invoke-rc.d
-dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
 EOF
 
-	sudo chmod +x $strapdir/postunpack || zerr
-	sudo chroot $strapdir  /postunpack || zerr
+	dpkgdivert on $strapdir
+	sudo chmod +x $strapdir/postunpack   || zerr
+	sudo -E chroot $strapdir /postunpack || zerr
+	dpkgdivert off $strapdir
 
-	for i in $custmodules; do
-		print $i | sudo tee -a $strapdir/etc/modules
-	done
+	for i in $custmodules;do print $i | sudo tee -a $strapdir/etc/modules; done
 }

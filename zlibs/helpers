@@ -83,6 +83,39 @@ qemu_install_user() {
 	sudo cp $qemu_bin $strapdir/usr/bin
 }
 
+dpkgdivert() {
+	fn dpkgdivert $@
+	req=(watdo werdo)
+	local watdo="$1"
+	local werdo="$2"
+	ckreq || return 1
+
+	if [[ $watdo = on ]]; then
+		cat <<EOF | sudo tee ${werdo}/dpkgdivert
+#!/bin/sh
+dpkg-divert --add --local \
+	--divert /usr/sbin/invoke-rc.d.chroot \
+	--rename /usr/sbin/invoke-rc.d
+cp /bin/true /usr/sbin/invoke-rc.d
+echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
+chmod +x /usr/sbin/policy-rc.d
+rm -f /dpkgdivert
+EOF
+		chmod +x $werdo/dpkgdivert
+		sudo -E chroot $werdo/dpkgdivert || zerr
+	elif [[ $watdo = off ]]; then
+		cat <<EOF | sudo tee ${werdo}/dpkgdivert
+#!/bin/sh
+rm -f /usr/sbin/policy-rc.d
+rm -f /usr/sbin/invoke-rc.d
+dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
+rm -f /dpkgdivert
+EOF
+		chmod +x $werdo/dpkgdivert
+		sudo -E chroot $werdo/dpkgdivert || zerr
+	fi
+}
+
 silly() {
 	fn silly "$@"
 	local arg1="$1"
