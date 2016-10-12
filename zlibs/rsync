@@ -30,7 +30,9 @@ rsync_to_raw_image() {
 	pushd $strapdir
 	sudo rm -f .done
 	sudo rsync -HPavz -q --exclude={./boot} ./* $workdir/root
-	sudo rsync -HPavz -q ./boot/* $workdir/boot
+	if [[ $parted_type = dos ]]; then
+		sudo rsync -HPavz -q ./boot/* $workdir/boot
+	fi
 	popd
 
 	image_raw_umount

@@ -64,13 +64,17 @@ image_partition_raw_gpt() {
 
 	notice "partitioning raw gpt image..."
 
-	parted $workdir/${image_name}.img --script -- mklabel gpt
-	cgpt create -z ${image_name}.img
-	cgpt create ${image_name}.img
-	cgpt add -i 1 -t kernel -b ${gpt_boot[1]} -s ${gpt_boot[2]} \
-		-l kernel -S 1 -T 5 -P 10 ${image_name}.img
-	cgpt add -i 2 -t data -b ${gpt_root[1]} -s $(expr $(cgpt show ${image_name}.img \
-		| awk '/Sec GPT table/ {print \$1}') - ${gpt_root[1]}) -l Root ${image_name}.img
+	parted $workdir/${image_name}.img --script -- mklabel gpt || zerr
+	cgpt create -z $workdir/${image_name}.img || zerr
+	cgpt create    $workdir/${image_name}.img || zerr
+
+	cgpt add -i 1 -t kernel -b ${gpt_boot[1]} \
+		-s ${gpt_boot[2]} \
+		-l kernel -S 1 -T 5 -P 10 $workdir/${image_name}.img
+
+	cgpt add -i 2 -t data -b ${gpt_root[1]} \
+		-s $(expr $(cgpt show $workdir/${image_name}.img | awk '/Sec GPT table/ {print $1}') - ${gpt_root[1]}) \
+		-l Root $workdir/${image_name}.img
 
 	findloopmapp
 

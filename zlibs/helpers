@@ -21,7 +21,12 @@
 
 build_image_dist() {
 	fn build_image_dist
-	req=(arch size parted_boot parted_root parted_type)
+	req=(arch size parted_type)
+	if [[ $parted_type = gpt ]]; then
+		req+=(gpt_boot gpt_root)
+	elif [[ $parted_type = dos ]]; then
+		req+=(parted_root parted_boot)
+	fi
 	req+=(workdir strapdir image_name)
 	ckreq || return 1
 
