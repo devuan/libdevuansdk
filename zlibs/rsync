@@ -22,6 +22,7 @@
 rsync_to_raw_image() {
 	fn rsync_to_raw_image
 	req=(workdir strapdir bootpart rootpart)
+	ckreq || return 1
 
 	notice "rsyncing strapdir to raw image..."
 	image_raw_mount
@@ -29,9 +30,17 @@ rsync_to_raw_image() {
 	silly
 	pushd $strapdir
 	sudo rm -f .done
-	sudo rsync -HPavz -q --exclude={./boot} ./* $workdir/root
+	sudo rsync -HPavz -q --exclude={./boot} ./* $workdir/root || {
+		image_raw_umount
+		die "not enough space. report a bug please"
+		zerr
+	}
 	if [[ $parted_type = dos ]]; then
-		sudo rsync -HPavz -q ./boot/* $workdir/boot
+		sudo rsync -HPavz -q ./boot/* $workdir/boot || {
+			image_raw_umount
+			die "not enough space. report a bug please"
+			zerr
+		}
 	fi
 	popd
 

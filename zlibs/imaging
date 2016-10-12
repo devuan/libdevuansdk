@@ -133,7 +133,9 @@ image_raw_mount() {
 	ckreq || return 1
 
 	mkdir -p $workdir/boot $workdir/root
-	sudo mount $bootpart $workdir/boot && act "mounted boot partition" || zerr
+	if [[ $parted_type = dos ]]; then
+		sudo mount $bootpart $workdir/boot && act "mounted boot partition" || zerr
+	fi
 	sudo mount $rootpart $workdir/root && act "mounted root partition" || zerr
 }
 
@@ -142,6 +144,8 @@ image_raw_umount() {
 	req=(workdir bootpart rootpart)
 	ckreq || return 1
 
-	sudo umount $workdir/boot && act "unmounted boot partition" || zerr
+	if [[ $parted_type = dos ]]; then
+		sudo umount $workdir/boot && act "unmounted boot partition" || zerr
+	fi
 	sudo umount $workdir/root && act "unmounted root partition" || zerr
 }
