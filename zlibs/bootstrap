@@ -60,10 +60,6 @@ bootstrap_complete_base() {
 	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf
 	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list
 
-	## below typically used in arm-sdk
-	[[ -n $inittab ]] && { print $inittab | sudo tee -a $strapdir/etc/inittab }
-	for i in $custmodules;do print $i | sudo tee -a $strapdir/etc/modules; done
-
 	## write third-stage for chroot
 	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage
 	bootstrap_config_cleanup    | sudo tee $strapdir/cleanup
@@ -84,7 +80,8 @@ bootstrap_complete_base() {
 	sleep 1
 	devprocsys umount $strapdir || zerr
 
-	bootstrap_tar_pack || zerr
+	bootstrap_tar_pack             || zerr
+	bootstrap_tar_unpack $strapdir || zerr
 }
 
 bootstrap_config_cleanup() {
@@ -133,11 +130,12 @@ bootstrap_tar_pack() {
 	req=(bootstrap_tgz)
 	ckreq || return 1
 
-	for i in $custmodules;do sudo sed -i -e 's/$i//' $strapdir/etc/modules;done
+	#for i in $custmodules;do sudo sed -i -e '/'$i'/d' $strapdir/etc/modules;done
+	#[[ -n $inittab ]] && sudo sed -i -e '/'$inittab'/d' $strapdir/etc/inittab
 
 	cat <<EOF | sudo tee ${strapdir}/prepack
 #!/bin/sh
-apt-get --yes --force-yes purge ${extra_packages}
+#apt-get --yes --force-yes purge ${extra_packages}
 apt-get --yes --force-yes autoremove
 apt-get clean
 EOF
@@ -169,18 +167,17 @@ bootstrap_tar_unpack() {
 	req=(unpath bootstrap_tgz)
 	ckreq || return 1
 
-	[[ -f ${unpath}/.done ]] && {
-		warn "bootstrap already unpacked in $unpath"
-		return 1 }
-
-	mkdir -p ${unpath}
-	silly
-	sudo tar xfp $bootstrap_tgz -C ${unpath}
-	sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
+	[[ -f ${unpath}/.done ]] || {
+		mkdir -p ${unpath}
+		silly
+		sudo tar xfp $bootstrap_tgz -C ${unpath}
+		sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
+	}
 
 	cat <<EOF | sudo tee ${strapdir}/postunpack
 #!/bin/sh
 apt-get update
+apt-get --yes --force-yes upgrade
 apt-get --yes --force-yes install ${extra_packages}
 apt-get --yes --force-yes autoremove
 apt-get clean
@@ -191,5 +188,7 @@ EOF
 	sudo -E chroot $strapdir /postunpack || zerr
 	dpkgdivert off $strapdir
 
+	## below typically used in arm-sdk
+	[[ -z $inittab ]] || { print $inittab | sudo tee -a $strapdir/etc/inittab }
 	for i in $custmodules;do print $i | sudo tee -a $strapdir/etc/modules; done
 }
