@@ -121,6 +121,23 @@ EOF
 	sudo -E chroot $werdo /dpkgdivert || zerr
 }
 
+enablessh() {
+	fn enablessh
+	req=(strapdir)
+	ckreq || return 1
+
+	cat <<EOF | sudo tee -a ${strapdir}/enssh
+#!/bin/sh
+sed -i -e 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+update-rc.d ssh enable
+EOF
+
+	dpkgdivert on $strapdir
+	sudo chmod +x $strapdir/enssh
+	sudo -E chroot $strapdir /enssh
+	dpkgdivert off $strapdir
+}
+
 silly() {
 	fn silly "$@"
 	local arg1="$1"
