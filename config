@@ -55,7 +55,7 @@ base_packages=(
 	alsa-utils
 	gawk
 	tmux
-	rdate
+	openntpd
 	wpasupplicant
 	wireless-tools
 	elinks
