@@ -19,15 +19,16 @@
 
 org="parazyd <parazyd@dyne.org> | dyne.org"
 name=libdevuansdk
-version=2.0
-desc="common library for devuan's sdk"
+version=0.2
+desc="common library for devuan's sdks"
 
 pages="
     libdevuansdk.7
 	configuration.7
+	workflow.7
 	helper_functions.7
-	creating_wrappers.7"
-
+	creating_wrappers.7
+"
 
 generate_manpages() {
 	for page in $pages; do
