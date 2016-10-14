@@ -23,7 +23,8 @@ version=2.0
 desc="common.lib.for.devuan.sdks"
 
 pages="
-    libdevuansdk.7"
+    libdevuansdk.7
+	configuration.7"
 
 
 generate_manpages() {
