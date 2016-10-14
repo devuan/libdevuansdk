@@ -138,6 +138,7 @@ bootstrap_tar_pack() {
 #apt-get --yes --force-yes purge ${extra_packages}
 apt-get --yes --force-yes autoremove
 apt-get clean
+rm -f /prepack
 EOF
 
 	sudo chmod +x $strapdir/prepack || zerr
@@ -181,6 +182,7 @@ apt-get --yes --force-yes upgrade
 apt-get --yes --force-yes install ${extra_packages}
 apt-get --yes --force-yes autoremove
 apt-get clean
+rm -f /postunpack
 EOF
 
 	dpkgdivert on $strapdir

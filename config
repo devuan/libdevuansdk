@@ -59,6 +59,7 @@ base_packages=(
 	wpasupplicant
 	wireless-tools
 	elinks
+	firmware-linux-free
 )
 
 purge_packages=(
