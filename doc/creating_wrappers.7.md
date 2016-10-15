@@ -47,7 +47,7 @@ the [zuper](https://github.com/dyne/zuper) zsh library.
   just to be safe.
 
 * `$size`  
-  This variable will hold the value in MB for `dd` to know how many zeroes it
+  This variable will hold the value in MiB for `dd` to know how many zeroes it
   should put in the raw image.  
   ex: `size=1337`
 
