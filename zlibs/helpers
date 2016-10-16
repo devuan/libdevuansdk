@@ -138,6 +138,28 @@ EOF
 	dpkgdivert off $strapdir
 }
 
+install-custdebs() {
+	fn install-custdebs
+	req=(R strapdir)
+	ckreq || return 1
+
+	sudo mkdir -p $strapdir/debs
+	sudo cp $CPVERBOSE -f $R/extra/custom-packages/*.deb $strapdir/debs/
+
+	cat <<EOF | sudo tee ${strapdir}/install-debs
+#!/bin/sh
+for deb in /debs/*.deb; do
+	dpkg -i \$deb
+	apt-get --yes --force-yes -f install
+done
+apt-get autoremove
+apt-get clean
+rm -rf /debs install-debs
+EOF
+	sudo chmod +x $strapdir/install-debs
+	sudo -E chroot $strapdir /install-debs
+}
+
 silly() {
 	fn silly "$@"
 	local arg1="$1"
