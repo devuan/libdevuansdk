@@ -1,0 +1,119 @@
+#!/usr/bin/env zsh
+# Copyright (c) 2016 Dyne.org Foundation
+# libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+## burn baby
+
+iso_prepare_strap() {
+	fn iso_prepare_strap
+	req=(strapdir)
+	ckreq || return 1
+
+	notice "preparing strapdir for livecd"
+
+	cat <<EOF | sudo tee ${strapdir}/isoprep
+#!/bin/sh
+apt-get update
+apt-get --yes --force-yes install dialog live-boot
+apt-get --yes --force-yes autoremove
+apt-get clean
+rm -f /isoprep
+EOF
+	sudo chmod +x $strapdir/isoprep
+	sudo -E chroot $strapdir /isoprep
+}
+
+iso_setup_isolinux() {
+	fn iso_setup_isolinux
+	req=(workdir strapdir)
+	ckreq || return 1
+
+	notice "setting up isolinux"
+
+	pushd $workdir
+	sudo mkdir -p binary/{live,isolinux}
+	act "copying kernel and initrd"
+	sudo cp $CPVERBOSE $strapdir/boot/vmlinuz* binary/live/vmlinuz
+	sudo cp $CPVERBOSE $strapdir/boot/initrd*  binary/live/initrd
+
+	## TODO: check if others are worth adding
+	sudo cp $CPVERBOSE /usr/lib/ISOLINUX/isolinux.bin             binary/isolinux/
+	sudo cp $CPVERBOSE /usr/lib/syslinux/modules/bios/elf.c32     binary/isolinux/
+	sudo cp $CPVERBOSE /usr/lib/syslinux/modules/bios/ldlinux.c32 binary/isolinux/
+	sudo cp $CPVERBOSE /usr/lib/syslinux/modules/bios/libutil.c32 binary/isolinux/
+	sudo cp $CPVERBOSE /usr/lib/syslinux/modules/bios/linux.c32   binary/isolinux/
+	sudo cp $CPVERBOSE /usr/lib/syslinux/modules/bios/menu.c32    binary/isolinux/
+	popd
+}
+
+iso_write_isolinux_cfg() {
+	fn iso_write_isolinux_cfg
+	req=(workdir arch os)
+	ckreq || return 1
+
+	notice "writing isolinux configuration"
+	cat <<EOF | sudo tee ${workdir}/binary/isolinux/isolinux.cfg
+ui menu.c32
+prompt 0
+menu title ${os} boot menu
+timeout 300
+
+label live-${arch}
+menu label ^${os} Live (${arch})
+menu default
+linux /live/vmlinuz
+append initrd=live/initrd boot=live
+
+endtext
+EOF
+}
+
+iso_squash_strap() {
+	fn iso_squash_strap
+	req=(workdir strapdir)
+	ckreq || return 1
+
+	notice "creating squashfs out of strapdir"
+
+	pushd $workdir
+	sudo mksquashfs $strapdir binary/live/filesystem.squashfs -comp xz -e boot
+	popd
+}
+
+iso_xorriso_build() {
+	fn iso_xorriso_build
+	req=(workdir image_name)
+	ckreq || return 1
+
+	notice "building iso..."
+	isoname="${image_name}-live.iso"
+
+	pushd $workdir
+	sudo xorriso -as mkisofs -r -J -joliet-long -l -cache-inodes \
+		-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+		-partition_offset 16 \
+		-a "${os} Live - ${arch}" \
+		-b isolinux/isolinux.bin \
+		-c isolinux/boot.cat \
+		-no-emul-boot \
+		-boot-load-size 4 \
+		-boot-info-table \
+		-o $R/dist/$isoname \
+		binary
+	popd
+}

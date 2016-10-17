@@ -186,8 +186,10 @@ rm -f /postunpack
 EOF
 
 	dpkgdivert on $strapdir
+	devprocsys mount $strapdir
 	sudo chmod +x $strapdir/postunpack   || zerr
 	sudo -E chroot $strapdir /postunpack || zerr
+	devprocsys umount $strapdir
 	dpkgdivert off $strapdir
 
 	## below typically used in arm-sdk
