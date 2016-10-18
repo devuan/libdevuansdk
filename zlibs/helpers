@@ -43,6 +43,22 @@ build_image_dist() {
 	image_pack_dist                    || zerr
 }
 
+build_iso_dist() {
+	fn build_iso_dist
+	req=(workdir strapdir os arch)
+	ckreq || return 1
+
+	notice "building complete iso image"
+
+	bootstrap_complete_base || zerr
+	iso_prepare_strap       || zerr
+	build_kernel_${arch}    || zerr
+	iso_setup_isolinux      || zerr
+	iso_write_isolinux_cfg  || zerr
+	iso_squash_strap        || zerr
+	iso_xorriso_build       || zerr
+}
+
 devprocsys() {
 	fn devprocsys "$@"
 	local watdo="$1"

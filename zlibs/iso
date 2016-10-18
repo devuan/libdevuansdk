@@ -34,8 +34,10 @@ apt-get --yes --force-yes autoremove
 apt-get clean
 rm -f /isoprep
 EOF
+	dpkgdivert on $strapdir
 	sudo chmod +x $strapdir/isoprep
 	sudo -E chroot $strapdir /isoprep
+	dpkgdivert off $strapdir
 }
 
 iso_setup_isolinux() {
@@ -104,10 +106,10 @@ iso_xorriso_build() {
 	isoname="${image_name}-live.iso"
 
 	pushd $workdir
-	sudo xorriso -as mkisofs -r -J -joliet-long -l -cache-inodes \
+	sudo xorriso -as mkisofs -r -J -joliet-long -l \
 		-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
 		-partition_offset 16 \
-		-a "${os} Live - ${arch}" \
+		-A "${os} Live - ${arch}" \
 		-b isolinux/isolinux.bin \
 		-c isolinux/boot.cat \
 		-no-emul-boot \
