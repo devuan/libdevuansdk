@@ -19,6 +19,8 @@
 
 ## burn baby
 
+[[ $INSTALLER = 1 ]] && base_packages+=(grub-pc)
+
 iso_prepare_strap() {
 	fn iso_prepare_strap
 	req=(strapdir)
@@ -53,13 +55,10 @@ iso_setup_isolinux() {
 	sudo cp $CPVERBOSE $strapdir/boot/vmlinuz* binary/live/vmlinuz
 	sudo cp $CPVERBOSE $strapdir/boot/initrd*  binary/live/initrd
 
-	## TODO: check if others are worth adding
-	sudo cp $CPVERBOSE /usr/lib/ISOLINUX/isolinux.bin             binary/isolinux/
-	sudo cp $CPVERBOSE /usr/lib/syslinux/modules/bios/elf.c32     binary/isolinux/
-	sudo cp $CPVERBOSE /usr/lib/syslinux/modules/bios/ldlinux.c32 binary/isolinux/
-	sudo cp $CPVERBOSE /usr/lib/syslinux/modules/bios/libutil.c32 binary/isolinux/
-	sudo cp $CPVERBOSE /usr/lib/syslinux/modules/bios/linux.c32   binary/isolinux/
-	sudo cp $CPVERBOSE /usr/lib/syslinux/modules/bios/menu.c32    binary/isolinux/
+	sudo cp $CPVERBOSE /usr/share/live/build/bootloaders/isolinux/isolinux.bin \
+		binary/isolinux
+	sudo cp $CPVERBOSE /usr/share/live/build/bootloaders/isolinux/*.c32 \
+		binary/isolinux
 	popd
 }
 
@@ -70,7 +69,7 @@ iso_write_isolinux_cfg() {
 
 	notice "writing isolinux configuration"
 	cat <<EOF | sudo tee ${workdir}/binary/isolinux/isolinux.cfg
-ui menu.c32
+ui vesamenu.c32
 prompt 0
 menu title ${os} boot menu
 timeout 300
@@ -79,7 +78,7 @@ label live-${arch}
 menu label ^${os} Live (${arch})
 menu default
 linux /live/vmlinuz
-append initrd=live/initrd boot=live
+append initrd=/live/initrd boot=live
 
 endtext
 EOF
@@ -118,4 +117,13 @@ iso_xorriso_build() {
 		-o $R/dist/$isoname \
 		binary
 	popd
+}
+
+iso_setup_installer() {
+	fn iso_setup_installer
+
+	notice "setting up devuan-installer"
+	sudo cp $CPVERBOSE $R/extra/installer/* $strapdir/
+
+	## TODO: init to script
 }

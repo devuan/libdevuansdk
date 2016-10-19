@@ -55,6 +55,7 @@ build_iso_dist() {
 	build_kernel_${arch}    || zerr
 	iso_setup_isolinux      || zerr
 	iso_write_isolinux_cfg  || zerr
+	[[ $INSTALLER = 1 ]] && iso_setup_installer
 	iso_squash_strap        || zerr
 	iso_xorriso_build       || zerr
 }

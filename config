@@ -60,6 +60,9 @@ base_packages=(
 	wireless-tools
 	elinks
 	firmware-linux-free
+	btrfs-tools
+	zsh
+	rsync
 )
 
 purge_packages=(
