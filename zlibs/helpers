@@ -138,6 +138,38 @@ EOF
 	sudo -E chroot $werdo /dpkgdivert || zerr
 }
 
+enableserv() {
+	fn enableserv "$@"
+	local service="$1"
+	req=(service strapdir)
+	ckreq || return 1
+
+	cat <<EOF | sudo tee -a ${strapdir}/enserv
+#!/bin/sh
+update-rc.d ${service} enable
+EOF
+
+	notice "enabling $service service"
+	sudo chmod +x $strapdir/enserv
+	sudo -E chroot $strapdir /enserv
+}
+
+disableserv() {
+	fn disableserv "$@"
+	local service="$1"
+	req=(service strapdir)
+	ckreq || return 1
+
+	cat <<EOF | sudo tee -a ${strapdir}/disserv
+#!/bin/sh
+update-rc.d ${service} disable
+EOF
+
+	notice "disabling $service service"
+	sudo chmod +x $strapdir/disserv
+	sudo -E chroot $strapdir /disserv
+}
+
 enablessh() {
 	fn enablessh
 	req=(strapdir)
