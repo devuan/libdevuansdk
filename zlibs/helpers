@@ -36,9 +36,11 @@ build_image_dist() {
 	## TODO: add blend_prebuild; blend_midbuild; blend_postbuild
 
 	bootstrap_complete_base            || zerr
+	[[ $BLEND = 1 ]] && blend_preinst  || zerr
 	image_prepare_raw                  || zerr
 	image_partition_raw_${parted_type} || zerr
 	build_kernel_${arch}               || zerr
+	[[ $BLEND = 1 ]] && blend_postinst || zerr
 	rsync_to_raw_image                 || zerr
 	image_pack_dist                    || zerr
 }
