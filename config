@@ -29,6 +29,7 @@ mirror="http://auto.mirror.devuan.org/merged"
 section="main"
 
 image_name="${os}_${release}_${version}_${arch}"
+[[ -n $blend_name  ]] && image_name="${image_name}_${blend_name}"
 [[ -n $device_name ]] && image_name="${image_name}_${device_name}"
 
 core_packages=(
