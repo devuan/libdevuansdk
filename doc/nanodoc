@@ -35,8 +35,8 @@ generate_manpages() {
 		ronn -r --manual="$name" --organization="$org" ${page}.md
 	done
 
-	mkdir -p man/7
-	mv *.7   man/7
+	mkdir -p man/man7
+	mv *.7   man/man7
 }
 
 generate_html() {
