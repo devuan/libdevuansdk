@@ -19,8 +19,8 @@
 
 ## libdevuansdk configuration
 
-vars+=(release version mirror section)
-arrs+=(core_packages base_packages purge_packages)
+vars+=(release version mirror section blend_name)
+arrs+=(core_packages base_packages purge_packages blend_packages)
 
 os="devuan"
 release="jessie"
