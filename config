@@ -64,6 +64,7 @@ base_packages=(
 	btrfs-tools
 	zsh
 	rsync
+	git-core
 )
 
 purge_packages=(
