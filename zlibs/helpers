@@ -193,8 +193,8 @@ EOF
 #
 ### BEGIN INIT INFO
 # Provides:       something
-# Required-Start: $syslog
-# Required-Stop:  $syslog
+# Required-Start: \$syslog
+# Required-Stop:  \$syslog
 # Default-Start:  2 3 4 5
 # Default-Stop:   0 1 6
 # Short-Description: Regenerate openssh-server keys
@@ -211,13 +211,13 @@ genkeys() {
 	/usr/sbin/update-rc.d regensshkeys disable
 }
 
-case "$1" in
+case "\$1" in
 	start)
-		genkeys
+		genkeys;;
 	stop)
 		;;
 	*)
-		echo "usage: $(basename $0) {start}"
+		echo "usage: \$(basename \$0) {start}"
 		;;
 esac
 EOF
