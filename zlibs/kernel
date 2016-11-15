@@ -30,12 +30,14 @@ build_kernel_amd64() {
 
 	notice "installing stock kernel for $arch"
 
+	dpkgdivert on $strapdir
 	devprocsys mount $strapdir
 
 	sudo chroot $strapdir \
 		apt-get --yes --force-yes install $kernel
 
 	devprocsys umount $strapdir
+	dpkgdivert off $strapdir
 }
 
 build_kernel_i386() {
@@ -49,10 +51,12 @@ build_kernel_i386() {
 
 	notice "installing stock kernel for $arch"
 
+	dpkgdivert on $strapdir
 	devprocsys mount $strapdir
 
 	sudo chroot $strapdir \
 		apt-get --yes --force-yes install $kernel
 
 	devprocsys umount $strapdir
+	dpkgdivert off $strapdir
 }

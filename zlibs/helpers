@@ -36,11 +36,32 @@ build_image_dist() {
 	## TODO: add blend_prebuild; blend_midbuild; blend_postbuild
 
 	bootstrap_complete_base            || zerr
+	[[ $BLEND = 1 ]] && blend_preinst  || zerr
 	image_prepare_raw                  || zerr
 	image_partition_raw_${parted_type} || zerr
 	build_kernel_${arch}               || zerr
+	[[ $BLEND = 1 ]] && blend_postinst || zerr
 	rsync_to_raw_image                 || zerr
 	image_pack_dist                    || zerr
+}
+
+build_iso_dist() {
+	fn build_iso_dist
+	req=(workdir strapdir os arch)
+	ckreq || return 1
+
+	notice "building complete iso image"
+
+	bootstrap_complete_base || zerr
+	[[ $BLEND = 1 ]] && blend_preinst || zerr
+	iso_prepare_strap       || zerr
+	build_kernel_${arch}    || zerr
+	iso_setup_isolinux      || zerr
+	iso_write_isolinux_cfg  || zerr
+	[[ $INSTALLER = 1 ]] && iso_setup_installer
+	[[ $BLEND = 1 ]] && blend_postinst || zerr
+	iso_squash_strap        || zerr
+	iso_xorriso_build       || zerr
 }
 
 devprocsys() {
@@ -121,6 +142,38 @@ EOF
 	sudo -E chroot $werdo /dpkgdivert || zerr
 }
 
+enableserv() {
+	fn enableserv "$@"
+	local service="$1"
+	req=(service strapdir)
+	ckreq || return 1
+
+	cat <<EOF | sudo tee -a ${strapdir}/enserv
+#!/bin/sh
+update-rc.d ${service} enable
+EOF
+
+	notice "enabling $service service"
+	sudo chmod +x $strapdir/enserv
+	sudo -E chroot $strapdir /enserv
+}
+
+disableserv() {
+	fn disableserv "$@"
+	local service="$1"
+	req=(service strapdir)
+	ckreq || return 1
+
+	cat <<EOF | sudo tee -a ${strapdir}/disserv
+#!/bin/sh
+update-rc.d ${service} disable
+EOF
+
+	notice "disabling $service service"
+	sudo chmod +x $strapdir/disserv
+	sudo -E chroot $strapdir /disserv
+}
+
 enablessh() {
 	fn enablessh
 	req=(strapdir)
@@ -130,12 +183,71 @@ enablessh() {
 #!/bin/sh
 sed -i -e 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 update-rc.d ssh enable
+chmod +x /etc/init.d/regensshkeys
+update-rc.d regensshkeys defaults
+update-rc.d regensshkeys enable
+EOF
+
+	cat <<EOF | sudo tee ${strapdir}/etc/init.d/regensshkeys
+#!/bin/sh
+#
+### BEGIN INIT INFO
+# Provides:       something
+# Required-Start: \$syslog
+# Required-Stop:  \$syslog
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Short-Description: Regenerate openssh-server keys
+# Description:    Regenerate openssh-server keys
+### END INIT INFO
+#
+set -e
+set -u
+
+genkeys() {
+	/usr/sbin/service ssh stop
+	/usr/sbin/dpkg-reconfigure openssh-server
+	/usr/sbin/service ssh start
+	/usr/sbin/update-rc.d regensshkeys disable
+}
+
+case "\$1" in
+	start)
+		genkeys;;
+	stop)
+		;;
+	*)
+		echo "usage: \$(basename \$0) {start}"
+		;;
+esac
 EOF
 
 	dpkgdivert on $strapdir
 	sudo chmod +x $strapdir/enssh
 	sudo -E chroot $strapdir /enssh
 	dpkgdivert off $strapdir
+}
+
+install-custdebs() {
+	fn install-custdebs
+	req=(R strapdir)
+	ckreq || return 1
+
+	sudo mkdir -p $strapdir/debs
+	sudo cp $CPVERBOSE -f $R/extra/custom-packages/*.deb $strapdir/debs/
+
+	cat <<EOF | sudo tee ${strapdir}/install-debs
+#!/bin/sh
+for deb in /debs/*.deb; do
+	dpkg -i \$deb
+	apt-get --yes --force-yes -f install
+done
+apt-get autoremove
+apt-get clean
+rm -rf /debs install-debs
+EOF
+	sudo chmod +x $strapdir/install-debs
+	sudo -E chroot $strapdir /install-debs
 }
 
 silly() {

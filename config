@@ -19,8 +19,8 @@
 
 ## libdevuansdk configuration
 
-vars+=(release version mirror section)
-arrs+=(core_packages base_packages purge_packages)
+vars+=(release version mirror section blend_name)
+arrs+=(core_packages base_packages purge_packages blend_packages)
 
 os="devuan"
 release="jessie"
@@ -29,6 +29,7 @@ mirror="http://auto.mirror.devuan.org/merged"
 section="main"
 
 image_name="${os}_${release}_${version}_${arch}"
+[[ -n $blend_name  ]] && image_name="${image_name}_${blend_name}"
 [[ -n $device_name ]] && image_name="${image_name}_${device_name}"
 
 core_packages=(
@@ -59,6 +60,11 @@ base_packages=(
 	wpasupplicant
 	wireless-tools
 	elinks
+	firmware-linux-free
+	btrfs-tools
+	zsh
+	rsync
+	git-core
 )
 
 purge_packages=(

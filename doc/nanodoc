@@ -1,0 +1,75 @@
+#!/bin/sh
+# Copyright (c) 2016 parazyd <parazyd@dyne.org>
+# nanodoc is written and maintained by parazyd
+#
+# This file is part of arm-sdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+org="parazyd <parazyd@dyne.org> | dyne.org"
+name=libdevuansdk
+version=0.2
+desc="common library for devuan's sdks"
+
+pages="
+    libdevuansdk.7
+	configuration.7
+	workflow.7
+	helper_functions.7
+	creating_wrappers.7
+"
+
+generate_manpages() {
+	for page in $pages; do
+		ronn -r --manual="$name" --organization="$org" ${page}.md
+	done
+
+	mkdir -p man/man7
+	mv *.7   man/man7
+}
+
+generate_html() {
+	mkdir -p html
+	sed -i -e 's/NAME/'"$name"'/' -e 's/DESC/'"$desc"'/g' static/head.html
+	sed -i -e 's/VERSION/'$version'/'                 static/foot.html
+
+	for page in $pages; do
+		pagetitle=$(sed 1q ${page}.md)
+		printf '<li><a href="%s.html" class="notPage">%s</a></li>\n' $page "$pagetitle" >> nav.html
+	done
+
+	printf "</ul></div><div id='main'>\n" >> nav.html
+
+	for page in $pages; do
+		printf "\thtml/%s\n" $page
+		cat static/head.html > html/${page}.html
+		cat nav.html >> html/${page}.html
+		python -m markdown ${page}.md >> html/${page}.html
+		cat static/foot.html >> html/${page}.html
+
+		pagetitle=$(sed 1q ${page}.md)
+		sed -i -e 's/TITLE/'"$pagetitle"'/' html/${page}.html
+		sed -i -e 's/'$page'.html" class="notPage/'$page'.html" class="thisPage/' html/${page}.html
+	done
+
+	ln -sf libdevuansdk.7.html html/index.html
+	#cat nav.html
+	rm -f nav.html
+}
+
+case $1 in
+	man)  generate_manpages && exit 0 ;;
+	html) generate_html     && exit 0 ;;
+	*)    exit 1 ;;
+esac
