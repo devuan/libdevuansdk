@@ -33,7 +33,7 @@ build_kernel_amd64() {
 	dpkgdivert on $strapdir
 	devprocsys mount $strapdir
 
-	sudo chroot $strapdir \
+	sudo -E chroot $strapdir \
 		apt-get --yes --force-yes install $kernel
 
 	devprocsys umount $strapdir
@@ -54,7 +54,7 @@ build_kernel_i386() {
 	dpkgdivert on $strapdir
 	devprocsys mount $strapdir
 
-	sudo chroot $strapdir \
+	sudo -E chroot $strapdir \
 		apt-get --yes --force-yes install $kernel
 
 	devprocsys umount $strapdir

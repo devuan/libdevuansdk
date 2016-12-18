@@ -39,7 +39,7 @@ proc            /proc          proc    nodev,noexec,nosuid    0      0
 /dev/sda2       /              ext4    errors=remount-ro      0      1
 
 # boot
-/dev/sda1       /boot          ext2    noauto                 0      0
+/dev/sda1       /boot          ext2    defaults               0      0
 EOF
 }
 
