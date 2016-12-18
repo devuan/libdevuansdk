@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-## ilporcodio
+## ilpd
 
 rsync_to_raw_image() {
 	fn rsync_to_raw_image
@@ -35,6 +35,7 @@ rsync_to_raw_image() {
 		die "not enough space. report a bug please"
 		zerr
 	}
+
 	if [[ $parted_type = dos ]]; then
 		sudo rsync -HPavz -q ./boot/* $workdir/boot || {
 			image_raw_umount

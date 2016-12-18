@@ -63,8 +63,6 @@ bootstrap_complete_base() {
 	## write third-stage for chroot
 	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage
 	bootstrap_config_cleanup    | sudo tee $strapdir/cleanup
-	sudo chmod +x $strapdir/thirdstage
-	sudo chmod +x $strapdir/cleanup
 
 	## chroot into it and configure further
 	## debootstrap stage 3
@@ -72,10 +70,7 @@ bootstrap_complete_base() {
 
 	devprocsys mount $strapdir || zerr
 
-	dpkgdivert on  $strapdir
-	sudo -E chroot $strapdir /thirdstage || zerr
-	sudo -E chroot $strapdir /cleanup    || zerr
-	dpkgdivert off $strapdir
+	chroot-script -d thirdstage cleanup || zerr
 
 	sleep 1
 	devprocsys umount $strapdir || zerr
@@ -94,7 +89,7 @@ rm -f /thirdstage
 rm -f /etc/ssh/*_key
 rm -f /etc/ssh/*.pub
 rm -f /root/.bash_history
-#rm -f /usr/bin/qemu-*
+#rm -f /usr/bin/qemu-arm-static
 ## our file for which we check the bootstrap is complete
 echo "1" > .done
 rm -f /cleanup
@@ -141,8 +136,7 @@ apt-get clean
 rm -f /prepack
 EOF
 
-	sudo chmod +x $strapdir/prepack || zerr
-	sudo -E chroot $strapdir  /prepack || zerr
+	chroot-script prepack || zerr
 
 	local _dest=$(dirname $bootstrap_tgz)
 
@@ -185,14 +179,13 @@ apt-get clean
 rm -f /postunpack
 EOF
 
-	dpkgdivert on $strapdir
 	devprocsys mount $strapdir
-	sudo chmod +x $strapdir/postunpack   || zerr
-	sudo -E chroot $strapdir /postunpack || zerr
+	chroot-script -d postunpack || zerr
 	devprocsys umount $strapdir
-	dpkgdivert off $strapdir
 
 	## below typically used in arm-sdk
 	[[ -z $inittab ]] || { print $inittab | sudo tee -a $strapdir/etc/inittab }
-	for i in $custmodules;do print $i | sudo tee -a $strapdir/etc/modules; done
+	for i in $custmodules; do
+		print $i | sudo tee -a $strapdir/etc/modules
+	done
 }

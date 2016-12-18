@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-## helper functions that make your life easier
+## helper functions that make my life easier
 
 build_image_dist() {
 	fn build_image_dist
@@ -138,8 +138,8 @@ dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
 rm -f /dpkgdivert
 EOF
 	fi
-	sudo chmod +x $werdo/dpkgdivert
-	sudo -E chroot $werdo /dpkgdivert || zerr
+
+	chroot-script dpkgdivert || zerr
 }
 
 enableserv() {
@@ -154,8 +154,7 @@ update-rc.d ${service} enable
 EOF
 
 	notice "enabling $service service"
-	sudo chmod +x $strapdir/enserv
-	sudo -E chroot $strapdir /enserv
+	chroot-script enserv
 }
 
 disableserv() {
@@ -170,8 +169,7 @@ update-rc.d ${service} disable
 EOF
 
 	notice "disabling $service service"
-	sudo chmod +x $strapdir/disserv
-	sudo -E chroot $strapdir /disserv
+	chroot-script disserv
 }
 
 enablessh() {
@@ -183,9 +181,9 @@ enablessh() {
 #!/bin/sh
 sed -i -e 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 update-rc.d ssh enable
-chmod +x /etc/init.d/regensshkeys
 update-rc.d regensshkeys defaults
 update-rc.d regensshkeys enable
+rm -f /enssh
 EOF
 
 	cat <<EOF | sudo tee ${strapdir}/etc/init.d/regensshkeys
@@ -222,10 +220,9 @@ case "\$1" in
 esac
 EOF
 
-	dpkgdivert on $strapdir
-	sudo chmod +x $strapdir/enssh
-	sudo -E chroot $strapdir /enssh
-	dpkgdivert off $strapdir
+	sudo chmod +x $strapdir/etc/init.d/regensshkeys
+
+	chroot-script -d enssh
 }
 
 install-custdebs() {
@@ -246,8 +243,35 @@ apt-get autoremove
 apt-get clean
 rm -rf /debs install-debs
 EOF
-	sudo chmod +x $strapdir/install-debs
-	sudo -E chroot $strapdir /install-debs
+	chroot-script install-debs
+}
+
+chroot-script() {
+	fn chroot-script "$@"
+
+	case "x$1" in
+		x-d)
+			shift 1
+			local scripts="$@"
+
+			dpkgdivert on $strapdir
+			for i in $scripts; do
+				notice "chrooting to execute $i..."
+				sudo chmod +x $strapdir/$i
+				sudo -E chroot $strapdir /$i
+			done
+			dpkgdivert off $strapdir
+			;;
+		*)
+			local scripts="$@"
+
+			for i in $scripts; do
+				notice "chrooting to execute $i..."
+				sudo chmod +x $strapdir/$i
+				sudo -E chroot $strapdir /$i
+			done
+			;;
+	esac
 }
 
 silly() {

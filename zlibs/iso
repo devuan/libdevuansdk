@@ -36,10 +36,8 @@ apt-get --yes --force-yes autoremove
 apt-get clean
 rm -f /isoprep
 EOF
-	dpkgdivert on $strapdir
-	sudo chmod +x $strapdir/isoprep
-	sudo -E chroot $strapdir /isoprep
-	dpkgdivert off $strapdir
+
+	chroot-script -d isoprep || zerr
 }
 
 iso_setup_isolinux() {
