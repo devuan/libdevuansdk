@@ -50,5 +50,11 @@ so that apt doesn't autostart daemons when they are installed.
 this function will allow root login with password in the bootstrapped rootfs.
 
 
+## chroot-script()  
+allows you to chroot inside the `$strapdir` and execute the
+script/binary that's given to it.
+takes an optional argument: `-d` (will call dpkgdivert on and off)
+
+
 ## silly()  
 a funny function printing out random messages.
