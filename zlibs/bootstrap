@@ -70,8 +70,7 @@ bootstrap_complete_base() {
 
 	devprocsys mount $strapdir || zerr
 
-	chroot-script -d thirdstage || zerr
-	chroot-script -d cleanup    || zerr
+	chroot-script -d thirdstage cleanup || zerr
 
 	sleep 1
 	devprocsys umount $strapdir || zerr
@@ -90,7 +89,7 @@ rm -f /thirdstage
 rm -f /etc/ssh/*_key
 rm -f /etc/ssh/*.pub
 rm -f /root/.bash_history
-rm -f /usr/bin/qemu-arm-static
+#rm -f /usr/bin/qemu-arm-static
 ## our file for which we check the bootstrap is complete
 echo "1" > .done
 rm -f /cleanup

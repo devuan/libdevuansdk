@@ -249,23 +249,29 @@ EOF
 chroot-script() {
 	fn chroot-script "$@"
 
-	notice "chrooting for script $@"
+	case "x$1" in
+		x-d)
+			shift 1
+			local scripts="$@"
 
-	if [[ "$1" == "-d" ]]; then
-		shift 1
-		local _script="$1"
+			dpkgdivert on $strapdir
+			for i in $scripts; do
+				notice "chrooting to execute $i..."
+				sudo chmod +x $strapdir/$i
+				sudo -E chroot $strapdir /$i
+			done
+			dpkgdivert off $strapdir
+			;;
+		*)
+			local scripts="$@"
 
-		dpkgdivert on $strapdir
-		sudo chmod +x $strapdir/$_script
-		sudo -E chroot $strapdir /$_script
-		dpkgdivert off $strapdir
-	else
-		local _script="$1"
-
-		sudo chmod +x $strapdir/$_script
-		sudo -E chroot $strapdir /$_script
-	fi
-
+			for i in $scripts; do
+				notice "chrooting to execute $i..."
+				sudo chmod +x $strapdir/$i
+				sudo -E chroot $strapdir /$i
+			done
+			;;
+	esac
 }
 
 silly() {
