@@ -18,7 +18,7 @@ zsh debootstrap sudo kpartx cgpt xz-utils
 
 ## Documentation
 
-Find documentation inside the `doc` directory of libdevuansdk.
+Find documentation inside the `docs` directory of libdevuansdk.
 
 ## Notes
 
