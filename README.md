@@ -18,7 +18,12 @@ zsh debootstrap sudo kpartx cgpt xz-utils
 
 ## Documentation
 
-Find documentation inside the `docs` directory of libdevuansdk.
+Find documentation inside the `docs` directory of libdevuansdk. The following
+packages need to be installed to compile the documentation:
+
+```
+python-markdown ruby-ronn
+```
 
 ## Notes
 
