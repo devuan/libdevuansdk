@@ -112,7 +112,7 @@ qemu_install_user() {
 }
 
 dpkgdivert() {
-	fn dpkgdivert $@
+	fn dpkgdivert "$@"
 	req=(watdo werdo)
 	local watdo="$1"
 	local werdo="$2"
@@ -211,25 +211,18 @@ chroot-script() {
 
 	case "x$1" in
 		x-d)
-			shift 1
-			local scripts="$@"
-
-			dpkgdivert on $strapdir
-			for i in $scripts; do
-				notice "chrooting to execute $i..."
-				sudo chmod +x $strapdir/$i
-				sudo -E chroot $strapdir /$i
-			done
-			dpkgdivert off $strapdir
+			local script="$2"
+			dpkgdivert on "$strapdir"
+			notice "chrooting to execute $script..."
+			sudo -E chmod +x  "$strapdir/$script" || zerr
+			sudo -E chroot "$strapdir" "/$script" || zerr
+			dpkgdivert off "$strapdir"
 			;;
 		*)
-			local scripts="$@"
-
-			for i in $scripts; do
-				notice "chrooting to execute $i..."
-				sudo chmod +x $strapdir/$i
-				sudo -E chroot $strapdir /$i
-			done
+			local script="$1"
+			notice "chrooting to execute $script..."
+			sudo -E chmod +x  "$strapdir/$script" || zerr
+			sudo -E chroot "$strapdir" "/$script" || zerr
 			;;
 	esac
 }
