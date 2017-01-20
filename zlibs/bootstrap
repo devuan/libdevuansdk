@@ -59,6 +59,7 @@ bootstrap_complete_base() {
 	conf_print_networkifaces  | sudo tee $strapdir/etc/network/interfaces
 	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf
 	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list
+	conf_print_locales        | sudo tee $strapdir/etc/profile.d/locales.sh
 
 	## write third-stage for chroot
 	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage

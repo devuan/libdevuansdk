@@ -177,52 +177,12 @@ enablessh() {
 	req=(strapdir)
 	ckreq || return 1
 
-	cat <<EOF | sudo tee -a ${strapdir}/enssh
-#!/bin/sh
-sed -i -e 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-update-rc.d ssh enable
-update-rc.d regensshkeys defaults
-update-rc.d regensshkeys enable
-rm -f /enssh
-EOF
-
-	cat <<EOF | sudo tee ${strapdir}/etc/init.d/regensshkeys
-#!/bin/sh
-#
-### BEGIN INIT INFO
-# Provides:       something
-# Required-Start: \$syslog
-# Required-Stop:  \$syslog
-# Default-Start:  2 3 4 5
-# Default-Stop:   0 1 6
-# Short-Description: Regenerate openssh-server keys
-# Description:    Regenerate openssh-server keys
-### END INIT INFO
-#
-set -e
-set -u
-
-genkeys() {
-	/usr/sbin/service ssh stop
-	/usr/sbin/dpkg-reconfigure openssh-server
-	/usr/sbin/service ssh start
-	/usr/sbin/update-rc.d regensshkeys disable
-}
-
-case "\$1" in
-	start)
-		genkeys;;
-	stop)
-		;;
-	*)
-		echo "usage: \$(basename \$0) {start}"
-		;;
-esac
-EOF
-
-	sudo chmod +x $strapdir/etc/init.d/regensshkeys
-
-	chroot-script -d enssh
+	# "hardened" ssh
+	sudo -E sed -i $strapdir/etc/sshd_config \
+		-e 's/PermitRootLogin .*/PermitRootLogin yes/' \
+		-e 's/HostKey .*dsa_key/#&/' \
+		-e 's/X11Forwarding .*/X11Forwarding no/' \
+		-e 's/UsePAM .*/UsePAM no/'
 }
 
 install-custdebs() {

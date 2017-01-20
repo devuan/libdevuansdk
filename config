@@ -41,8 +41,8 @@ core_packages=(
 	bzip2
 	curl
 	less
-	vim-tiny
-	nano-tiny
+	vim
+	nano
 	sysvinit
 )
 
@@ -54,8 +54,9 @@ base_packages=(
 	sudo
 	alsa-base
 	alsa-utils
-	gawk
+	mawk
 	tmux
+	screen
 	openntpd
 	wpasupplicant
 	wireless-tools
