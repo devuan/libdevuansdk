@@ -52,18 +52,18 @@ bootstrap_complete_base() {
 
 	## write all system configuration
 	notice "writing system configuration"
-	conf_print_debconf        | sudo tee $strapdir/debconf.set
-	conf_print_fstab          | sudo tee $strapdir/etc/fstab
-	conf_print_hostname       | sudo tee $strapdir/etc/hostname
-	conf_print_hosts          | sudo tee $strapdir/etc/hosts
-	conf_print_networkifaces  | sudo tee $strapdir/etc/network/interfaces
-	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf
-	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list
-	conf_print_locales        | sudo tee $strapdir/etc/profile.d/locales.sh
+	conf_print_debconf        | sudo tee $strapdir/debconf.set >/dev/null
+	conf_print_fstab          | sudo tee $strapdir/etc/fstab >/dev/null
+	conf_print_hostname       | sudo tee $strapdir/etc/hostname >/dev/null
+	conf_print_hosts          | sudo tee $strapdir/etc/hosts >/dev/null
+	conf_print_networkifaces  | sudo tee $strapdir/etc/network/interfaces >/dev/null
+	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf >/dev/null
+	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list >/dev/null
+	conf_print_locales        | sudo tee $strapdir/etc/profile.d/locales.sh >/dev/null
 
 	## write third-stage for chroot
-	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage
-	bootstrap_config_cleanup    | sudo tee $strapdir/cleanup
+	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage >/dev/null
+	bootstrap_config_cleanup    | sudo tee $strapdir/cleanup >/dev/null
 
 	## chroot into it and configure further
 	## debootstrap stage 3
@@ -129,7 +129,7 @@ bootstrap_tar_pack() {
 	#for i in $custmodules;do sudo sed -i -e '/'$i'/d' $strapdir/etc/modules;done
 	#[[ -n $inittab ]] && sudo sed -i -e '/'$inittab'/d' $strapdir/etc/inittab
 
-	cat <<EOF | sudo tee ${strapdir}/prepack
+	cat <<EOF | sudo tee ${strapdir}/prepack >/dev/null
 #!/bin/sh
 #apt-get --yes --force-yes purge ${extra_packages}
 apt-get --yes --force-yes autoremove
@@ -170,7 +170,7 @@ bootstrap_tar_unpack() {
 		sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
 	}
 
-	cat <<EOF | sudo tee ${strapdir}/postunpack
+	cat <<EOF | sudo tee ${strapdir}/postunpack >/dev/null
 #!/bin/sh
 apt-get update
 apt-get --yes --force-yes upgrade
@@ -185,8 +185,8 @@ EOF
 	devprocsys umount $strapdir
 
 	## below typically used in arm-sdk
-	[[ -z $inittab ]] || { print $inittab | sudo tee -a $strapdir/etc/inittab }
+	[[ -z $inittab ]] || { print $inittab | sudo tee -a $strapdir/etc/inittab >/dev/null }
 	for i in $custmodules; do
-		print $i | sudo tee -a $strapdir/etc/modules
+		print $i | sudo tee -a $strapdir/etc/modules >/dev/null
 	done
 }

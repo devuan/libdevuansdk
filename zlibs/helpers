@@ -119,7 +119,7 @@ dpkgdivert() {
 	ckreq || return 1
 
 	if [[ $watdo = on ]]; then
-		cat <<EOF | sudo tee ${werdo}/dpkgdivert
+		cat <<EOF | sudo tee ${werdo}/dpkgdivert >/dev/null
 #!/bin/sh
 dpkg-divert --add --local \
 	--divert /usr/sbin/invoke-rc.d.chroot \
@@ -130,7 +130,7 @@ chmod +x /usr/sbin/policy-rc.d
 rm -f /dpkgdivert
 EOF
 	elif [[ $watdo = off ]]; then
-		cat <<EOF | sudo tee ${werdo}/dpkgdivert
+		cat <<EOF | sudo tee ${werdo}/dpkgdivert >/dev/null
 #!/bin/sh
 rm -f /usr/sbin/policy-rc.d
 rm -f /usr/sbin/invoke-rc.d
@@ -148,7 +148,7 @@ enableserv() {
 	req=(service strapdir)
 	ckreq || return 1
 
-	cat <<EOF | sudo tee -a ${strapdir}/enserv
+	cat <<EOF | sudo tee -a ${strapdir}/enserv >/dev/null
 #!/bin/sh
 update-rc.d ${service} enable
 EOF
@@ -163,7 +163,7 @@ disableserv() {
 	req=(service strapdir)
 	ckreq || return 1
 
-	cat <<EOF | sudo tee -a ${strapdir}/disserv
+	cat <<EOF | sudo tee -a ${strapdir}/disserv >/dev/null
 #!/bin/sh
 update-rc.d ${service} disable
 EOF
@@ -178,11 +178,13 @@ enablessh() {
 	ckreq || return 1
 
 	# "hardened" ssh
-	sudo -E sed -i $strapdir/etc/sshd_config \
-		-e 's/PermitRootLogin .*/PermitRootLogin yes/' \
-		-e 's/HostKey .*dsa_key/#&/' \
-		-e 's/X11Forwarding .*/X11Forwarding no/' \
-		-e 's/UsePAM .*/UsePAM no/'
+	#sudo -E sed -i $strapdir/etc/sshd_config \
+		#-e 's/PermitRootLogin .*/PermitRootLogin yes/' \
+		#-e 's/HostKey .*dsa_key/#&/' \
+		#-e 's/X11Forwarding .*/X11Forwarding no/' \
+		#-e 's/UsePAM .*/UsePAM no/'
+
+	return 0
 }
 
 install-custdebs() {
@@ -191,9 +193,9 @@ install-custdebs() {
 	ckreq || return 1
 
 	sudo mkdir -p $strapdir/debs
-	sudo cp $CPVERBOSE -f $R/extra/custom-packages/*.deb $strapdir/debs/
+	sudo ${=cp} $R/extra/custom-packages/*.deb $strapdir/debs/
 
-	cat <<EOF | sudo tee ${strapdir}/install-debs
+	cat <<EOF | sudo tee ${strapdir}/install-debs >/dev/null
 #!/bin/sh
 for deb in /debs/*.deb; do
 	dpkg -i \$deb

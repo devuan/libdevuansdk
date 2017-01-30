@@ -32,4 +32,11 @@ source $LIBPATH/zlibs/sysconf
 vars+=(libdevuansdk_version)
 vars+=(LIBPATH)
 
+if [[ $DEBUG -gt 0 ]]; then
+	cp="/bin/cp -v"
+else
+	cp="/bin/cp"
+	setopt pushdsilent
+fi
+
 act "libdevuansdk v$libdevuansdk_version loaded"

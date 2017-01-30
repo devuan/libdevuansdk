@@ -28,7 +28,7 @@ iso_prepare_strap() {
 
 	notice "preparing strapdir for livecd"
 
-	cat <<EOF | sudo tee ${strapdir}/isoprep
+	cat <<EOF | sudo tee ${strapdir}/isoprep >/dev/null
 #!/bin/sh
 apt-get update
 apt-get --yes --force-yes install dialog live-boot
@@ -50,12 +50,12 @@ iso_setup_isolinux() {
 	pushd $workdir
 	sudo mkdir -p binary/{live,isolinux}
 	act "copying kernel and initrd"
-	sudo cp $CPVERBOSE $strapdir/boot/vmlinuz* binary/live/vmlinuz
-	sudo cp $CPVERBOSE $strapdir/boot/initrd*  binary/live/initrd
+	sudo ${=cp} $strapdir/boot/vmlinuz* binary/live/vmlinuz
+	sudo ${=cp} $strapdir/boot/initrd*  binary/live/initrd
 
-	sudo cp $CPVERBOSE /usr/share/live/build/bootloaders/isolinux/isolinux.bin \
+	sudo ${=cp} /usr/share/live/build/bootloaders/isolinux/isolinux.bin \
 		binary/isolinux
-	sudo cp $CPVERBOSE /usr/share/live/build/bootloaders/isolinux/*.c32 \
+	sudo ${=cp} /usr/share/live/build/bootloaders/isolinux/*.c32 \
 		binary/isolinux
 	popd
 }
@@ -66,7 +66,7 @@ iso_write_isolinux_cfg() {
 	ckreq || return 1
 
 	notice "writing isolinux configuration"
-	cat <<EOF | sudo tee ${workdir}/binary/isolinux/isolinux.cfg
+	cat <<EOF | sudo tee ${workdir}/binary/isolinux/isolinux.cfg >/dev/null
 ui vesamenu.c32
 prompt 0
 menu title ${os} boot menu
@@ -90,7 +90,7 @@ iso_squash_strap() {
 	notice "creating squashfs out of strapdir"
 
 	pushd $workdir
-	sudo mksquashfs $strapdir binary/live/filesystem.squashfs -comp xz -e boot
+		sudo mksquashfs $strapdir binary/live/filesystem.squashfs -comp xz -e boot
 	popd
 }
 
@@ -121,7 +121,7 @@ iso_setup_installer() {
 	fn iso_setup_installer
 
 	notice "setting up devuan-installer"
-	sudo cp $CPVERBOSE $R/extra/installer/* $strapdir/
+	sudo ${=cp} $R/extra/installer/* $strapdir/
 
 	## TODO: init to script
 }
