@@ -18,7 +18,7 @@
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
 libdevuansdk_version="0.3"
-LIBPATH=${LIBPATH:-`dirname $0`}
+LIBPATH=${LIBPATH:-$(dirname $0)}
 
 source $LIBPATH/config
 source $LIBPATH/zlibs/bootstrap
