@@ -30,20 +30,13 @@ rsync_to_raw_image() {
 
 	silly
 	pushd $strapdir
-	sudo rm -f .done
-	sudo rsync -HPavz -q --exclude={./boot} ./* $workdir/root || {
+	#sudo rm -f .done
+
+	sudo rsync -HPavz -q ./* $workdir/mnt || {
 		image_raw_umount
-		die "not enough space. report a bug please"
+		die "not enough space, please report a bug"
 		zerr
 	}
-
-	if [[ $parted_type = dos ]]; then
-		sudo rsync -HPavz -q ./boot/* $workdir/boot || {
-			image_raw_umount
-			die "not enough space. report a bug please"
-			zerr
-		}
-	fi
 	popd
 
 	image_raw_umount
