@@ -34,9 +34,13 @@ vars+=(LIBPATH)
 
 if [[ $DEBUG -gt 0 ]]; then
 	cp="/bin/cp -v"
+	mkdir="/bin/mkdir -v"
 else
 	cp="/bin/cp"
+	mkdir="/bin/mkdir"
 	setopt pushdsilent
 fi
+
+sudo="sudo -E"
 
 act "libdevuansdk v$libdevuansdk_version loaded"

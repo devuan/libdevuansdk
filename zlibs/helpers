@@ -172,21 +172,6 @@ EOF
 	chroot-script disserv
 }
 
-enablessh() {
-	fn enablessh
-	req=(strapdir)
-	ckreq || return 1
-
-	# "hardened" ssh
-	#sudo -E sed -i $strapdir/etc/sshd_config \
-		#-e 's/PermitRootLogin .*/PermitRootLogin yes/' \
-		#-e 's/HostKey .*dsa_key/#&/' \
-		#-e 's/X11Forwarding .*/X11Forwarding no/' \
-		#-e 's/UsePAM .*/UsePAM no/'
-
-	return 0
-}
-
 install-custdebs() {
 	fn install-custdebs
 	req=(R strapdir)
