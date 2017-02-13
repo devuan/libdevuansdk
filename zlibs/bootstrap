@@ -71,7 +71,8 @@ bootstrap_complete_base() {
 
 	devprocsys mount $strapdir || zerr
 
-	chroot-script -d thirdstage cleanup || zerr
+	chroot-script -d thirdstage || zerr
+	chroot-script -d cleanup    || zerr
 
 	sleep 1
 	devprocsys umount $strapdir || zerr
