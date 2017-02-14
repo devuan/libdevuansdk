@@ -19,7 +19,7 @@
 
 ## imagine images
 
-vars+=(image_name bootpart rootpart)
+vars+=(image_name bootpart rootpart loopdevice)
 
 image_prepare_raw() {
 	fn image_prepare_raw
@@ -150,4 +150,27 @@ image_raw_umount() {
 	sudo umount $workdir/mnt/boot && act "unmounted boot partition" || zerr
 	sleep 1
 	sudo umount $workdir/mnt      && act "unmounted root partition" || zerr
+}
+
+image_raw_as_strapdir() {
+	fn image_raw_as_strapdir
+	req=(workdir strapdir)
+	ckreq || return 1
+
+	pushd "$workdir"
+
+	notice "creating raw image of $size MB"
+	sudo -E rm -f base.raw
+	sudo -E qemu-img create -f raw base.raw
+	notice "partitioning"
+	sudo -E parted base.raw mktable msdos
+	sudo -E parted base.raw mkpart primary '0%' '100%'
+	loopdevice=$(losetup --find)
+	sudo -E losetup -P $loopdevice base.raw
+	sudo -E mkfs.ext4 ${loopdevice}p1
+
+	notice "mounting raw image to strapdir"
+	sudo mount ${loopdevice}p1 $strapdir
+
+	popd
 }

@@ -28,6 +28,7 @@ source $LIBPATH/zlibs/iso
 source $LIBPATH/zlibs/kernel
 source $LIBPATH/zlibs/rsync
 source $LIBPATH/zlibs/sysconf
+source $LIBPATH/zlibs/vm
 
 vars+=(libdevuansdk_version)
 vars+=(LIBPATH)

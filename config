@@ -28,6 +28,8 @@ version="1.0.0-beta2"
 mirror="http://auto.mirror.devuan.org/merged"
 section="main"
 
+isomirror="http://files.devuan.org/devuan_jessie_beta"
+
 image_name="${os}_${release}_${version}_${arch}"
 [[ -n $blend_name  ]] && image_name="${image_name}_${blend_name}"
 [[ -n $device_name ]] && image_name="${image_name}_${device_name}"
@@ -72,4 +74,8 @@ base_packages=(
 purge_packages+=(
 	dbus
 	nano
+	exim4
+	exim4-base
+	exim4-config
+	reportbug
 )

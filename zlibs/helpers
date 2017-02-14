@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -58,10 +58,37 @@ build_iso_dist() {
 	build_kernel_${arch}    || zerr
 	iso_setup_isolinux      || zerr
 	iso_write_isolinux_cfg  || zerr
-	[[ $INSTALLER = 1 ]] && iso_setup_installer
+	[[ $INSTALLER = 1 ]] && iso_setup_installer || zerr
 	[[ $BLEND = 1 ]] && blend_postinst || zerr
 	iso_squash_strap        || zerr
 	iso_xorriso_build       || zerr
+}
+
+build_vagrant_dist() {
+	fn build_vagrant_dist
+	req=(workdir strapdir os arch)
+	ckreq || return 1
+
+	notice "building complete vagrant image"
+
+	image_raw_as_strapdir   || zerr
+	bootstrap_complete_base || zerr
+	vm_inject_overrides     || zerr
+	[[ $BLEND = 1 ]] && blend_preinst  || zerr
+	vm_setup_grub           || zerr
+	[[ $BLEND = 1 ]] && blend_postinst || zerr
+	vm_umount_raw           || zerr
+	vm_vbox_setup           || zerr
+	vm_vagrant_package      || zerr
+	vm_pack_dist            || zerr
+}
+
+getfield() {
+	fn getfield $*
+
+	echo "$1" | grep "^$2=" | \
+		sed -e 's:.*=\(.*\)$:\1:g' | \
+		sed -e 's:^"\(.*\)"$:\1:g'
 }
 
 devprocsys() {

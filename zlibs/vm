@@ -1,0 +1,171 @@
+#!/usr/bin/env zsh
+# Copyright (c) 2016-2017 Dyne.org Foundation
+# libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
+#
+# This file is part of libdevuansdk
+#
+# This source code is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source code. If not, see <http://www.gnu.org/licenses/>.
+
+## ma baker
+#
+# deps:
+# virtualbox
+# qemu-kvm
+
+vars+=(vmname)
+
+vm_inject_overrides() {
+	fn vm_inject_overrides
+	req=(strapdir)
+	ckreq || return 1
+
+	notice "injecting rootfs overrides"
+	cat <<EOF | sudo -E tee ${strapdir}/etc/rc.local >/dev/null
+#!/bin/sh
+# rc.local for base images
+
+[ -f /etc/ssh/ssh_host_rsa_key.pub ] || dpkg-reconfigure openssh-server
+
+exit 0
+EOF
+	sudo -E chmod +x $strapdir/etc/rc.local
+
+	print "rootfs / rootfs rw 0 0" | sudo -E tee ${strapdir}/etc/fstab >/dev/null
+
+	sudo sed -i -e 's/without-password/yes/' ${strapdir}/etc/ssh/sshd_config || zerr
+}
+
+vm_setup_grub() {
+	fn vm_setup_grub
+	req=(strapdir loopdevice)
+	ckreq || return 1
+
+	notice "setting up grub"
+	cat <<EOF | sudo -E tee ${strapdir}/setupgrub >/dev/null
+#!/bin/sh
+export DEBIAN_FRONTEND=noninteractive
+apt-get --yes --force-yes install linux-image-amd64 grub-pc
+sed -e 's:GRUB_TIMEOUT=5:GRUB_TIMEOUT=1:' -i /etc/default/grub
+update-grub
+grub-install --no-floppy --recheck --modules="biosdisk part_msdos" ${loopdevice}
+sed -e 's:${loopdevice}p1:/dev/sda1:g' -i /boot/grub/grub.cfg
+sync
+sync
+sync
+EOF
+	devprocsys mount $strapdir  || zerr
+	chroot-script -d setupgrub  || zerr
+	devprocsys umount $strapdir || zerr
+}
+
+vm_umount_raw() {
+	fn vm_umount_raw
+	req=(strapdir loopdevice)
+	ckreq || return 1
+
+	notice "remounting raw image"
+	sudo -E mount -o remount,ro $strapdir || zerr
+	sync
+	notice "flushing bytes and buffers"
+	sudo blockdev --flushbufs $loopdevice || zerr
+	sudo python -c 'import os; os.fsync(open("'${loopdevice}'", "r+b"))' || zerr
+	notice "unmounting raw image from strapdir"
+	silly sleep 1
+	sudo umount $strapdir || zerr
+	sudo rmdir $strapdir  || zerr
+
+	sync
+	silly sleep 1
+	notice "cleaning up"
+	sudo losetup -d ${loopdevice} || zerr
+	silly sleep 1
+}
+
+vm_vbox_setup() {
+	fn vm_vbox_setup
+	req=(workdir)
+	ckreq || return 1
+
+	notice "converting raw image to vdi"
+	pushd $workdir
+	sudo -E qemu-img convert -f raw -O vdi base.raw base.vdi || zerr
+	sudo -E chown $USER base.vdi || zerr
+	VBoxManage modifyhd base.vdi --type immutable --compact || zerr
+	act "removing old raw image"
+	rm -f base.raw
+
+	vmname="${os}-${release}-prevagrant"
+	notice "importing base.vdi to a VBox"
+	act "creating vm"
+	VBoxManage createvm --name "$vmname" --ostype Debian_64 --register || zerr
+	act "setting up ram and group"
+	VBoxManage modifyvm "$vmname" --memory 256 --groups /personalcloud || zerr
+	act "setting up storage"
+	VBoxManage storagectl "$vmname" --name "IDE Controller" --add ide || zerr
+	act "attaching storage"
+	VBoxManage storageattach "$vmname" --storagectl "IDE Controller" --port 0 --device 0 --type hdd --medium base.vdi || zerr
+
+	vminfo="$(VBoxManage showvminfo "$vmname" --machinereadable)"
+	diskuuid="$(getfield "$vminfo" '"IDE Controller-ImageUUID-0-0"')"
+
+	act "autoreset off on storage"
+	VBoxManage modifyhd "$diskuuid" --autoreset off || zerr
+
+	act "setting up nat network"
+	VBoxManage modifyvm "$vmname" --nic1 nat || zerr
+	popd
+}
+
+vm_vagrant_package() {
+	fn vm_vagrant_package
+	req=(workdir vmname)
+	ckreq || return 1
+
+	notice "packaging a vagrant box"
+
+	pushd $workdir
+	act "creating vagrantfile"
+	cat <<EOF > Vagrantfile
+Vagrant.configure("2") do |config|
+	config.vm.box = "devuanbox.box"
+	config.ssh.username = "root"
+	config.ssh.password = "toor"
+	config.vm.guest = :debian
+end
+EOF
+	act "creating metadata.json"
+	cat <<EOF > metadata.json
+{
+	"provider": "virtualbox"
+}
+EOF
+	notice "actually packaging..."
+	vagrant package --base "$vmname" --outbut devuanbox.box --include metadata.json --vagrantfile Vagrantfile || zerr
+	popd
+}
+
+vm_pack_dist() {
+	fn vm_pack_dist
+	req=(workdir)
+	ckreq || return 1
+
+	notice "packing up dist"
+	mkdir -p $R/dist
+	mv $workdir/devuanbox.box $R/dist/
+	act "calculating sha256sum..."
+	silly
+	sha256sum $R/dist/devuanbox.box > $R/dist/devuanbox.box.sha
+	notice "done!"
+	ls -1 $R/dist
+}

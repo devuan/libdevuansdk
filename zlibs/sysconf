@@ -84,6 +84,9 @@ iface lo inet loopback
 auto eth0
 iface eth0 inet dhcp
 
+#auto eth1
+#iface eth1 inet dhcp
+
 # auto eth0
 # iface eth0 inet static
 #	address 10.0.1.10

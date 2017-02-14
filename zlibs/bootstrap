@@ -88,8 +88,7 @@ bootstrap_config_cleanup() {
 #!/bin/sh
 rm -f /debconf.set
 rm -f /thirdstage
-rm -f /etc/ssh/*_key
-rm -f /etc/ssh/*.pub
+rm -f /etc/ssh/ssh_host_*
 rm -f /root/.bash_history
 #rm -f /usr/bin/qemu-arm-static
 ## our file for which we check the bootstrap is complete
@@ -186,7 +185,7 @@ EOF
 	devprocsys umount $strapdir
 
 	## below typically used in arm-sdk
-	[[ -z $inittab ]] || { print $inittab | sudo tee -a $strapdir/etc/inittab >/dev/null }
+	[[ -n "$inittab" ]] && { print $inittab | sudo tee -a $strapdir/etc/inittab >/dev/null }
 	for i in $custmodules; do
 		print $i | sudo tee -a $strapdir/etc/modules >/dev/null
 	done
