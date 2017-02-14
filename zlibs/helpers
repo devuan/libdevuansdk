@@ -51,6 +51,7 @@ build_iso_dist() {
 	ckreq || return 1
 
 	notice "building complete iso image"
+	## XXX: TODO: upstream existing heads code
 
 	bootstrap_complete_base || zerr
 	[[ $BLEND = 1 ]] && blend_preinst || zerr
@@ -85,10 +86,7 @@ build_vagrant_dist() {
 
 getfield() {
 	fn getfield $*
-
-	echo "$1" | grep "^$2=" | \
-		sed -e 's:.*=\(.*\)$:\1:g' | \
-		sed -e 's:^"\(.*\)"$:\1:g'
+	print "$1" | grep "^$2=" | sed -e 's:.*=\(.*\)$:\1:g' | sed -e 's:^"\(.*\)"$:\1:g'
 }
 
 devprocsys() {
@@ -154,7 +152,6 @@ dpkg-divert --add --local \
 cp /bin/true /usr/sbin/invoke-rc.d
 echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
 chmod +x /usr/sbin/policy-rc.d
-rm -f /dpkgdivert
 EOF
 	elif [[ $watdo = off ]]; then
 		cat <<EOF | sudo tee ${werdo}/dpkgdivert >/dev/null
@@ -162,7 +159,6 @@ EOF
 rm -f /usr/sbin/policy-rc.d
 rm -f /usr/sbin/invoke-rc.d
 dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
-rm -f /dpkgdivert
 EOF
 	fi
 
@@ -205,7 +201,7 @@ install-custdebs() {
 	ckreq || return 1
 
 	sudo mkdir -p $strapdir/debs
-	sudo ${=cp} $R/extra/custom-packages/*.deb $strapdir/debs/
+	sudo cp $R/extra/custom-packages/*.deb $strapdir/debs/
 
 	cat <<EOF | sudo tee ${strapdir}/install-debs >/dev/null
 #!/bin/sh
@@ -215,7 +211,7 @@ for deb in /debs/*.deb; do
 done
 apt-get autoremove
 apt-get clean
-rm -rf /debs install-debs
+rm -rf /debs
 EOF
 	chroot-script install-debs
 }
@@ -228,17 +224,19 @@ chroot-script() {
 			local script="$2"
 			dpkgdivert on "$strapdir"
 			notice "chrooting to execute $script..."
-			sudo -E chmod +x  "$strapdir/$script" || zerr
+			sudo chmod +x  "$strapdir/$script" || zerr
 			sudo -E chroot "$strapdir" "/$script" || zerr
 			dpkgdivert off "$strapdir"
 			;;
 		*)
 			local script="$1"
 			notice "chrooting to execute $script..."
-			sudo -E chmod +x  "$strapdir/$script" || zerr
+			sudochmod +x  "$strapdir/$script" || zerr
 			sudo -E chroot "$strapdir" "/$script" || zerr
 			;;
 	esac
+
+	sudo rm -f $strapdir/$script
 }
 
 silly() {

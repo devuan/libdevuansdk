@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-libdevuansdk_version="0.3"
+libdevuansdk_version="0.4"
 LIBPATH=${LIBPATH:-$(dirname $0)}
 
 source $LIBPATH/config
@@ -33,15 +33,6 @@ source $LIBPATH/zlibs/vm
 vars+=(libdevuansdk_version)
 vars+=(LIBPATH)
 
-if [[ $DEBUG -gt 0 ]]; then
-	cp="/bin/cp -v"
-	mkdir="/bin/mkdir -v"
-else
-	cp="/bin/cp"
-	mkdir="/bin/mkdir"
-	setopt pushdsilent
-fi
-
-sudo="sudo -E"
+setopt pushdsilent
 
 act "libdevuansdk v$libdevuansdk_version loaded"

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -132,10 +132,6 @@ image_raw_mount() {
 	req=(workdir bootpart rootpart)
 	ckreq || return 1
 
-	#mkdir -p $workdir/boot $workdir/root
-	#sudo mount $bootpart $workdir/boot && act "mounted boot partition" || zerr
-	#sudo mount $rootpart $workdir/root && act "mounted root partition" || zerr
-
 	mkdir -p $workdir/mnt
 	sudo mount $rootpart $workdir/mnt && act "mounted root partition" || zerr
 	sudo mkdir $workdir/mnt/boot
@@ -160,14 +156,14 @@ image_raw_as_strapdir() {
 	pushd "$workdir"
 
 	notice "creating raw image of $size MB"
-	sudo -E rm -f base.raw
-	sudo -E qemu-img create -f raw base.raw ${size}M
+	sudo rm -f base.raw
+	sudo qemu-img create -f raw base.raw ${size}M   || zerr
 	notice "partitioning"
-	sudo -E parted base.raw mktable msdos
-	sudo -E parted base.raw mkpart primary '0%' '100%'
+	sudo parted base.raw mktable msdos              || zerr
+	sudo parted base.raw mkpart primary '0%' '100%' || zerr
 	loopdevice=$(losetup --find)
-	sudo -E losetup -P $loopdevice base.raw
-	sudo -E mkfs.ext4 ${loopdevice}p1
+	sudo losetup -P $loopdevice base.raw || zerr
+	sudo mkfs.ext4 ${loopdevice}p1       || zerr
 
 	notice "mounting raw image to strapdir"
 	sudo mount ${loopdevice}p1 $strapdir

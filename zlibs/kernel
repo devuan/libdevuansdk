@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -22,7 +22,7 @@
 build_kernel_amd64() {
 	fn build_kernel_amd64
 	req=(strapdir arch)
-	#freq=($strapdir/.done)
+	#freq=($strapdir/.keep)
 	ckreq || return 1
 
 	local kernel_base="linux-image"
@@ -43,7 +43,7 @@ build_kernel_amd64() {
 build_kernel_i386() {
 	fn build_kernel_i386
 	req=(strapdir arch)
-	#freq=($strapdir/.done)
+	#freq=($strapdir/.keep)
 	ckreq || return 1
 
 	local kernel_base="linux-image"

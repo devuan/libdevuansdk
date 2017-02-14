@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -19,7 +19,7 @@
 
 ## libdevuansdk configuration
 
-vars+=(release version mirror section blend_name)
+vars+=(release version mirror section blend_name image_name vm_name)
 arrs+=(core_packages base_packages purge_packages blend_packages)
 
 os="devuan"
@@ -28,11 +28,14 @@ version="1.0.0-beta2"
 mirror="http://auto.mirror.devuan.org/merged"
 section="main"
 
-isomirror="http://files.devuan.org/devuan_jessie_beta"
-
 image_name="${os}_${release}_${version}_${arch}"
 [[ -n $blend_name  ]] && image_name="${image_name}_${blend_name}"
 [[ -n $device_name ]] && image_name="${image_name}_${device_name}"
+
+vm_name="${os}_${release}_${version}_${arch}_vagrant"
+[[ -n $blend_name  ]] && vm_name="${image_name}_${blend_name}"
+
+rootcredentials="root:toor"
 
 core_packages=(
 	devuan-keyring
@@ -73,9 +76,4 @@ base_packages=(
 
 purge_packages+=(
 	dbus
-	nano
-	exim4
-	exim4-base
-	exim4-config
-	reportbug
 )

@@ -18,10 +18,6 @@
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
 ## ma baker
-#
-# deps:
-# virtualbox
-# qemu-kvm
 
 vars+=(vmname)
 
@@ -39,9 +35,9 @@ vm_inject_overrides() {
 
 exit 0
 EOF
-	sudo -E chmod +x $strapdir/etc/rc.local
+	sudo chmod +x $strapdir/etc/rc.local
 
-	print "rootfs / rootfs rw 0 0" | sudo -E tee ${strapdir}/etc/fstab >/dev/null
+	print "rootfs / rootfs rw 0 0" | sudo tee ${strapdir}/etc/fstab >/dev/null
 
 	sudo sed -i -e 's/without-password/yes/' ${strapdir}/etc/ssh/sshd_config || zerr
 }
@@ -52,7 +48,7 @@ vm_setup_grub() {
 	ckreq || return 1
 
 	notice "setting up grub"
-	cat <<EOF | sudo -E tee ${strapdir}/setupgrub >/dev/null
+	cat <<EOF | sudo tee ${strapdir}/setupgrub >/dev/null
 #!/bin/sh
 export DEBIAN_FRONTEND=noninteractive
 apt-get --yes --force-yes install linux-image-amd64 grub-pc
@@ -60,9 +56,7 @@ sed -e 's:GRUB_TIMEOUT=5:GRUB_TIMEOUT=1:' -i /etc/default/grub
 update-grub
 grub-install --no-floppy --recheck --modules="biosdisk part_msdos" ${loopdevice}
 sed -e 's:${loopdevice}p1:/dev/sda1:g' -i /boot/grub/grub.cfg
-sync
-sync
-sync
+sync; sync; sync
 EOF
 	devprocsys mount $strapdir  || zerr
 	chroot-script -d setupgrub  || zerr
@@ -75,7 +69,7 @@ vm_umount_raw() {
 	ckreq || return 1
 
 	notice "remounting raw image"
-	sudo -E mount -o remount,ro $strapdir || zerr
+	sudo mount -o remount,ro $strapdir || zerr
 	sync
 	notice "flushing bytes and buffers"
 	sudo blockdev --flushbufs $loopdevice || zerr
@@ -99,8 +93,8 @@ vm_vbox_setup() {
 
 	notice "converting raw image to vdi"
 	pushd $workdir
-	sudo -E qemu-img convert -f raw -O vdi base.raw base.vdi || zerr
-	sudo -E chown $USER base.vdi || zerr
+	sudo qemu-img convert -f raw -O vdi base.raw base.vdi || zerr
+	sudo chown $USER base.vdi || zerr
 	VBoxManage modifyhd base.vdi --type immutable --compact || zerr
 	act "removing old raw image"
 	rm -f base.raw
@@ -151,7 +145,7 @@ EOF
 }
 EOF
 	notice "actually packaging..."
-	vagrant package --base "$vmname" --output devuanbox.box --include metadata.json --vagrantfile Vagrantfile || zerr
+	vagrant package --base "$vmname" --output ${vm_name}.box --include metadata.json --vagrantfile Vagrantfile || zerr
 	popd
 }
 
@@ -162,10 +156,11 @@ vm_pack_dist() {
 
 	notice "packing up dist"
 	mkdir -p $R/dist
-	mv $workdir/devuanbox.box $R/dist/
+	mv $workdir/${vm_name}.box $R/dist
 	act "calculating sha256sum..."
 	silly
-	sha256sum $R/dist/devuanbox.box > $R/dist/devuanbox.box.sha
+	sha256sum $R/dist/${vm_name}.box > $R/dist/${vm_name}.box.sha
+	# TODO: XXX: cleanup vagrant/virtualbox leftovers
 	notice "done!"
 	ls -1 $R/dist
 }
