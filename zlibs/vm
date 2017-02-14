@@ -151,7 +151,7 @@ EOF
 }
 EOF
 	notice "actually packaging..."
-	vagrant package --base "$vmname" --outbut devuanbox.box --include metadata.json --vagrantfile Vagrantfile || zerr
+	vagrant package --base "$vmname" --output devuanbox.box --include metadata.json --vagrantfile Vagrantfile || zerr
 	popd
 }
 

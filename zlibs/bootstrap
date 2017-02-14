@@ -188,5 +188,5 @@ EOF
 	[[ -n "$inittab" ]] && { print $inittab | sudo tee -a $strapdir/etc/inittab >/dev/null }
 	for i in $custmodules; do
 		print $i | sudo tee -a $strapdir/etc/modules >/dev/null
-	done
+	done || return 0
 }
