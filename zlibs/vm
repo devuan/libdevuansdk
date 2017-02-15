@@ -112,7 +112,7 @@ vm_vbox_setup() {
 	act "creating vm"
 	VBoxManage createvm --name "$vmname" --ostype Debian_64 --register || zerr
 	act "setting up ram and group"
-	VBoxManage modifyvm "$vmname" --memory 256 --groups /personalcloud || zerr
+	VBoxManage modifyvm "$vmname" --memory 256 --groups /vmsdk || zerr
 	act "setting up storage"
 	VBoxManage storagectl "$vmname" --name "IDE Controller" --add ide || zerr
 	act "attaching storage"
@@ -172,7 +172,15 @@ vm_pack_dist() {
 	silly
 	sha256sum $R/dist/${vm_name}.box > $R/dist/${vm_name}.box.sha
 	sha256sum $R/dist/${vm_name}.${imageformat} > $R/dist/${vm_name}.${imageformat}.sha
-	# TODO: XXX: cleanup vagrant/virtualbox leftovers
+	notice "cleaning up virtualbox leftovers"
+	pushd "$workdir"
+	VBoxManage unregistervm "$vmname" --delete
+	rm -f metadata.json Vagrantfile
+	rm -rf .vagrant
+	popd
+	rm -rf "$workdir"
+	rm -rf "$HOME/VirtualBox VMs/vmsdk"
+
 	notice "done!"
 	ls -1 $R/dist
 }

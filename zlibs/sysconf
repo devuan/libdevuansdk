@@ -66,8 +66,8 @@ fe02::1          ip6-allrouters
 EOF
 }
 
-conf_print_networkifaces() {
-	fn conf_print_networkifaces
+conf_print_netifaces() {
+	fn conf_print_netifaces
 
 	cat <<EOF
 # interfaces(5) file used by ifup(8) and ifdown(8)

@@ -288,6 +288,6 @@ silly() {
 		"god is porco"
 		"A million hamsters are spinning their wheels right now"
 	)
-	local rnd=$(shuf -i1-30 -n 1)
+	local rnd=$(shuf -i1-$#funneh -n 1)
 	act "${funneh[$rnd]}" ; [[ $arg1 = sleep ]] && sleep $arg2
 }
