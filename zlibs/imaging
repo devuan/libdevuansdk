@@ -167,7 +167,7 @@ image_raw_as_strapdir() {
 
 	notice "mounting raw image to strapdir"
 	sudo mount ${loopdevice}p1 $strapdir
-
+	echo 1 | sudo tee ${strapdir}/.keep >/dev/null ## hack? XXX: bootstrap_tar_unpack couldn't see it
 	popd
 }
 
@@ -193,6 +193,6 @@ image_qcow2_as_strapdir() {
 
 	notice "mounting qcow2 image to strapdir"
 	sudo mount ${loopdevice}p1 $strapdir || zerr
-
+	echo 1 | sudo tee ${strapdir}/.keep >/dev/null ## hack? XXX: bootstrap_tar_unpack couldn't see it
 	popd
 }
