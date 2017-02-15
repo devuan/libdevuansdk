@@ -136,6 +136,8 @@ Vagrant.configure("2") do |config|
 	config.ssh.username = "root"
 	config.ssh.password = "toor"
 	config.vm.guest = :debian
+	config.vm.synced_folder ".", "/vagrant", disabled: true
+	# https://github.com/dotless-de/vagrant-vbguest
 end
 EOF
 	act "creating metadata.json"
