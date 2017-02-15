@@ -63,41 +63,49 @@ EOF
 	devprocsys umount $strapdir || zerr
 }
 
-vm_umount_raw() {
-	fn vm_umount_raw
-	req=(strapdir loopdevice)
+vm_umount_${imageformat}() {
+	fn vm_umount_${imageformat}
+	req=(strapdir loopdevice imageformat)
 	ckreq || return 1
 
-	notice "remounting raw image"
+	notice "remounting ${imageformat} image"
 	sudo mount -o remount,ro $strapdir || zerr
 	sync
 	notice "flushing bytes and buffers"
 	sudo blockdev --flushbufs $loopdevice || zerr
 	sudo python -c 'import os; os.fsync(open("'${loopdevice}'", "r+b"))' || zerr
-	notice "unmounting raw image from strapdir"
-	silly sleep 1
+	notice "unmounting ${imageformat} image from strapdir"
 	sudo umount $strapdir || zerr
+	silly sleep 1
 	sudo rmdir $strapdir  || zerr
 
-	sync
-	silly sleep 1
 	notice "cleaning up"
-	sudo losetup -d ${loopdevice} || zerr
+	case "$imageformat" in
+		raw)
+			sudo losetup -d ${loopdevice} || zerr
+			;;
+		qcow2)
+			sudo qemu-nbd --disconnect ${loopdevice} || zerr
+			;;
+		*)
+			zerr
+			;;
+	esac
 	silly sleep 1
 }
 
 vm_vbox_setup() {
 	fn vm_vbox_setup
-	req=(workdir)
+	req=(workdir imageformat)
 	ckreq || return 1
 
-	notice "converting raw image to vdi"
+	notice "converting ${imageformat} image to vdi"
 	pushd $workdir
-	sudo qemu-img convert -f raw -O vdi base.raw base.vdi || zerr
-	sudo chown $USER base.vdi || zerr
+	qemu-img convert -f ${imageformat} -O vdi base.${imageformat} base.vdi || zerr
+	#sudo chown $USER base.vdi || zerr
 	VBoxManage modifyhd base.vdi --type immutable --compact || zerr
-	act "removing old raw image"
-	rm -f base.raw
+	#act "removing old raw image"
+	#rm -f base.raw
 
 	vmname="${os}-${release}-prevagrant"
 	notice "importing base.vdi to a VBox"
@@ -153,15 +161,17 @@ EOF
 
 vm_pack_dist() {
 	fn vm_pack_dist
-	req=(workdir)
+	req=(workdir imageformat)
 	ckreq || return 1
 
 	notice "packing up dist"
 	mkdir -p $R/dist
 	mv $workdir/${vm_name}.box $R/dist
-	act "calculating sha256sum..."
+	mv $workdir/base.${imageformat} $R/dist/${vm_name}.${imageformat}
+	act "calculating sha256 sums..."
 	silly
 	sha256sum $R/dist/${vm_name}.box > $R/dist/${vm_name}.box.sha
+	sha256sum $R/dist/${vm_name}.${imageformat} > $R/dist/${vm_name}.${imageformat}.sha
 	# TODO: XXX: cleanup vagrant/virtualbox leftovers
 	notice "done!"
 	ls -1 $R/dist

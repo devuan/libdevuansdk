@@ -67,21 +67,21 @@ build_iso_dist() {
 
 build_vagrant_dist() {
 	fn build_vagrant_dist
-	req=(workdir strapdir os arch)
+	req=(workdir strapdir os arch imageformat)
 	ckreq || return 1
 
 	notice "building complete vagrant image"
 
-	image_raw_as_strapdir   || zerr
-	bootstrap_complete_base || zerr
-	vm_inject_overrides     || zerr
+	image_${imageformat}_as_strapdir   || zerr
+	bootstrap_complete_base            || zerr
+	vm_inject_overrides                || zerr
 	[[ $BLEND = 1 ]] && blend_preinst  || zerr
-	vm_setup_grub           || zerr
+	vm_setup_grub                      || zerr
 	[[ $BLEND = 1 ]] && blend_postinst || zerr
-	vm_umount_raw           || zerr
-	vm_vbox_setup           || zerr
-	vm_vagrant_package      || zerr
-	vm_pack_dist            || zerr
+	vm_umount_${imageformat}           || zerr
+	vm_vbox_setup                      || zerr
+	vm_vagrant_package                 || zerr
+	vm_pack_dist                       || zerr
 }
 
 getfield() {
@@ -125,6 +125,19 @@ findloopmapp() {
 	func "mappdevice: $mappdevice"
 
 	silly sleep 4
+}
+
+findfreenbd() {
+	fn findfreenbd
+
+	notice "looking for a free /dev/nbd"
+
+	for i in $(seq 0 8); do
+		grep "^/dev/nbd${i}" /proc/mounts >/dev/null || {
+			print "/dev/nbd${i}"
+			break
+		}
+	done
 }
 
 qemu_install_user() {
@@ -231,7 +244,7 @@ chroot-script() {
 		*)
 			local script="$1"
 			notice "chrooting to execute $script..."
-			sudochmod +x  "$strapdir/$script" || zerr
+			sudo chmod +x  "$strapdir/$script" || zerr
 			sudo -E chroot "$strapdir" "/$script" || zerr
 			;;
 	esac

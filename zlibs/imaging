@@ -170,3 +170,28 @@ image_raw_as_strapdir() {
 
 	popd
 }
+
+image_qcow2_as_strapdir() {
+	fn image_qcow2_as_strapdir
+	req=(workdir strapdir size)
+	ckreq || return 1
+
+	pushd "$workdir"
+
+	notice "creating qcow2 image of $size MB"
+	rm -f base.qcow2
+	qemu-img create -f qcow2 base.qcow2 ${size}M     || zerr
+	sudo modprobe nbd max_part=8                     || zerr
+	loopdevice="$(findfreenbd)"
+	[ -n "$loopdevice" ]                             || zerr
+	sudo qemu-nbd --connect=${loopdevice} base.qcow2 || zerr
+	notice "partitioning"
+	sudo parted ${loopdevice} mktable msdos              || zerr
+	sudo parted ${loopdevice} mkpart primary '0%' '100%' || zerr
+	sudo mkfs.ext4 ${loopdevice}p1 || zerr
+
+	notice "mounting qcow2 image to strapdir"
+	sudo mount ${loopdevice}p1 $strapdir || zerr
+
+	popd
+}
