@@ -137,15 +137,15 @@ bootstrap_tar_unpack() {
 	req=(unpath bootstrap_tgz)
 	ckreq || return 1
 
-	if [[ -f ${unpath}/.keep ]]; then
+	if [[ -f "${unpath}/.keep" ]]; then
+		error "no .keep file found. exiting..."
+		zerr
+		exit 1
+	else
 		mkdir -p ${unpath}
 		silly
 		sudo tar xfp $bootstrap_tgz -C ${unpath}
 		sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
-	else
-		error "no .keep file found. exiting..."
-		zerr
-		exit 1
 	fi
 
 	cat <<EOF | sudo tee ${strapdir}/postunpack >/dev/null
