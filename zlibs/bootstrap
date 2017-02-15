@@ -145,6 +145,7 @@ bootstrap_tar_unpack() {
 	else
 		error "no .keep file found. exiting..."
 		zerr
+		exit 1
 	fi
 
 	cat <<EOF | sudo tee ${strapdir}/postunpack >/dev/null

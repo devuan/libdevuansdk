@@ -184,6 +184,7 @@ image_qcow2_as_strapdir() {
 	sudo modprobe nbd max_part=8                     || zerr
 	loopdevice="$(findfreenbd)"
 	[ -n "$loopdevice" ]                             || zerr
+	act "$loopdevice"
 	sudo qemu-nbd --connect=${loopdevice} base.qcow2 || zerr
 	notice "partitioning"
 	sudo parted ${loopdevice} mktable msdos              || zerr
