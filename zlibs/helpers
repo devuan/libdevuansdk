@@ -36,11 +36,11 @@ build_image_dist() {
 	## TODO: add blend_prebuild; blend_midbuild; blend_postbuild
 
 	bootstrap_complete_base            || zerr
-	[[ $BLEND = 1 ]] && blend_preinst  || zerr
+	blend_preinst                      || zerr
 	image_prepare_raw                  || zerr
 	image_partition_raw_${parted_type} || zerr
 	build_kernel_${arch}               || zerr
-	[[ $BLEND = 1 ]] && blend_postinst || zerr
+	blend_postinst                     || zerr
 	rsync_to_raw_image                 || zerr
 	image_pack_dist                    || zerr
 }
@@ -54,13 +54,13 @@ build_iso_dist() {
 	## XXX: TODO: upstream existing heads code
 
 	bootstrap_complete_base || zerr
-	[[ $BLEND = 1 ]] && blend_preinst || zerr
+	blend_preinst           || zerr
 	iso_prepare_strap       || zerr
 	build_kernel_${arch}    || zerr
 	iso_setup_isolinux      || zerr
 	iso_write_isolinux_cfg  || zerr
-	[[ $INSTALLER = 1 ]] && iso_setup_installer || zerr
-	[[ $BLEND = 1 ]] && blend_postinst || zerr
+	#[[ $INSTALLER = 1 ]] && iso_setup_installer || zerr
+	blend_postinst          || zerr
 	iso_squash_strap        || zerr
 	iso_xorriso_build       || zerr
 }
@@ -75,9 +75,9 @@ build_vagrant_dist() {
 	image_${imageformat}_as_strapdir   || zerr
 	bootstrap_complete_base            || zerr
 	vm_inject_overrides                || zerr
-	[[ $BLEND = 1 ]] && blend_preinst  || zerr
+	blend_preinst                      || zerr
 	vm_setup_grub                      || zerr
-	[[ $BLEND = 1 ]] && blend_postinst || zerr
+	blend_postinst                     || zerr
 	vm_umount_${imageformat}           || zerr
 	vm_vbox_setup                      || zerr
 	vm_vagrant_package                 || zerr
@@ -250,6 +250,18 @@ chroot-script() {
 	esac
 
 	sudo rm -f $strapdir/$script
+}
+
+blend_preinst() {
+	fn blend_preinst
+	func "not overriden"
+	return 0
+}
+
+blend_postinst() {
+	fn blend_postinst
+	func "not overriden"
+	return 0
 }
 
 silly() {

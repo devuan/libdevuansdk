@@ -19,7 +19,7 @@
 
 ## burn baby
 
-[[ $INSTALLER = 1 ]] && base_packages+=(grub-pc)
+#[[ $INSTALLER = 1 ]] && base_packages+=(grub-pc)
 
 iso_prepare_strap() {
 	fn iso_prepare_strap
