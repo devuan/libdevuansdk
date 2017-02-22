@@ -89,7 +89,7 @@ iso_squash_strap() {
 	notice "creating squashfs out of strapdir"
 
 	pushd $workdir
-		sudo mksquashfs $strapdir binary/live/filesystem.squashfs -comp xz -e boot
+	sudo mksquashfs $strapdir binary/live/filesystem.squashfs -comp xz -e boot || zerr
 	popd
 }
 
@@ -101,6 +101,7 @@ iso_xorriso_build() {
 	notice "building iso..."
 	isoname="${image_name}-live.iso"
 
+	mkdir -p $R/dist
 	pushd $workdir
 	sudo xorriso -as mkisofs -r -J -joliet-long -l \
 		-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
@@ -112,7 +113,7 @@ iso_xorriso_build() {
 		-boot-load-size 4 \
 		-boot-info-table \
 		-o $R/dist/$isoname \
-		binary
+		binary || zerr
 	popd
 }
 

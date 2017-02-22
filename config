@@ -71,7 +71,6 @@ base_packages=(
 	zsh
 	rsync
 	git-core
-	haveged
 )
 
 purge_packages+=(
