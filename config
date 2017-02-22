@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -19,7 +19,7 @@
 
 ## libdevuansdk configuration
 
-vars+=(release version mirror section blend_name)
+vars+=(release version mirror section blend_name image_name vm_name)
 arrs+=(core_packages base_packages purge_packages blend_packages)
 
 os="devuan"
@@ -32,6 +32,11 @@ image_name="${os}_${release}_${version}_${arch}"
 [[ -n $blend_name  ]] && image_name="${image_name}_${blend_name}"
 [[ -n $device_name ]] && image_name="${image_name}_${device_name}"
 
+vm_name="${os}_${release}_${version}_${arch}_vagrant"
+[[ -n $blend_name  ]] && vm_name="${image_name}_${blend_name}"
+
+rootcredentials="root:toor"
+
 core_packages=(
 	devuan-keyring
 	debian-keyring
@@ -41,8 +46,8 @@ core_packages=(
 	bzip2
 	curl
 	less
-	vim-tiny
-	nano-tiny
+	vim
+	nano
 	sysvinit
 )
 
@@ -54,8 +59,9 @@ base_packages=(
 	sudo
 	alsa-base
 	alsa-utils
-	gawk
+	mawk
 	tmux
+	screen
 	openntpd
 	wpasupplicant
 	wireless-tools
@@ -65,9 +71,9 @@ base_packages=(
 	zsh
 	rsync
 	git-core
+	haveged
 )
 
-purge_packages=(
+purge_packages+=(
 	dbus
-	nano
 )

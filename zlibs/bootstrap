@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -52,17 +52,17 @@ bootstrap_complete_base() {
 
 	## write all system configuration
 	notice "writing system configuration"
-	conf_print_debconf        | sudo tee $strapdir/debconf.set
-	conf_print_fstab          | sudo tee $strapdir/etc/fstab
-	conf_print_hostname       | sudo tee $strapdir/etc/hostname
-	conf_print_hosts          | sudo tee $strapdir/etc/hosts
-	conf_print_networkifaces  | sudo tee $strapdir/etc/network/interfaces
-	conf_print_resolvconf     | sudo tee $strapdir/etc/resolv.conf
-	conf_print_sourceslist    | sudo tee $strapdir/etc/apt/sources.list
+	conf_print_debconf     | sudo tee $strapdir/debconf.set >/dev/null
+	conf_print_fstab       | sudo tee $strapdir/etc/fstab >/dev/null
+	conf_print_hostname    | sudo tee $strapdir/etc/hostname >/dev/null
+	conf_print_hosts       | sudo tee $strapdir/etc/hosts >/dev/null
+	conf_print_netifaces   | sudo tee $strapdir/etc/network/interfaces >/dev/null
+	conf_print_resolvconf  | sudo tee $strapdir/etc/resolv.conf >/dev/null
+	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list >/dev/null
+	conf_print_locales     | sudo tee $strapdir/etc/profile.d/locales.sh >/dev/null
 
 	## write third-stage for chroot
-	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage
-	bootstrap_config_cleanup    | sudo tee $strapdir/cleanup
+	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage >/dev/null
 
 	## chroot into it and configure further
 	## debootstrap stage 3
@@ -70,30 +70,13 @@ bootstrap_complete_base() {
 
 	devprocsys mount $strapdir || zerr
 
-	chroot-script -d thirdstage cleanup || zerr
+	chroot-script -d thirdstage || zerr
 
 	sleep 1
 	devprocsys umount $strapdir || zerr
 
 	bootstrap_tar_pack             || zerr
 	bootstrap_tar_unpack $strapdir || zerr
-}
-
-bootstrap_config_cleanup() {
-	fn config_cleanup
-
-	cat << EOF
-#!/bin/sh
-rm -f /debconf.set
-rm -f /thirdstage
-rm -f /etc/ssh/*_key
-rm -f /etc/ssh/*.pub
-rm -f /root/.bash_history
-#rm -f /usr/bin/qemu-arm-static
-## our file for which we check the bootstrap is complete
-echo "1" > .done
-rm -f /cleanup
-EOF
 }
 
 bootstrap_config_thirdstage() {
@@ -106,7 +89,7 @@ bootstrap_config_thirdstage() {
 apt-get update
 debconf-set-selections /debconf.set
 
-echo "root:toor" | chpasswd
+echo "${rootcredentials}" | chpasswd
 sed -i -e 's/KERNEL\!=\"eth\*|/KERNEL\!=\"/' \
 	/lib/udev/rules.d/75-persistent-net-generator.rules
 rm -f /etc/udev/rules.d/70-persistent-net.rules
@@ -117,6 +100,11 @@ apt-get --yes --force-yes install ${base_packages}
 apt-get --yes --force-yes purge  ${purge_packages}
 apt-get --yes --force-yes autoremove
 apt-get clean
+
+rm -f /debconf.set
+rm -f /etc/ssh/ssh_host_*
+rm -f /root/.bash_history
+echo "1" > .keep
 EOF
 }
 
@@ -124,19 +112,6 @@ bootstrap_tar_pack() {
 	fn bootstrap_tar_pack
 	req=(bootstrap_tgz)
 	ckreq || return 1
-
-	#for i in $custmodules;do sudo sed -i -e '/'$i'/d' $strapdir/etc/modules;done
-	#[[ -n $inittab ]] && sudo sed -i -e '/'$inittab'/d' $strapdir/etc/inittab
-
-	cat <<EOF | sudo tee ${strapdir}/prepack
-#!/bin/sh
-#apt-get --yes --force-yes purge ${extra_packages}
-apt-get --yes --force-yes autoremove
-apt-get clean
-rm -f /prepack
-EOF
-
-	chroot-script prepack || zerr
 
 	local _dest=$(dirname $bootstrap_tgz)
 
@@ -162,21 +137,24 @@ bootstrap_tar_unpack() {
 	req=(unpath bootstrap_tgz)
 	ckreq || return 1
 
-	[[ -f ${unpath}/.done ]] || {
+	if [[ -f "${unpath}/.keep" ]]; then
 		mkdir -p ${unpath}
 		silly
 		sudo tar xfp $bootstrap_tgz -C ${unpath}
 		sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
-	}
+	else
+		error "no .keep file found. exiting..."
+		zerr
+		exit 1
+	fi
 
-	cat <<EOF | sudo tee ${strapdir}/postunpack
+	cat <<EOF | sudo tee ${strapdir}/postunpack >/dev/null
 #!/bin/sh
 apt-get update
 apt-get --yes --force-yes upgrade
 apt-get --yes --force-yes install ${extra_packages}
 apt-get --yes --force-yes autoremove
 apt-get clean
-rm -f /postunpack
 EOF
 
 	devprocsys mount $strapdir
@@ -184,8 +162,8 @@ EOF
 	devprocsys umount $strapdir
 
 	## below typically used in arm-sdk
-	[[ -z $inittab ]] || { print $inittab | sudo tee -a $strapdir/etc/inittab }
+	[[ -n "$inittab" ]] && { print $inittab | sudo tee -a $strapdir/etc/inittab >/dev/null }
 	for i in $custmodules; do
-		print $i | sudo tee -a $strapdir/etc/modules
-	done
+		print $i | sudo tee -a $strapdir/etc/modules >/dev/null
+	done || return 0
 }

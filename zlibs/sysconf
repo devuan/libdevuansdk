@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -66,8 +66,8 @@ fe02::1          ip6-allrouters
 EOF
 }
 
-conf_print_networkifaces() {
-	fn conf_print_networkifaces
+conf_print_netifaces() {
+	fn conf_print_netifaces
 
 	cat <<EOF
 # interfaces(5) file used by ifup(8) and ifdown(8)
@@ -83,6 +83,9 @@ iface lo inet loopback
 
 auto eth0
 iface eth0 inet dhcp
+
+#auto eth1
+#iface eth1 inet dhcp
 
 # auto eth0
 # iface eth0 inet static
@@ -119,10 +122,21 @@ conf_print_sourceslist() {
 deb ${mirror} ${release} ${section}
 deb ${mirror} ${release}-updates ${section}
 deb ${mirror} ${release}-security ${section}
+#deb ${mirror} ${release}-backports ${section}
 
 ## source repositories
 #deb-src ${mirror} ${release} ${section}
 #deb-src ${mirror} ${release}-updates ${section}
 #deb-src ${mirror} ${release}-security ${section}
+#deb-src ${mirror} ${release}-backports ${section}
+EOF
+}
+
+conf_print_locales() {
+	fn conf_print_locales
+
+	cat <<EOF
+export LANG=C
+export LC_ALL=C
 EOF
 }

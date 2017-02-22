@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -36,11 +36,11 @@ build_image_dist() {
 	## TODO: add blend_prebuild; blend_midbuild; blend_postbuild
 
 	bootstrap_complete_base            || zerr
-	[[ $BLEND = 1 ]] && blend_preinst  || zerr
+	blend_preinst                      || zerr
 	image_prepare_raw                  || zerr
 	image_partition_raw_${parted_type} || zerr
 	build_kernel_${arch}               || zerr
-	[[ $BLEND = 1 ]] && blend_postinst || zerr
+	blend_postinst                     || zerr
 	rsync_to_raw_image                 || zerr
 	image_pack_dist                    || zerr
 }
@@ -51,17 +51,42 @@ build_iso_dist() {
 	ckreq || return 1
 
 	notice "building complete iso image"
+	## XXX: TODO: upstream existing heads code
 
 	bootstrap_complete_base || zerr
-	[[ $BLEND = 1 ]] && blend_preinst || zerr
+	blend_preinst           || zerr
 	iso_prepare_strap       || zerr
 	build_kernel_${arch}    || zerr
 	iso_setup_isolinux      || zerr
 	iso_write_isolinux_cfg  || zerr
-	[[ $INSTALLER = 1 ]] && iso_setup_installer
-	[[ $BLEND = 1 ]] && blend_postinst || zerr
+	#[[ $INSTALLER = 1 ]] && iso_setup_installer || zerr
+	blend_postinst          || zerr
 	iso_squash_strap        || zerr
 	iso_xorriso_build       || zerr
+}
+
+build_vagrant_dist() {
+	fn build_vagrant_dist
+	req=(workdir strapdir os arch imageformat)
+	ckreq || return 1
+
+	notice "building complete vagrant image"
+
+	image_${imageformat}_as_strapdir   || zerr
+	bootstrap_complete_base            || zerr
+	vm_inject_overrides                || zerr
+	blend_preinst                      || zerr
+	vm_setup_grub                      || zerr
+	blend_postinst                     || zerr
+	vm_umount_${imageformat}           || zerr
+	vm_vbox_setup                      || zerr
+	vm_vagrant_package                 || zerr
+	vm_pack_dist                       || zerr
+}
+
+getfield() {
+	fn getfield $*
+	print "$1" | grep "^$2=" | sed -e 's:.*=\(.*\)$:\1:g' | sed -e 's:^"\(.*\)"$:\1:g'
 }
 
 devprocsys() {
@@ -102,6 +127,19 @@ findloopmapp() {
 	silly sleep 4
 }
 
+findfreenbd() {
+	fn findfreenbd
+
+	notice "looking for a free /dev/nbd"
+
+	for i in $(seq 0 8); do
+		grep "^/dev/nbd${i}" /proc/mounts >/dev/null || {
+			print "/dev/nbd${i}"
+			break
+		}
+	done
+}
+
 qemu_install_user() {
 	fn qemu_install_user
 	req=(qemu_bin strapdir)
@@ -112,14 +150,14 @@ qemu_install_user() {
 }
 
 dpkgdivert() {
-	fn dpkgdivert $@
+	fn dpkgdivert "$@"
 	req=(watdo werdo)
 	local watdo="$1"
 	local werdo="$2"
 	ckreq || return 1
 
 	if [[ $watdo = on ]]; then
-		cat <<EOF | sudo tee ${werdo}/dpkgdivert
+		cat <<EOF | sudo tee ${werdo}/dpkgdivert >/dev/null
 #!/bin/sh
 dpkg-divert --add --local \
 	--divert /usr/sbin/invoke-rc.d.chroot \
@@ -127,15 +165,13 @@ dpkg-divert --add --local \
 cp /bin/true /usr/sbin/invoke-rc.d
 echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
 chmod +x /usr/sbin/policy-rc.d
-rm -f /dpkgdivert
 EOF
 	elif [[ $watdo = off ]]; then
-		cat <<EOF | sudo tee ${werdo}/dpkgdivert
+		cat <<EOF | sudo tee ${werdo}/dpkgdivert >/dev/null
 #!/bin/sh
 rm -f /usr/sbin/policy-rc.d
 rm -f /usr/sbin/invoke-rc.d
 dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
-rm -f /dpkgdivert
 EOF
 	fi
 
@@ -148,7 +184,7 @@ enableserv() {
 	req=(service strapdir)
 	ckreq || return 1
 
-	cat <<EOF | sudo tee -a ${strapdir}/enserv
+	cat <<EOF | sudo tee -a ${strapdir}/enserv >/dev/null
 #!/bin/sh
 update-rc.d ${service} enable
 EOF
@@ -163,7 +199,7 @@ disableserv() {
 	req=(service strapdir)
 	ckreq || return 1
 
-	cat <<EOF | sudo tee -a ${strapdir}/disserv
+	cat <<EOF | sudo tee -a ${strapdir}/disserv >/dev/null
 #!/bin/sh
 update-rc.d ${service} disable
 EOF
@@ -172,68 +208,15 @@ EOF
 	chroot-script disserv
 }
 
-enablessh() {
-	fn enablessh
-	req=(strapdir)
-	ckreq || return 1
-
-	cat <<EOF | sudo tee -a ${strapdir}/enssh
-#!/bin/sh
-sed -i -e 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-update-rc.d ssh enable
-update-rc.d regensshkeys defaults
-update-rc.d regensshkeys enable
-rm -f /enssh
-EOF
-
-	cat <<EOF | sudo tee ${strapdir}/etc/init.d/regensshkeys
-#!/bin/sh
-#
-### BEGIN INIT INFO
-# Provides:       something
-# Required-Start: \$syslog
-# Required-Stop:  \$syslog
-# Default-Start:  2 3 4 5
-# Default-Stop:   0 1 6
-# Short-Description: Regenerate openssh-server keys
-# Description:    Regenerate openssh-server keys
-### END INIT INFO
-#
-set -e
-set -u
-
-genkeys() {
-	/usr/sbin/service ssh stop
-	/usr/sbin/dpkg-reconfigure openssh-server
-	/usr/sbin/service ssh start
-	/usr/sbin/update-rc.d regensshkeys disable
-}
-
-case "\$1" in
-	start)
-		genkeys;;
-	stop)
-		;;
-	*)
-		echo "usage: \$(basename \$0) {start}"
-		;;
-esac
-EOF
-
-	sudo chmod +x $strapdir/etc/init.d/regensshkeys
-
-	chroot-script -d enssh
-}
-
 install-custdebs() {
 	fn install-custdebs
 	req=(R strapdir)
 	ckreq || return 1
 
 	sudo mkdir -p $strapdir/debs
-	sudo cp $CPVERBOSE -f $R/extra/custom-packages/*.deb $strapdir/debs/
+	sudo cp $R/extra/custom-packages/*.deb $strapdir/debs/
 
-	cat <<EOF | sudo tee ${strapdir}/install-debs
+	cat <<EOF | sudo tee ${strapdir}/install-debs >/dev/null
 #!/bin/sh
 for deb in /debs/*.deb; do
 	dpkg -i \$deb
@@ -241,7 +224,7 @@ for deb in /debs/*.deb; do
 done
 apt-get autoremove
 apt-get clean
-rm -rf /debs install-debs
+rm -rf /debs
 EOF
 	chroot-script install-debs
 }
@@ -251,27 +234,34 @@ chroot-script() {
 
 	case "x$1" in
 		x-d)
-			shift 1
-			local scripts="$@"
-
-			dpkgdivert on $strapdir
-			for i in $scripts; do
-				notice "chrooting to execute $i..."
-				sudo chmod +x $strapdir/$i
-				sudo -E chroot $strapdir /$i
-			done
-			dpkgdivert off $strapdir
+			local script="$2"
+			dpkgdivert on "$strapdir"
+			notice "chrooting to execute $script..."
+			sudo chmod +x  "$strapdir/$script" || zerr
+			sudo -E chroot "$strapdir" "/$script" || zerr
+			dpkgdivert off "$strapdir"
 			;;
 		*)
-			local scripts="$@"
-
-			for i in $scripts; do
-				notice "chrooting to execute $i..."
-				sudo chmod +x $strapdir/$i
-				sudo -E chroot $strapdir /$i
-			done
+			local script="$1"
+			notice "chrooting to execute $script..."
+			sudo chmod +x  "$strapdir/$script" || zerr
+			sudo -E chroot "$strapdir" "/$script" || zerr
 			;;
 	esac
+
+	sudo rm -f $strapdir/$script
+}
+
+blend_preinst() {
+	fn blend_preinst
+	func "not overriden"
+	return 0
+}
+
+blend_postinst() {
+	fn blend_postinst
+	func "not overriden"
+	return 0
 }
 
 silly() {
@@ -310,6 +300,6 @@ silly() {
 		"god is porco"
 		"A million hamsters are spinning their wheels right now"
 	)
-	local rnd=$(shuf -i1-30 -n 1)
+	local rnd=$(shuf -i1-$#funneh -n 1)
 	act "${funneh[$rnd]}" ; [[ $arg1 = sleep ]] && sleep $arg2
 }

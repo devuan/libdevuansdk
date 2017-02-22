@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -19,7 +19,7 @@
 
 ## imagine images
 
-vars+=(image_name bootpart rootpart)
+vars+=(image_name bootpart rootpart loopdevice)
 
 image_prepare_raw() {
 	fn image_prepare_raw
@@ -132,11 +132,10 @@ image_raw_mount() {
 	req=(workdir bootpart rootpart)
 	ckreq || return 1
 
-	mkdir -p $workdir/boot $workdir/root
-	if [[ $parted_type = dos ]]; then
-		sudo mount $bootpart $workdir/boot && act "mounted boot partition" || zerr
-	fi
-	sudo mount $rootpart $workdir/root && act "mounted root partition" || zerr
+	mkdir -p $workdir/mnt
+	sudo mount $rootpart $workdir/mnt && act "mounted root partition" || zerr
+	sudo mkdir $workdir/mnt/boot
+	sudo mount $bootpart $workdir/mnt/boot && act "mounted boot partition" || zerr
 }
 
 image_raw_umount() {
@@ -144,8 +143,56 @@ image_raw_umount() {
 	req=(workdir bootpart rootpart)
 	ckreq || return 1
 
-	if [[ $parted_type = dos ]]; then
-		sudo umount $workdir/boot && act "unmounted boot partition" || zerr
-	fi
-	sudo umount $workdir/root && act "unmounted root partition" || zerr
+	sudo umount $workdir/mnt/boot && act "unmounted boot partition" || zerr
+	sleep 1
+	sudo umount $workdir/mnt      && act "unmounted root partition" || zerr
+}
+
+image_raw_as_strapdir() {
+	fn image_raw_as_strapdir
+	req=(workdir strapdir size)
+	ckreq || return 1
+
+	pushd "$workdir"
+
+	notice "creating raw image of $size MB"
+	sudo rm -f base.raw
+	sudo qemu-img create -f raw base.raw ${size}M   || zerr
+	notice "partitioning"
+	sudo parted base.raw mktable msdos              || zerr
+	sudo parted base.raw mkpart primary '0%' '100%' || zerr
+	loopdevice=$(losetup --find)
+	sudo losetup -P $loopdevice base.raw || zerr
+	sudo mkfs.ext4 ${loopdevice}p1       || zerr
+
+	notice "mounting raw image to strapdir"
+	sudo mount ${loopdevice}p1 $strapdir
+	echo 1 | sudo tee ${strapdir}/.keep >/dev/null ## hack? XXX: bootstrap_tar_unpack couldn't see it
+	popd
+}
+
+image_qcow2_as_strapdir() {
+	fn image_qcow2_as_strapdir
+	req=(workdir strapdir size)
+	ckreq || return 1
+
+	pushd "$workdir"
+
+	notice "creating qcow2 image of $size MB"
+	rm -f base.qcow2
+	qemu-img create -f qcow2 base.qcow2 ${size}M     || zerr
+	sudo modprobe nbd max_part=8                     || zerr
+	loopdevice="$(findfreenbd)"
+	[ -n "$loopdevice" ]                             || zerr
+	act "$loopdevice"
+	sudo qemu-nbd --connect=${loopdevice} base.qcow2 || zerr
+	notice "partitioning"
+	sudo parted ${loopdevice} mktable msdos              || zerr
+	sudo parted ${loopdevice} mkpart primary '0%' '100%' || zerr
+	sudo mkfs.ext4 ${loopdevice}p1 || zerr
+
+	notice "mounting qcow2 image to strapdir"
+	sudo mount ${loopdevice}p1 $strapdir || zerr
+	echo 1 | sudo tee ${strapdir}/.keep >/dev/null ## hack? XXX: bootstrap_tar_unpack couldn't see it
+	popd
 }

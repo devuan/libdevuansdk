@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016 Dyne.org Foundation
+# Copyright (c) 2016-2017 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -26,23 +26,17 @@ rsync_to_raw_image() {
 
 	notice "rsyncing strapdir to raw image..."
 	image_raw_mount
+	sleep 1
 
 	silly
 	pushd $strapdir
-	sudo rm -f .done
-	sudo rsync -HPavz -q --exclude={./boot} ./* $workdir/root || {
+	#sudo rm -f .done
+
+	sudo rsync -HPavz -q ./* $workdir/mnt || {
 		image_raw_umount
-		die "not enough space. report a bug please"
+		die "not enough space, please report a bug"
 		zerr
 	}
-
-	if [[ $parted_type = dos ]]; then
-		sudo rsync -HPavz -q ./boot/* $workdir/boot || {
-			image_raw_umount
-			die "not enough space. report a bug please"
-			zerr
-		}
-	fi
 	popd
 
 	image_raw_umount
