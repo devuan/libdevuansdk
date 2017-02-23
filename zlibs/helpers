@@ -89,6 +89,23 @@ getfield() {
 	print "$1" | grep "^$2=" | sed -e 's:.*=\(.*\)$:\1:g' | sed -e 's:^"\(.*\)"$:\1:g'
 }
 
+add-user() {
+	fn add-user $*
+	local user="$1"
+	local pass="$2"
+	req=(strapdir user pass)
+	ckreq || return 1
+
+	notice "adding user $user:$pass"
+
+	cat <<EOF | sudo tee ${strapdir}/adduser
+#!/bin/sh
+useradd -m ${user}
+echo "${user}:${pass}" | chpasswd
+EOF
+	chroot-script adduser || zerr
+}
+
 devprocsys() {
 	fn devprocsys "$@"
 	local watdo="$1"

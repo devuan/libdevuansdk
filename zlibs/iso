@@ -72,7 +72,7 @@ menu title ${os} boot menu
 timeout 300
 
 label live-${arch}
-menu label ^${os} Live (${arch})
+menu label ^${os} live (${arch})
 menu default
 linux /live/vmlinuz
 append initrd=/live/initrd boot=live
