@@ -31,7 +31,7 @@ iso_prepare_strap() {
 	cat <<EOF | sudo tee ${strapdir}/isoprep >/dev/null
 #!/bin/sh
 apt-get update
-apt-get --yes --force-yes install dialog live-boot
+apt-get --yes --force-yes install dialog live-boot live-boot-initramfs-tools
 apt-get --yes --force-yes autoremove
 apt-get clean
 EOF
