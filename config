@@ -20,6 +20,7 @@
 ## libdevuansdk configuration
 
 vars+=(release version mirror section blend_name image_name vm_name)
+vars+=(arch earch)
 arrs+=(core_packages base_packages purge_packages blend_packages)
 
 os="devuan"
