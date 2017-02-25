@@ -141,7 +141,7 @@ findloopmapp() {
 	func "loopdevice: $loopdevice"
 	func "mappdevice: $mappdevice"
 
-	silly sleep 4
+	silly sleep 2
 }
 
 findfreenbd() {
