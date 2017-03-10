@@ -45,6 +45,9 @@ bootstrap_complete_base() {
 
 	[[ $arch =~ "^arm.." ]] && { qemu_install_user || zerr }
 
+	sudo mkdir -p $strapdir/tmp
+	sudo chmod 1777 $strapdir/tmp
+
 	## debootstrap stage 2
 	notice "running debootstrap stage 2"
 	sudo -E chroot $strapdir \
