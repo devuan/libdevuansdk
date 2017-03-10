@@ -36,7 +36,9 @@ apt-get --yes --force-yes autoremove
 apt-get clean
 EOF
 
-	chroot-script -d isoprep || zerr
+	devprocsys mount $strapdir  || zerr
+	chroot-script -d isoprep    || zerr
+	devprocsys umount $strapdir || zerr
 }
 
 iso_setup_isolinux() {
