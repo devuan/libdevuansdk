@@ -26,17 +26,14 @@ rsync_to_raw_image() {
 
 	notice "rsyncing strapdir to raw image..."
 	image_raw_mount
-	sleep 1
+	silly sleep 1
 
-	silly
 	pushd $strapdir
-	#sudo rm -f .done
-
-	sudo rsync -HPavz -q ./* $workdir/mnt || {
-		image_raw_umount
-		die "not enough space, please report a bug"
-		zerr
-	}
+		sudo rsync -HPavz -q ./* $workdir/mnt || {
+			image_raw_umount
+			die "not enough space, please report a bug"
+			zerr
+		}
 	popd
 
 	image_raw_umount

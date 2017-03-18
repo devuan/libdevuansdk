@@ -33,8 +33,6 @@ build_image_dist() {
 	notice "building complete dist image"
 	act "$image_name"
 
-	## TODO: add blend_prebuild; blend_midbuild; blend_postbuild
-
 	bootstrap_complete_base            || zerr
 	blend_preinst                      || zerr
 	image_prepare_raw                  || zerr
@@ -51,7 +49,6 @@ build_iso_dist() {
 	ckreq || return 1
 
 	notice "building complete iso image"
-	## XXX: TODO: upstream existing heads code
 
 	bootstrap_complete_base || zerr
 	blend_preinst           || zerr
@@ -86,7 +83,10 @@ build_vagrant_dist() {
 
 getfield() {
 	fn getfield $*
-	print "$1" | grep "^$2=" | sed -e 's:.*=\(.*\)$:\1:g' | sed -e 's:^"\(.*\)"$:\1:g'
+	print "$1" | \
+		grep "^$2=" | \
+		sed -e 's:.*=\(.*\)$:\1:g' | \
+		sed -e 's:^"\(.*\)"$:\1:g'
 }
 
 add-user() {
@@ -137,7 +137,9 @@ findloopmapp() {
 	notice "finding a free loopdevice"
 
 	loopdevice=$(sudo losetup -f --show $workdir/${image_name}.img)
-	mappdevice=$(sudo kpartx -va $loopdevice | sed -E 's/.*(loop[0-9])p.*/\1/g' | sed 1q)
+	mappdevice=$(sudo kpartx -va $loopdevice | \
+		sed -E 's/.*(loop[0-9])p.*/\1/g' | sed 1q)
+
 	func "loopdevice: $loopdevice"
 	func "mappdevice: $mappdevice"
 
@@ -252,11 +254,13 @@ chroot-script() {
 	case "x$1" in
 		x-d)
 			local script="$2"
-			dpkgdivert on "$strapdir"
+			devprocsys mount "$strapdir" || zerr
+			dpkgdivert on "$strapdir"    || zerr
 			notice "chrooting to execute $script..."
-			sudo chmod +x  "$strapdir/$script" || zerr
+			sudo chmod +x  "$strapdir/$script"    || zerr
 			sudo -E chroot "$strapdir" "/$script" || zerr
-			dpkgdivert off "$strapdir"
+			dpkgdivert off "$strapdir"    || zerr
+			devprocsys umount "$strapdir" || zerr
 			;;
 		*)
 			local script="$1"

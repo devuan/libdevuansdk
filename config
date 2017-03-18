@@ -21,7 +21,9 @@
 
 vars+=(release version mirror section blend_name image_name vm_name)
 vars+=(arch earch)
+
 arrs+=(core_packages base_packages purge_packages blend_packages)
+
 
 os="devuan"
 release="jessie"
@@ -30,13 +32,14 @@ mirror="http://auto.mirror.devuan.org/merged"
 section="main"
 
 image_name="${os}_${release}_${version}_${arch}"
-[[ -n $blend_name  ]] && image_name="${image_name}_${blend_name}"
-[[ -n $device_name ]] && image_name="${image_name}_${device_name}"
+[[ -n "$blend_name"  ]] && image_name="${image_name}_${blend_name}"
+[[ -n "$device_name" ]] && image_name="${image_name}_${device_name}"
 
 vm_name="${os}_${release}_${version}_${arch}_vagrant"
 [[ -n $blend_name  ]] && vm_name="${image_name}_${blend_name}"
 
 rootcredentials="root:toor"
+usercredentials="devuan:devuan"
 
 core_packages=(
 	devuan-keyring

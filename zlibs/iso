@@ -36,9 +36,7 @@ apt-get --yes --force-yes autoremove
 apt-get clean
 EOF
 
-	devprocsys mount $strapdir  || zerr
 	chroot-script -d isoprep    || zerr
-	devprocsys umount $strapdir || zerr
 }
 
 iso_setup_isolinux() {
@@ -55,9 +53,9 @@ iso_setup_isolinux() {
 	sudo cp $strapdir/boot/initrd*  binary/live/initrd
 
 	sudo cp /usr/share/live/build/bootloaders/isolinux/isolinux.bin \
-		binary/isolinux
+		binary/isolinux || zerr
 	sudo cp /usr/share/live/build/bootloaders/isolinux/*.c32 \
-		binary/isolinux
+		binary/isolinux || zerr
 	popd
 }
 
@@ -91,7 +89,8 @@ iso_squash_strap() {
 	notice "creating squashfs out of strapdir"
 
 	pushd $workdir
-	sudo mksquashfs $strapdir binary/live/filesystem.squashfs -comp xz -e boot || zerr
+	sudo mksquashfs $strapdir binary/live/filesystem.squashfs \
+		-comp xz -e boot || zerr
 	popd
 }
 

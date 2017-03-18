@@ -73,7 +73,8 @@ image_partition_raw_gpt() {
 		-l kernel -S 1 -T 5 -P 10 $workdir/${image_name}.img
 
 	cgpt add -i 2 -t data -b ${gpt_root[1]} \
-		-s $(expr $(cgpt show $workdir/${image_name}.img | awk '/Sec GPT table/ {print $1}') - ${gpt_root[1]}) \
+		-s $(expr $(cgpt show $workdir/${image_name}.img | \
+		awk '/Sec GPT table/ {print $1}') - ${gpt_root[1]}) \
 		-l Root $workdir/${image_name}.img
 
 	findloopmapp
@@ -104,8 +105,14 @@ image_pack_dist() {
 		sleep 1
 	}
 
-	sudo kpartx -dv $loopdevice || { die "kpartx  failed to remove $loopdevice"; zerr }
-	sudo losetup -d $loopdevice || { die "losetup failed to remove $loopdevice"; zerr }
+	sudo kpartx -dv $loopdevice || {
+		die "kpartx  failed to remove $loopdevice"
+		zerr
+	}
+	sudo losetup -d $loopdevice || {
+		die "losetup failed to remove $loopdevice"
+		zerr
+	}
 
 	notice "compressing image with xz"
 	silly
@@ -133,9 +140,12 @@ image_raw_mount() {
 	ckreq || return 1
 
 	mkdir -p $workdir/mnt
-	sudo mount $rootpart $workdir/mnt && act "mounted root partition" || zerr
+	sudo mount $rootpart $workdir/mnt && \
+		act "mounted root partition" || zerr
+
 	sudo mkdir $workdir/mnt/boot
-	sudo mount $bootpart $workdir/mnt/boot && act "mounted boot partition" || zerr
+	sudo mount $bootpart $workdir/mnt/boot && \
+		act "mounted boot partition" || zerr
 }
 
 image_raw_umount() {
@@ -167,7 +177,7 @@ image_raw_as_strapdir() {
 
 	notice "mounting raw image to strapdir"
 	sudo mount ${loopdevice}p1 $strapdir
-	echo 1 | sudo tee ${strapdir}/.keep >/dev/null ## hack? XXX: bootstrap_tar_unpack couldn't see it
+	echo 1 | sudo tee ${strapdir}/.keep >/dev/null
 	popd
 }
 
@@ -193,6 +203,6 @@ image_qcow2_as_strapdir() {
 
 	notice "mounting qcow2 image to strapdir"
 	sudo mount ${loopdevice}p1 $strapdir || zerr
-	echo 1 | sudo tee ${strapdir}/.keep >/dev/null ## hack? XXX: bootstrap_tar_unpack couldn't see it
+	echo 1 | sudo tee ${strapdir}/.keep >/dev/null
 	popd
 }
