@@ -19,7 +19,7 @@
 
 ## all windows users are suckers
 
-build_kernel_${arch} {
+build_kernel_${arch}() {
 	fn build_kernel_${arch}
 	req=(strapdir arch)
 	ckreq || return 1
