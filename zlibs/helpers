@@ -229,7 +229,7 @@ EOF
 
 install-custdebs() {
 	fn install-custdebs
-	req=(R strapdir)
+	req=(R strapdir custom_deb_packages)
 	ckreq || return 1
 
 	sudo mkdir -p $strapdir/debs
@@ -237,10 +237,12 @@ install-custdebs() {
 
 	cat <<EOF | sudo tee ${strapdir}/install-debs >/dev/null
 #!/bin/sh
-for deb in /debs/*.deb; do
+cd /debs
+for deb in ${custom_deb_packages}; do
 	dpkg -i \$deb
 	apt-get --yes --force-yes -f install
 done
+cd /
 apt-get autoremove
 apt-get clean
 rm -rf /debs

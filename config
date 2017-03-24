@@ -21,6 +21,7 @@
 
 vars+=(release version mirror section blend_name image_name vm_name)
 vars+=(arch earch)
+vars+=(usercredentials rootcredentials)
 
 arrs+=(core_packages base_packages purge_packages blend_packages)
 

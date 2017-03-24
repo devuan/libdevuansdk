@@ -90,7 +90,7 @@ iso_squash_strap() {
 
 	pushd $workdir
 	sudo mksquashfs $strapdir binary/live/filesystem.squashfs \
-		-comp xz -e boot || zerr
+		-noappend -comp xz || zerr
 	popd
 }
 
