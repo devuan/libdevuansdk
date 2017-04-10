@@ -255,22 +255,35 @@ chroot-script() {
 	req=(strapdir)
 	ckreq || return 1
 
+	mkdir -p "$R/log"
 	case "x$1" in
 		x-d)
 			local script="$2"
 			devprocsys mount "$strapdir" || zerr
 			dpkgdivert on "$strapdir"    || zerr
+
+			## logging
+			sudo sed -i "$strapdir/$script" \
+				-e 's@#!/bin/sh@#!/bin/sh\'$'\nset -x ; exec 2>/'$script'.log@'
 			notice "chrooting to execute $script..."
 			sudo chmod +x  "$strapdir/$script"    || zerr
 			sudo -E chroot "$strapdir" "/$script" || zerr
+			sudo mv -f "$strapdir/${script}.log" "$R/log/"
+
 			dpkgdivert off "$strapdir"    || zerr
 			devprocsys umount "$strapdir" || zerr
 			;;
 		*)
 			local script="$1"
+
+			## logging
+			sudo sed -i "$strapdir/$script" \
+				-e 's@#!/bin/sh@#!/bin/sh\'$'\nset -x ; exec 2>/'$script'.log@'
+
 			notice "chrooting to execute $script..."
 			sudo chmod +x  "$strapdir/$script" || zerr
 			sudo -E chroot "$strapdir" "/$script" || zerr
+			sudo mv -f "$strapdir/${script}.log" "$R/log/"
 			;;
 	esac
 
