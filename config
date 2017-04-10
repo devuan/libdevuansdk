@@ -76,6 +76,7 @@ base_packages=(
 	zsh
 	rsync
 	git-core
+	mlocate
 )
 
 purge_packages+=(
