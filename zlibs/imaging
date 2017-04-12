@@ -145,9 +145,11 @@ image_raw_mount() {
 	sudo mount $rootpart $workdir/mnt && \
 		act "mounted root partition" || zerr
 
-	sudo mkdir $workdir/mnt/boot
-	sudo mount $bootpart $workdir/mnt/boot && \
-		act "mounted boot partition" || zerr
+	[[ "$parted_type" == gpt ]] || {
+		sudo mkdir $workdir/mnt/boot
+		sudo mount $bootpart $workdir/mnt/boot && \
+			act "mounted boot partition" || zerr
+	}
 }
 
 image_raw_umount() {
@@ -155,8 +157,10 @@ image_raw_umount() {
 	req=(workdir bootpart rootpart)
 	ckreq || return 1
 
-	sudo umount $workdir/mnt/boot && act "unmounted boot partition" || zerr
-	sleep 1
+	[[ "$parted_type" == gpt ]] || {
+		sudo umount $workdir/mnt/boot && act "unmounted boot partition" || zerr
+		sleep 1
+	}
 	sudo umount $workdir/mnt      && act "unmounted root partition" || zerr
 }
 
