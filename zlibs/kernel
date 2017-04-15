@@ -19,44 +19,22 @@
 
 ## all windows users are suckers
 
-build_kernel_amd64() {
-	fn build_kernel_amd64
+build_kernel_${arch}() {
+	fn build_kernel_${arch}
 	req=(strapdir arch)
-	#freq=($strapdir/.keep)
 	ckreq || return 1
 
 	local kernel_base="linux-image"
-	local kernel="${kernel_base}-amd64"
+	case "$arch" in
+		amd64) local kernel="${kernel_base}-amd64";;
+		i386)  local kernel="${kernel_base}-586";;
+	esac
 
 	notice "installing stock kernel for $arch"
 
-	dpkgdivert on $strapdir
-	devprocsys mount $strapdir
-
-	sudo -E chroot $strapdir \
-		apt-get --yes --force-yes install $kernel
-
-	devprocsys umount $strapdir
-	dpkgdivert off $strapdir
-}
-
-build_kernel_i386() {
-	fn build_kernel_i386
-	req=(strapdir arch)
-	#freq=($strapdir/.keep)
-	ckreq || return 1
-
-	local kernel_base="linux-image"
-	local kernel="${kernel_base}-586"
-
-	notice "installing stock kernel for $arch"
-
-	dpkgdivert on $strapdir
-	devprocsys mount $strapdir
-
-	sudo -E chroot $strapdir \
-		apt-get --yes --force-yes install $kernel
-
-	devprocsys umount $strapdir
-	dpkgdivert off $strapdir
+	cat <<EOF | sudo tee ${strapdir}/install-linux
+#!/bin/sh
+apt-get --yes --force-yes install ${kernel}
+EOF
+	chroot-script -d install-linux || zerr
 }

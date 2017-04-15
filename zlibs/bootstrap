@@ -45,6 +45,9 @@ bootstrap_complete_base() {
 
 	[[ $arch =~ "^arm.." ]] && { qemu_install_user || zerr }
 
+	sudo mkdir -p $strapdir/tmp
+	sudo chmod 1777 $strapdir/tmp
+
 	## debootstrap stage 2
 	notice "running debootstrap stage 2"
 	sudo -E chroot $strapdir \
@@ -52,13 +55,13 @@ bootstrap_complete_base() {
 
 	## write all system configuration
 	notice "writing system configuration"
-	conf_print_debconf     | sudo tee $strapdir/debconf.set >/dev/null
-	conf_print_fstab       | sudo tee $strapdir/etc/fstab >/dev/null
-	conf_print_hostname    | sudo tee $strapdir/etc/hostname >/dev/null
-	conf_print_hosts       | sudo tee $strapdir/etc/hosts >/dev/null
-	conf_print_netifaces   | sudo tee $strapdir/etc/network/interfaces >/dev/null
-	conf_print_resolvconf  | sudo tee $strapdir/etc/resolv.conf >/dev/null
-	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list >/dev/null
+	conf_print_debconf     | sudo tee $strapdir/debconf.set              >/dev/null
+	conf_print_fstab       | sudo tee $strapdir/etc/fstab                >/dev/null
+	conf_print_hostname    | sudo tee $strapdir/etc/hostname             >/dev/null
+	conf_print_hosts       | sudo tee $strapdir/etc/hosts                >/dev/null
+	conf_print_netifaces   | sudo tee $strapdir/etc/network/interfaces   >/dev/null
+	conf_print_resolvconf  | sudo tee $strapdir/etc/resolv.conf          >/dev/null
+	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list     >/dev/null
 	conf_print_locales     | sudo tee $strapdir/etc/profile.d/locales.sh >/dev/null
 
 	## write third-stage for chroot
@@ -68,12 +71,9 @@ bootstrap_complete_base() {
 	## debootstrap stage 3
 	notice "running debootstrap stage 3"
 
-	devprocsys mount $strapdir || zerr
 
 	chroot-script -d thirdstage || zerr
-
 	sleep 1
-	devprocsys umount $strapdir || zerr
 
 	bootstrap_tar_pack             || zerr
 	bootstrap_tar_unpack $strapdir || zerr
@@ -151,18 +151,32 @@ bootstrap_tar_unpack() {
 	cat <<EOF | sudo tee ${strapdir}/postunpack >/dev/null
 #!/bin/sh
 apt-get update
+
+## check if all our extra_packages exist
+allpkgs="\$(apt-cache search '.' | cut -d' ' -f1)"
+for i in ${extra_packages} ; do
+	printf "%s" "\$allpkgs" | grep -q "^\$i$" || missing="\$missing \$i"
+done
+
+[ -n "\$missing" ] && {
+	printf "\033[1;31m[!!] some extra packages don't exist\033[0m\n"
+	printf "%s\n" "\$missing"
+	exit 1
+}
+
 apt-get --yes --force-yes upgrade
 apt-get --yes --force-yes install ${extra_packages}
 apt-get --yes --force-yes autoremove
 apt-get clean
 EOF
 
-	devprocsys mount $strapdir
 	chroot-script -d postunpack || zerr
-	devprocsys umount $strapdir
 
 	## below typically used in arm-sdk
-	[[ -n "$inittab" ]] && { print $inittab | sudo tee -a $strapdir/etc/inittab >/dev/null }
+	[[ -n "$inittab" ]] && {
+		print $inittab | sudo tee -a $strapdir/etc/inittab >/dev/null
+	}
+
 	for i in $custmodules; do
 		print $i | sudo tee -a $strapdir/etc/modules >/dev/null
 	done || return 0

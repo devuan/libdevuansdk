@@ -31,12 +31,12 @@ iso_prepare_strap() {
 	cat <<EOF | sudo tee ${strapdir}/isoprep >/dev/null
 #!/bin/sh
 apt-get update
-apt-get --yes --force-yes install dialog live-boot
+apt-get --yes --force-yes install dialog live-boot live-boot-initramfs-tools
 apt-get --yes --force-yes autoremove
 apt-get clean
 EOF
 
-	chroot-script -d isoprep || zerr
+	chroot-script -d isoprep    || zerr
 }
 
 iso_setup_isolinux() {
@@ -53,9 +53,9 @@ iso_setup_isolinux() {
 	sudo cp $strapdir/boot/initrd*  binary/live/initrd
 
 	sudo cp /usr/share/live/build/bootloaders/isolinux/isolinux.bin \
-		binary/isolinux
+		binary/isolinux || zerr
 	sudo cp /usr/share/live/build/bootloaders/isolinux/*.c32 \
-		binary/isolinux
+		binary/isolinux || zerr
 	popd
 }
 
@@ -72,7 +72,7 @@ menu title ${os} boot menu
 timeout 300
 
 label live-${arch}
-menu label ^${os} Live (${arch})
+menu label ^${os} live (${arch})
 menu default
 linux /live/vmlinuz
 append initrd=/live/initrd boot=live
@@ -89,7 +89,8 @@ iso_squash_strap() {
 	notice "creating squashfs out of strapdir"
 
 	pushd $workdir
-		sudo mksquashfs $strapdir binary/live/filesystem.squashfs -comp xz -e boot
+	sudo mksquashfs $strapdir binary/live/filesystem.squashfs \
+		-noappend -comp xz || zerr
 	popd
 }
 
@@ -101,6 +102,7 @@ iso_xorriso_build() {
 	notice "building iso..."
 	isoname="${image_name}-live.iso"
 
+	mkdir -p $R/dist
 	pushd $workdir
 	sudo xorriso -as mkisofs -r -J -joliet-long -l \
 		-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
@@ -112,7 +114,7 @@ iso_xorriso_build() {
 		-boot-load-size 4 \
 		-boot-info-table \
 		-o $R/dist/$isoname \
-		binary
+		binary || zerr
 	popd
 }
 
