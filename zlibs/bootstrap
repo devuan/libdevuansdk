@@ -151,6 +151,19 @@ bootstrap_tar_unpack() {
 	cat <<EOF | sudo tee ${strapdir}/postunpack >/dev/null
 #!/bin/sh
 apt-get update
+
+## check if all our extra_packages exist
+allpkgs="\$(apt-cache search '.' | cut -d' ' -f1)"
+for i in ${extra_packages} ; do
+	printf "%s" "\$allpkgs" | grep -q "^\$i$" || missing="\$missing \$i"
+done
+
+[ -n "\$missing" ] && {
+	printf "\033[1;31m[!!] some extra packages don't exist\033[0m\n"
+	printf "%s\n" "\$missing"
+	exit 1
+}
+
 apt-get --yes --force-yes upgrade
 apt-get --yes --force-yes install ${extra_packages}
 apt-get --yes --force-yes autoremove

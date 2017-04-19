@@ -114,10 +114,12 @@ image_pack_dist() {
 		zerr
 	}
 
-	notice "compressing image with xz"
+	_xz="xz -zv"
+	[[ $(command -v pixz) ]] && _xz=pixz
+	notice "compressing image with $_xz"
 	silly
 	pushd $workdir
-	xz -zv ${image_name}.img
+	${=_xz} ${image_name}.img
 
 	notice "generating sha256 for ${image_name}.img.xz"
 	sha256sum ${image_name}.img.xz > ${image_name}.img.xz.sha
@@ -143,9 +145,11 @@ image_raw_mount() {
 	sudo mount $rootpart $workdir/mnt && \
 		act "mounted root partition" || zerr
 
-	sudo mkdir $workdir/mnt/boot
-	sudo mount $bootpart $workdir/mnt/boot && \
-		act "mounted boot partition" || zerr
+	[[ "$parted_type" == gpt ]] || {
+		sudo mkdir $workdir/mnt/boot
+		sudo mount $bootpart $workdir/mnt/boot && \
+			act "mounted boot partition" || zerr
+	}
 }
 
 image_raw_umount() {
@@ -153,8 +157,10 @@ image_raw_umount() {
 	req=(workdir bootpart rootpart)
 	ckreq || return 1
 
-	sudo umount $workdir/mnt/boot && act "unmounted boot partition" || zerr
-	sleep 1
+	[[ "$parted_type" == gpt ]] || {
+		sudo umount $workdir/mnt/boot && act "unmounted boot partition" || zerr
+		sleep 1
+	}
 	sudo umount $workdir/mnt      && act "unmounted root partition" || zerr
 }
 
