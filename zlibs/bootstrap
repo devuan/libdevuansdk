@@ -148,6 +148,8 @@ bootstrap_tar_unpack() {
 		exit 1
 	fi
 
+	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list >/dev/null
+
 	cat <<EOF | sudo tee ${strapdir}/postunpack >/dev/null
 #!/bin/sh
 apt-get update
