@@ -102,6 +102,10 @@ iso_xorriso_build() {
 	notice "building iso..."
 	isoname="${image_name}-live.iso"
 
+	[[ -n "$mkefi" ]] && {
+	uefi_opt="-eltorito-alt-boot -e boot/grub/efiboot.img -isohybrid-gpt-basdat -no-emul-boot"
+	}
+
 	mkdir -p $R/dist
 	pushd $workdir
 	sudo xorriso -as mkisofs -r -J -joliet-long -l \
@@ -113,6 +117,7 @@ iso_xorriso_build() {
 		-no-emul-boot \
 		-boot-load-size 4 \
 		-boot-info-table \
+		${=uefi_opt} \
 		-o $R/dist/$isoname \
 		binary || zerr
 	popd
