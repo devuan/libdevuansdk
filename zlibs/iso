@@ -88,10 +88,13 @@ iso_squash_strap() {
 
 	notice "creating squashfs out of strapdir"
 
+	[[ -n "$mkefi" ]] && uefi_opt="-Xbcj x86"
 	pushd $workdir
 	sudo mksquashfs $strapdir binary/live/filesystem.squashfs \
+		${=uefi_opt} \
 		-noappend -comp xz || zerr
 	popd
+	unset uefi_opt
 }
 
 iso_xorriso_build() {
@@ -101,6 +104,10 @@ iso_xorriso_build() {
 
 	notice "building iso..."
 	isoname="${image_name}-live.iso"
+
+	[[ -n "$mkefi" ]] && {
+	uefi_opt="-eltorito-alt-boot -e boot/grub/efiboot.img -isohybrid-gpt-basdat -no-emul-boot"
+	}
 
 	mkdir -p $R/dist
 	pushd $workdir
@@ -113,9 +120,11 @@ iso_xorriso_build() {
 		-no-emul-boot \
 		-boot-load-size 4 \
 		-boot-info-table \
+		${=uefi_opt} \
 		-o $R/dist/$isoname \
 		binary || zerr
 	popd
+	unset uefi_opt
 }
 
 iso_setup_installer() {
