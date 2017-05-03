@@ -33,14 +33,14 @@ build_image_dist() {
 	notice "building complete dist image"
 	act "$image_name"
 
-	bootstrap_complete_base            || zerr
-	blend_preinst                      || zerr
-	image_prepare_raw                  || zerr
-	image_partition_raw_${parted_type} || zerr
-	build_kernel_${arch}               || zerr
-	blend_postinst                     || zerr
-	rsync_to_raw_image                 || zerr
-	image_pack_dist                    || zerr
+	bootstrap_complete_base            || { zerr; wrapup }
+	blend_preinst                      || { zerr; wrapup }
+	image_prepare_raw                  || { zerr; wrapup }
+	image_partition_raw_${parted_type} || { zerr; wrapup }
+	build_kernel_${arch}               || { zerr; wrapup }
+	blend_postinst                     || { zerr; wrapup }
+	rsync_to_raw_image                 || { zerr; wrapup }
+	image_pack_dist                    || { zerr; wrapup }
 }
 
 build_iso_dist() {
@@ -50,16 +50,16 @@ build_iso_dist() {
 
 	notice "building complete iso image"
 
-	bootstrap_complete_base || zerr
-	blend_preinst           || zerr
-	iso_prepare_strap       || zerr
-	build_kernel_${arch}    || zerr
-	iso_setup_isolinux      || zerr
-	iso_write_isolinux_cfg  || zerr
+	bootstrap_complete_base || { zerr; wrapup }
+	blend_preinst           || { zerr; wrapup }
+	iso_prepare_strap       || { zerr; wrapup }
+	build_kernel_${arch}    || { zerr; wrapup }
+	iso_setup_isolinux      || { zerr; wrapup }
+	iso_write_isolinux_cfg  || { zerr; wrapup }
 	#[[ $INSTALLER = 1 ]] && iso_setup_installer || zerr
-	blend_postinst          || zerr
-	iso_squash_strap        || zerr
-	iso_xorriso_build       || zerr
+	blend_postinst          || { zerr; wrapup }
+	iso_squash_strap        || { zerr; wrapup }
+	iso_xorriso_build       || { zerr; wrapup }
 }
 
 build_vagrant_dist() {
@@ -69,16 +69,16 @@ build_vagrant_dist() {
 
 	notice "building complete vagrant image"
 
-	image_${imageformat}_as_strapdir   || zerr
-	bootstrap_complete_base            || zerr
-	vm_inject_overrides                || zerr
-	blend_preinst                      || zerr
-	vm_setup_grub                      || zerr
-	blend_postinst                     || zerr
-	vm_umount_${imageformat}           || zerr
-	vm_vbox_setup                      || zerr
-	vm_vagrant_package                 || zerr
-	vm_pack_dist                       || zerr
+	image_${imageformat}_as_strapdir   || { zerr; wrapup }
+	bootstrap_complete_base            || { zerr; wrapup }
+	vm_inject_overrides                || { zerr; wrapup }
+	blend_preinst                      || { zerr; wrapup }
+	vm_setup_grub                      || { zerr; wrapup }
+	blend_postinst                     || { zerr; wrapup }
+	vm_umount_${imageformat}           || { zerr; wrapup }
+	vm_vbox_setup                      || { zerr; wrapup }
+	vm_vagrant_package                 || { zerr; wrapup }
+	vm_pack_dist                       || { zerr; wrapup }
 }
 
 getfield() {
@@ -120,13 +120,27 @@ devprocsys() {
 		sudo mount -o bind /dev/pts $werdo/dev/pts && act "mounted devpts" && \
 		return 0
 	elif [[ $watdo = umount ]]; then
-		sudo umount $werdo/dev/pts  && act "umounted devpts" && sleep 1 && \
-		sudo umount $werdo/dev      && act "umounted dev"    && sleep 1 && \
-		sudo umount $werdo/proc     && act "umounted proc"   && sleep 1 && \
-		sudo umount $werdo/sys      && act "umounted sys"    && sleep 1 && \
+		sudo umount $werdo/dev/pts  && act "umounted devpts" && sleep 1 \
+		sudo umount $werdo/dev      && act "umounted dev"    && sleep 1 \
+		sudo umount $werdo/proc     && act "umounted proc"   && sleep 1 \
+		sudo umount $werdo/sys      && act "umounted sys"    && sleep 1 \
 		return 0
 	fi
 	return 1
+}
+
+wrapup() {
+	# a hopefully clean exit
+	fn wrapup
+	req=(strapdir)
+	ckreq || {
+		die "something is very wrong"
+		die "cleanup yourself, sorry"
+		exit 1
+	}
+
+	devprocsys umount $strapdir
+	exit 1
 }
 
 findloopmapp() {
