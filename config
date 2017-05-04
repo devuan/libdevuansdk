@@ -28,7 +28,7 @@ arrs+=(core_packages base_packages purge_packages blend_packages)
 
 os="devuan"
 release="jessie"
-version="1.0.0-RC"
+version="1.0.0-RC2"
 mirror="http://auto.mirror.devuan.org/merged"
 section="main"
 
