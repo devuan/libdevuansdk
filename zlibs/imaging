@@ -114,12 +114,12 @@ image_pack_dist() {
 		zerr
 	}
 
-	_xz="xz -zv"
+	_xz=(xz -zv)
 	[[ $(command -v pixz) ]] && _xz=pixz
 	notice "compressing image with $_xz"
 	silly
 	pushd $workdir
-	${=_xz} ${image_name}.img
+	${xz} "${image_name}.img"
 
 	notice "generating sha256 for ${image_name}.img.xz"
 	sha256sum ${image_name}.img.xz > ${image_name}.img.xz.sha
