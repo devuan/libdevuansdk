@@ -151,7 +151,7 @@ findloopmapp() {
 	notice "finding a free loopdevice"
 
 	loopdevice=$(sudo losetup -f --show $workdir/${image_name}.img)
-	mappdevice=$(sudo kpartx -va $loopdevice | \
+	mappdevice=$(sudo partx -va $loopdevice | \
 		sed -E 's/.*(loop[0-9])p.*/\1/g' | sed 1q)
 
 	func "loopdevice: $loopdevice"

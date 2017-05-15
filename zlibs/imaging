@@ -105,8 +105,8 @@ image_pack_dist() {
 		sleep 1
 	}
 
-	sudo kpartx -dv $loopdevice || {
-		die "kpartx  failed to remove $loopdevice"
+	sudo partx -dv $loopdevice || {
+		die "partx failed to remove $loopdevice"
 		zerr
 	}
 	sudo losetup -d $loopdevice || {
