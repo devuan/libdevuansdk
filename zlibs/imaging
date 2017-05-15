@@ -87,14 +87,14 @@ image_partition_raw_gpt() {
 
 image_pack_dist() {
 	fn image_pack_dist
-	req=(mappdevice loopdevice image_name strapdir workdir)
+	req=(loopdevice image_name strapdir workdir)
 	ckreq || return 1
 
 	notice "packaging image for dist"
 
 	act "rechecking filesystem"
-	sudo e2fsck -f ${mappdevice}p2
-	sudo resize2fs ${mappdevice}p2
+	sudo e2fsck -f ${loopdevice}p2
+	sudo resize2fs ${loopdevice}p2
 
 	sleep 2
 
