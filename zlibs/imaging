@@ -48,9 +48,8 @@ image_partition_raw_dos() {
 	## get loopdevice (see ./helpers)
 	findloopdev
 
-	mappdevice="/dev/mapper/${mappdevice}"
-	bootpart=${mappdevice}p1
-	rootpart=${mappdevice}p2
+	bootpart=${loopdevice}p1
+	rootpart=${loopdevice}p2
 
 	notice "formatting partitions..."
 	sudo mkfs.vfat ${bootpart}
@@ -79,8 +78,8 @@ image_partition_raw_gpt() {
 
 	findloopdev
 
-	bootpart=${loopdevice}p1
-	rootpart=${loopdevice}p2
+	bootpart="${loopdevice}p1"
+	rootpart="${loopdevice}p2"
 
 	notice "formatting partitions..."
 	sudo mkfs.ext4 -L rootfs ${rootpart}

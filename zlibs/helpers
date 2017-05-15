@@ -19,6 +19,8 @@
 
 ## helper functions that make my life easier
 
+vars+=(loopdevice)
+
 build_image_dist() {
 	fn build_image_dist
 	req=(arch size parted_type)
