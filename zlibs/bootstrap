@@ -40,6 +40,7 @@ bootstrap_complete_base() {
 	export DEBIAN_FRONTEND=noninteractive
 
 	sudo -E debootstrap \
+		--keyring="$LIBPATH/extra/devuan-keyring/keyrings/devuan-keyring.gpg" \
 		--foreign \
 		--arch $arch $release $strapdir $mirror || zerr
 
