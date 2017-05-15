@@ -19,6 +19,8 @@
 
 ## helper functions that make my life easier
 
+vars+=(loopdevice)
+
 build_image_dist() {
 	fn build_image_dist
 	req=(arch size parted_type)
@@ -143,20 +145,17 @@ wrapup() {
 	exit 1
 }
 
-findloopmapp() {
-	fn findloopmapp
+findloopdev() {
+	fn findloopdev
 	req=(workdir image_name)
 	ckreq || return 1
 
 	notice "finding a free loopdevice"
 
 	loopdevice=$(sudo losetup -f --show $workdir/${image_name}.img)
-	mappdevice=$(sudo partx -va $loopdevice | \
-		sed -E 's/.*(loop[0-9])p.*/\1/g' | sed 1q)
+	sudo partx -av $loopdevice || zerr
 
 	func "loopdevice: $loopdevice"
-	func "mappdevice: $mappdevice"
-
 	silly sleep 2
 }
 
