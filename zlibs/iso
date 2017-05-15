@@ -52,10 +52,25 @@ iso_setup_isolinux() {
 	sudo cp $strapdir/boot/vmlinuz* binary/live/vmlinuz
 	sudo cp $strapdir/boot/initrd*  binary/live/initrd
 
-	sudo cp /usr/share/live/build/bootloaders/isolinux/isolinux.bin \
-		binary/isolinux || zerr
-	sudo cp /usr/share/live/build/bootloaders/isolinux/*.c32 \
-		binary/isolinux || zerr
+	eval $(cat /etc/os-release)
+	case "$ID" in
+		devuan)
+			sudo cp \
+				/usr/share/live/build/bootloaders/isolinux/isolinux.bin \
+				binary/isolinux || zerr
+			sudo cp /usr/share/live/build/bootloaders/isolinux/*.c32 \
+				binary/isolinux || zerr
+			;;
+		gentoo)
+			sudo cp \
+				/usr/share/syslinux/isolinux.bin binary/isolinux || zerr
+			sudo cp \
+				/usr/share/syslinux/*.c32 binary/isolinux || zerr
+			;;
+		*)
+			warn "no isolinux has been copied. take care of it yourself"
+			;;
+	esac
 	popd
 }
 
