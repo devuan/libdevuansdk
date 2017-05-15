@@ -124,10 +124,20 @@ iso_xorriso_build() {
 	uefi_opt="-eltorito-alt-boot -e boot/grub/efiboot.img -isohybrid-gpt-basdat -no-emul-boot"
 	}
 
+	eval $(cat /etc/os-release)
+	case "$ID" in
+		devuan)
+			isohybrid=/usr/lib/ISOLINUX/isohdpfx.bin
+			;;
+		gentoo)
+			isohybrid=/usr/share/syslinux/isohdpfx.bin
+			;;
+	esac
+
 	mkdir -p $R/dist
 	pushd $workdir
 	sudo xorriso -as mkisofs -r -J -joliet-long -l \
-		-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+		-isohybrid-mbr $isohybrid \
 		-partition_offset 16 \
 		-A "${os} Live - ${arch}" \
 		-b isolinux/isolinux.bin \
