@@ -65,7 +65,7 @@ iso_setup_isolinux() {
 			sudo cp \
 				/usr/share/syslinux/isolinux.bin binary/isolinux || zerr
 			sudo cp \
-				/usr/ahre/syslinux/*.c32 binary/isolinux || zerr
+				/usr/share/syslinux/*.c32 binary/isolinux || zerr
 			;;
 		*)
 			warn "no isolinux has been copied. take care of it yourself"
