@@ -157,7 +157,9 @@ apt-get update
 ## check if all our extra_packages exist
 allpkgs="\$(apt-cache search '.' | cut -d' ' -f1)"
 for i in ${extra_packages} ; do
-	printf "%s" "\$allpkgs" | grep -q "^\$i$" || missing="\$missing \$i"
+	printf "%s" "\$allpkgs" | grep -q "^\$i$" || {
+		printf "%s" "\$i" | greq -q "^--.*" || missing="\$missing \$i"
+	}
 done
 
 [ -n "\$missing" ] && {
