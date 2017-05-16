@@ -158,7 +158,10 @@ apt-get update
 allpkgs="\$(apt-cache search '.' | cut -d' ' -f1)"
 for i in ${extra_packages} ; do
 	printf "%s" "\$allpkgs" | grep -q "^\$i$" || {
-		printf "%s" "\$i" | greq -q "^--.*" || missing="\$missing \$i"
+		case "\$i" in
+			--*) continue ;;
+			*)   missing="\$missing \$i" ;;
+		esac
 	}
 done
 
