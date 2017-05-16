@@ -52,10 +52,25 @@ iso_setup_isolinux() {
 	sudo cp $strapdir/boot/vmlinuz* binary/live/vmlinuz
 	sudo cp $strapdir/boot/initrd*  binary/live/initrd
 
-	sudo cp /usr/share/live/build/bootloaders/isolinux/isolinux.bin \
-		binary/isolinux || zerr
-	sudo cp /usr/share/live/build/bootloaders/isolinux/*.c32 \
-		binary/isolinux || zerr
+	eval $(cat /etc/os-release)
+	case "$ID" in
+		devuan)
+			sudo cp \
+				/usr/share/live/build/bootloaders/isolinux/isolinux.bin \
+				binary/isolinux || zerr
+			sudo cp /usr/share/live/build/bootloaders/isolinux/*.c32 \
+				binary/isolinux || zerr
+			;;
+		gentoo)
+			sudo cp \
+				/usr/share/syslinux/isolinux.bin binary/isolinux || zerr
+			sudo cp \
+				/usr/share/syslinux/*.c32 binary/isolinux || zerr
+			;;
+		*)
+			warn "no isolinux has been copied. take care of it yourself"
+			;;
+	esac
 	popd
 }
 
@@ -88,10 +103,13 @@ iso_squash_strap() {
 
 	notice "creating squashfs out of strapdir"
 
+	[[ -n "$mkefi" ]] && uefi_opt="-Xbcj x86"
 	pushd $workdir
 	sudo mksquashfs $strapdir binary/live/filesystem.squashfs \
+		${=uefi_opt} \
 		-noappend -comp xz || zerr
 	popd
+	unset uefi_opt
 }
 
 iso_xorriso_build() {
@@ -102,10 +120,24 @@ iso_xorriso_build() {
 	notice "building iso..."
 	isoname="${image_name}-live.iso"
 
+	[[ -n "$mkefi" ]] && {
+	uefi_opt="-eltorito-alt-boot -e boot/grub/efiboot.img -isohybrid-gpt-basdat -no-emul-boot"
+	}
+
+	eval $(cat /etc/os-release)
+	case "$ID" in
+		devuan)
+			isohybrid=/usr/lib/ISOLINUX/isohdpfx.bin
+			;;
+		gentoo)
+			isohybrid=/usr/share/syslinux/isohdpfx.bin
+			;;
+	esac
+
 	mkdir -p $R/dist
 	pushd $workdir
 	sudo xorriso -as mkisofs -r -J -joliet-long -l \
-		-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+		-isohybrid-mbr $isohybrid \
 		-partition_offset 16 \
 		-A "${os} Live - ${arch}" \
 		-b isolinux/isolinux.bin \
@@ -113,9 +145,11 @@ iso_xorriso_build() {
 		-no-emul-boot \
 		-boot-load-size 4 \
 		-boot-info-table \
+		${=uefi_opt} \
 		-o $R/dist/$isoname \
 		binary || zerr
 	popd
+	unset uefi_opt
 }
 
 iso_setup_installer() {

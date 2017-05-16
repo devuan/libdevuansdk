@@ -40,6 +40,7 @@ bootstrap_complete_base() {
 	export DEBIAN_FRONTEND=noninteractive
 
 	sudo -E debootstrap \
+		--keyring="$LIBPATH/extra/devuan-keyring/keyrings/devuan-archive-keyring.gpg" \
 		--foreign \
 		--arch $arch $release $strapdir $mirror || zerr
 
@@ -116,7 +117,7 @@ bootstrap_tar_pack() {
 	local _dest=$(dirname $bootstrap_tgz)
 
 	if [[ -f $bootstrap_tgz ]]; then
-		act "tarball found already in $_dest"
+		notice "tarball found already in $_dest"
 	else
 		notice "Creating boostrap tarball in $bootstrap_tgz"
 		silly
@@ -138,15 +139,16 @@ bootstrap_tar_unpack() {
 	ckreq || return 1
 
 	if [[ -f "${unpath}/.keep" ]]; then
+		act "skipping tarball unpack"
+	else
+		sudo rm -rf ${unpath}
 		mkdir -p ${unpath}
 		silly
 		sudo tar xfp $bootstrap_tgz -C ${unpath}
 		sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
-	else
-		error "no .keep file found. exiting..."
-		zerr
-		exit 1
 	fi
+
+	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list >/dev/null
 
 	cat <<EOF | sudo tee ${strapdir}/postunpack >/dev/null
 #!/bin/sh
