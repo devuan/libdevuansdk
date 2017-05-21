@@ -20,7 +20,8 @@
 ## libdevuansdk configuration
 
 vars+=(release version mirror section blend_name image_name vm_name)
-vars+=(arch earch aptcachedir APT_CACHE)
+vars+=(arch earch)
+vars+=(aptcachedir APT_CACHE aptcachegpg)
 vars+=(usercredentials rootcredentials)
 
 arrs+=(core_packages base_packages purge_packages blend_packages)
@@ -28,6 +29,8 @@ arrs+=(core_packages base_packages purge_packages blend_packages)
 ## enable local apt cache
 APT_CACHE=1
 aptcachedir="$LIBPATH/apt-cache"
+## key used to sign the cache's Release
+aptcachegpg="0xdeadbeefdeadbeef"
 
 os="devuan"
 release="jessie"
