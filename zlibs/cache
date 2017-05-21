@@ -47,7 +47,7 @@ fill_apt_cache() {
 
     notice "filling local apt cache"
 
-	cp -fv "$strapdir/var/cache/archives/*.deb" "$aptcachedir"
+	cp -fv $strapdir/var/cache/apt/archives/*.deb $aptcachedir
 
 	pushd "$aptcachedir"
 		dpkg-scanpackages . /dev/null > Packages
@@ -72,7 +72,7 @@ EOF
 	popd
 
 
-	sudo sed -i -e '@deb file:/mnt@d' "$strapdir/etc/apt/sources.list"
+	sudo sed -i '/deb file:\/mnt/d' "$strapdir/etc/apt/sources.list"
 	notice "removing apt cache gpg pubkey"
 	cat <<EOF | sudo tee ${strapdir}/delcachepubkey >/dev/null
 #!/bin/sh
