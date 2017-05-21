@@ -392,14 +392,14 @@ fill_apt_cache() {
 
 # NOTE: do we need apt update or does it read the remote(s)?
 apt-get update
-apt-get install dpkg-dev
+apt-get --yes --force-yes --no-install-recommends install dpkg-dev
 
 cp -afv /var/cache/apt/archives/*.deb /mnt
 cd /mnt
 dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz
 cd -
 
-apt-get purge dpkg-dev
+apt-get --yes --force-yes purge dpkg-dev
 
 sed -i -e "@deb file:/mnt@d" /etc/apt/sources.list
 apt-get update
