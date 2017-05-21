@@ -68,9 +68,15 @@ SHA256:
  $(sha256sum Packages.gz | cut -d' ' -f1)    $(du -b Packages.gz)
 EOF
 		rm -f Packages
-		## TODO: XXX: gpg sign Release
+		gpg --sign --detach-sign --sign-with $aptcachegpg Release || zerr
 	popd
 
 
 	sudo sed -i -e '@deb file:/mnt@d' "$strapdir/etc/apt/sources.list"
+	notice "removing apt cache gpg pubkey"
+	cat <<EOF | sudo tee ${strapdir}/delcachepubkey >/dev/null
+#!/bin/sh
+apt-key del ${aptcachegpg}
+EOF
+	chroot-script delcachepubkey || zerr
 }

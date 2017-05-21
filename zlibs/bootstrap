@@ -74,6 +74,17 @@ bootstrap_complete_base() {
 
 
 	chroot-script -d thirdstage || zerr
+
+	[[ $APT_CACHE = 1 ]] && {
+		notice "adding apt cache gpg pubkey"
+		cat <<EOF | sudo tee ${strapdir}/addcachepubkey >/dev/null
+#!/bin/sh
+gpgkey="$(gpg --export -a $aptcachegpg)"
+printf "%s" "\$gpgkey" | apt-key add -
+EOF
+		chroot-script addcachepubkey || zerr
+	}
+
 	sleep 1
 
 	bootstrap_tar_pack             || zerr
