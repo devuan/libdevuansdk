@@ -357,57 +357,6 @@ blend_postinst() {
 	return 0
 }
 
-aptcache() {
-	fn aptcache "$*"
-	req=(aptcachedir watdo werdo APT_CACHE)
-	local watdo="$1"
-	local werdo="$2"
-	ckreq || return 1
-
-	[[ $APT_CACHE = 1 ]] || return 0
-
-	case "$watdo" in
-		on)
-			act "mounting local apt cache"
-			sudo mount -o bind "$aptcachedir" "$werdo" || zerr
-			;;
-		off)
-			act "umounting local apt cache"
-			sudo umount "$werdo" || zerr
-			;;
-	esac
-}
-
-fill_apt_cache() {
-	fn fill_apt_cache
-	req=(strapdir APT_CACHE)
-	ckreq || return 1
-
-	[[ $APT_CACHE = 1 ]] || return 0
-
-	notice "filling local apt cache"
-
-	cat <<EOF | sudo tee ${strapdir}/fill-apt-cache >/dev/null
-#!/bin/sh
-
-# NOTE: do we need apt update or does it read the remote(s)?
-apt-get update
-apt-get --yes --force-yes --no-install-recommends install dpkg-dev
-
-cp -afv /var/cache/apt/archives/*.deb /mnt
-cd /mnt
-dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz
-cd -
-
-apt-get --yes --force-yes purge dpkg-dev
-
-sed -i -e "@deb file:/mnt@d" /etc/apt/sources.list
-apt-get update
-
-EOF
-	chroot-script fill-apt-cache || zerr
-}
-
 silly() {
 	fn silly "$@"
 	local arg1="$1"
