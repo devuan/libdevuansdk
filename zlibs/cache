@@ -68,7 +68,8 @@ SHA256:
  $(sha256sum Packages.gz | cut -d' ' -f1)    $(du -b Packages.gz)
 EOF
 		rm -f Packages
-		gpg --sign --detach-sign --sign-with $aptcachegpg Release || zerr
+		gpg --sign --detach-sign -a --sign-with $aptcachegpg Release || zerr
+		mv Release.asc Release.gpg
 	popd
 
 
