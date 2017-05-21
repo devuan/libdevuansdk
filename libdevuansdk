@@ -22,6 +22,7 @@ LIBPATH=${LIBPATH:-$(dirname $0)}
 
 source $LIBPATH/config
 source $LIBPATH/zlibs/bootstrap
+source $LIBPATH/zlibs/cache
 source $LIBPATH/zlibs/helpers
 source $LIBPATH/zlibs/imaging
 source $LIBPATH/zlibs/iso
