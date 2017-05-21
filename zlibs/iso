@@ -33,7 +33,6 @@ iso_prepare_strap() {
 apt-get update
 apt-get --yes --force-yes install dialog live-boot live-boot-initramfs-tools
 apt-get --yes --force-yes autoremove
-apt-get clean
 EOF
 
 	chroot-script -d isoprep    || zerr

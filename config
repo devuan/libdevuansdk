@@ -20,15 +20,18 @@
 ## libdevuansdk configuration
 
 vars+=(release version mirror section blend_name image_name vm_name)
-vars+=(arch earch)
+vars+=(arch earch aptcachedir APT_CACHE)
 vars+=(usercredentials rootcredentials)
 
 arrs+=(core_packages base_packages purge_packages blend_packages)
 
+## enable local apt cache
+APT_CACHE=1
+aptcachedir="$LIBPATH/apt-cache"
 
 os="devuan"
 release="jessie"
-version="1.0.0-RC2"
+version="1.0.0"
 mirror="http://auto.mirror.devuan.org/merged"
 section="main"
 
