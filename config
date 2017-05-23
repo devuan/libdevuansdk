@@ -27,7 +27,7 @@ vars+=(usercredentials rootcredentials)
 arrs+=(core_packages base_packages purge_packages blend_packages)
 
 ## enable local apt cache
-APT_CACHE=0
+APT_CACHE=${APT_CACHE:-0}
 aptcachedir="$LIBPATH/apt-cache"
 ## key used to sign the cache's Release
 aptcachegpg="0xdeadbeefdeadbeef"
