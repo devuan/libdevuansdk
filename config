@@ -27,7 +27,7 @@ vars+=(usercredentials rootcredentials)
 arrs+=(core_packages base_packages purge_packages blend_packages)
 
 ## enable local apt cache
-APT_CACHE=1
+APT_CACHE=0
 aptcachedir="$LIBPATH/apt-cache"
 ## key used to sign the cache's Release
 aptcachegpg="0xdeadbeefdeadbeef"
@@ -36,7 +36,7 @@ os="devuan"
 release="jessie"
 version="1.0.0"
 mirror="http://auto.mirror.devuan.org/merged"
-section="main"
+section="main contrib non-free"
 
 image_name="${os}_${release}_${version}_${arch}"
 [[ -n "$blend_name"  ]] && image_name="${image_name}_${blend_name}"

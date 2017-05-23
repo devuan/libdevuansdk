@@ -275,6 +275,7 @@ chroot-script() {
 			local script="$2"
 			devprocsys mount "$strapdir" || zerr
 			dpkgdivert on "$strapdir"    || zerr
+			[[ "$APT_CACHE" = 1 ]] && { aptcache on "$strapdir/mnt"  || zerr }
 
 			## logging
 			sudo sed -i "$strapdir/$script" \
@@ -285,6 +286,7 @@ chroot-script() {
 			sudo -E chroot "$strapdir" "/$script" || zerr
 			sudo mv -f "$strapdir/${script}.log" "$R/log/"
 
+			[[ "$APT_CACHE" = 1 ]] && { aptcache off "$strapdir/mnt" || zerr }
 			dpkgdivert off "$strapdir"    || zerr
 			devprocsys umount "$strapdir" || zerr
 			;;
