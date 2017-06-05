@@ -50,6 +50,7 @@ iso_setup_isolinux() {
 	act "copying kernel and initrd"
 	sudo cp $strapdir/boot/vmlinuz* binary/live/vmlinuz
 	sudo cp $strapdir/boot/initrd*  binary/live/initrd
+	#sudo cp $strapdir/boot/memtest86+.bin binary/live/memtest
 
 	eval $(cat /etc/os-release)
 	case "$ID" in
