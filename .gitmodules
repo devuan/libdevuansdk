@@ -1,3 +1,7 @@
 [submodule "extra/devuan-keyring"]
 	path = extra/devuan-keyring
 	url = https://git.devuan.org/devuan-packages/devuan-keyring
+[submodule "extra/debootstrap"]
+	path = extra/debootstrap
+	url = https://git.devuan.org/devuan-packages/debootstrap
+	branch = suites/jessie
