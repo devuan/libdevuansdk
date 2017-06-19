@@ -39,7 +39,7 @@ bootstrap_complete_base() {
 	export LC_ALL=C
 	export DEBIAN_FRONTEND=noninteractive
 
-	sudo -E debootstrap \
+	sudo -E "$LIBPATH/extra/debootstrap/debootstrap" \
 		--keyring="$LIBPATH/extra/devuan-keyring/keyrings/devuan-archive-keyring.gpg" \
 		--foreign \
 		--arch $arch $release $strapdir $mirror || zerr
