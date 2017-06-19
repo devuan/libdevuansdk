@@ -26,9 +26,6 @@ vars+=(usercredentials rootcredentials)
 
 arrs+=(core_packages base_packages purge_packages blend_packages)
 
-## overrides the system's debootstrap if there is one
-export PATH="$LIBPATH/extra/debootstrap:$PATH"
-
 ## enable local apt cache
 APT_CACHE=${APT_CACHE:-0}
 aptcachedir="$LIBPATH/apt-cache"
