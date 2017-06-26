@@ -119,7 +119,7 @@ image_pack_dist() {
 	notice "compressing image with $_xz"
 	silly
 	pushd $workdir
-	${xz} "${image_name}.img"
+	${_xz} "${image_name}.img"
 
 	notice "generating sha256 for ${image_name}.img.xz"
 	sha256sum ${image_name}.img.xz > ${image_name}.img.xz.sha
