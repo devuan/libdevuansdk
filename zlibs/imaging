@@ -19,7 +19,8 @@
 
 ## imagine images
 
-vars+=(image_name bootpart rootpart loopdevice)
+vars+=(image_name bootpart rootpart loopdevice filesystem)
+arrs+=(fsargs)
 
 image_prepare_raw() {
 	fn image_prepare_raw
@@ -194,7 +195,10 @@ image_qcow2_as_strapdir() {
 
 	pushd "$workdir"
 
-	notice "creating qcow2 image of $size MB"
+	# default filesystem fallback to ext4
+	filesystem=${filesystem:-ext4}
+
+	notice "creating qcow2 image of $size MB formatted with $filesystem"
 	rm -f base.qcow2
 	qemu-img create -f qcow2 base.qcow2 ${size}M     || zerr
 	sudo modprobe nbd max_part=8                     || zerr
@@ -202,10 +206,16 @@ image_qcow2_as_strapdir() {
 	[ -n "$loopdevice" ]                             || zerr
 	act "$loopdevice"
 	sudo qemu-nbd --connect=${loopdevice} base.qcow2 || zerr
+
 	notice "partitioning"
 	sudo parted ${loopdevice} mktable msdos              || zerr
 	sudo parted ${loopdevice} mkpart primary '0%' '100%' || zerr
-	sudo mkfs.ext4 ${loopdevice}p1 || zerr
+
+	notice "formatting with $filesystem"
+	command -v mkfs.${filesystem} >/dev/null || {
+		error "filesystem tools not found in path: mkfs.${filesystem}"
+		zerr }
+	sudo mkfs.${filesystem} ${=fsargs} ${loopdevice}p1 || zerr
 
 	notice "mounting qcow2 image to strapdir"
 	sudo mount ${loopdevice}p1 $strapdir || zerr
