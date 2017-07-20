@@ -40,7 +40,8 @@ EOF
 	print "rootfs / rootfs rw 0 0" | sudo tee ${strapdir}/etc/fstab >/dev/null
 
 	sudo sed -i ${strapdir}/etc/ssh/sshd_config \
-		-e 's/without-password/yes/' || zerr
+		-e 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' \
+		-e 's/PermitRootLogin without-password/PermitRootLogin yes/'|| zerr
 }
 
 vm_setup_grub() {
