@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-vars+=(bootstrap_tgz)
+vars+=(bootstrap_tgz_stage3 bootstrap_tgz_stage4 TAR_STAGE4)
 
 bootstrap_complete_base() {
 	fn bootstrap_complete_base "$@"
@@ -26,13 +26,25 @@ bootstrap_complete_base() {
 
 	notice "bootstrapping $os $arch base"
 
-	bootstrap_tgz="$R/tmp/bootstrap-${os}-${arch}.tgz"
+	bootstrap_tgz_stage3="$R/tmp/bootstrap-${os}-${arch}-stage3.tgz"
+	bootstrap_tgz_stage4="$R/tmp/bootstrap-${os}-${arch}-stage4.tgz"
 
-	[[ -f $bootstrap_tgz ]] && {
-		notice "using the existing bootstrap tarball found in $R/tmp"
-		bootstrap_tar_unpack $strapdir || { die "failed to extract"; zerr }
-		return 0
-	}
+	if [[ -n "$TAR_STAGE4" && -f "$bootstrap_tgz_stage4" ]]; then
+		notice "using the existing stage4 bootstrap tarball found in $R/tmp"
+		bootstrap_tar_unpack "$bootstrap_tgz_stage4" "$strapdir" || {
+			die "failed to extract tarball"
+			zerr
+		}
+		return
+	elif [[ -f "$bootstrap_tgz_stage3" ]]; then
+		notice "using the existing stage3 bootstrap tarball found in $R/tmp"
+		bootstrap_tar_unpack "$bootstrap_tgz_stage3" "$strapdir" || {
+			die "failed to extract tarball"
+			zerr
+		}
+		return
+	fi
+
 	notice "running debootstrap stage 1"
 	## deboostrap stage 1
 	export LANG=C
@@ -85,10 +97,12 @@ EOF
 		chroot-script addcachepubkey || zerr
 	}
 
-	sleep 1
-
-	bootstrap_tar_pack             || zerr
-	bootstrap_tar_unpack $strapdir || zerr
+	if [ -n "$TAR_STAGE4" ]]; then
+		bootstrap_tar_unpack "$bootstrap_tgz_stage4" "$strapdir" || zerr
+	else
+		bootstrap_tar_pack   "$bootstrap_tgz_stage3"             || zerr
+		bootstrap_tar_unpack "$bootstrap_tgz_stage3" "$strapdir" || zerr
+	fi
 }
 
 bootstrap_config_thirdstage() {
@@ -122,6 +136,7 @@ EOF
 bootstrap_tar_pack() {
 	fn bootstrap_tar_pack
 	req=(bootstrap_tgz)
+	bootstrap_tgz="$1"
 	ckreq || return 1
 
 	local _dest=$(dirname $bootstrap_tgz)
@@ -144,7 +159,8 @@ bootstrap_tar_pack() {
 
 bootstrap_tar_unpack() {
 	fn bootstrap_tar_unpack $@
-	local unpath="$1"
+	local bootstrap_tgz="$1"
+	local unpath="$2"
 	req=(unpath bootstrap_tgz)
 	ckreq || return 1
 
@@ -196,4 +212,8 @@ EOF
 	for i in $custmodules; do
 		print $i | sudo tee -a $strapdir/etc/modules >/dev/null
 	done || return 0
+
+	[[ -n "$TAR_STAGE4" ]] && {
+		bootstrap_tar_pack "$bootstrap_tgz_stage4"
+	}
 }
