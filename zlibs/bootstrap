@@ -97,7 +97,7 @@ EOF
 		chroot-script addcachepubkey || zerr
 	}
 
-	if [ -n "$TAR_STAGE4" ]]; then
+	if [[ -n "$TAR_STAGE4" ]]; then
 		bootstrap_tar_unpack "$bootstrap_tgz_stage4" "$strapdir" || zerr
 	else
 		bootstrap_tar_pack   "$bootstrap_tgz_stage3"             || zerr
