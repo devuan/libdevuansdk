@@ -117,9 +117,14 @@ conf_print_sourceslist() {
 	req=(mirror release section)
 	ckreq || return 1
 
-	cat <<EOF
+	[[ $APT_CACHE = 1 ]] && {
+		cat <<EOF
 deb file:/mnt ./
 
+EOF
+	}
+
+	cat <<EOF
 ## package repositories
 deb ${mirror} ${release} ${section}
 deb ${mirror} ${release}-updates ${section}
