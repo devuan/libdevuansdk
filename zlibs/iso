@@ -103,9 +103,14 @@ iso_squash_strap() {
 
 	notice "creating squashfs out of strapdir"
 
+	_extraopts=()
+	if [[ "$arch" = amd64 ]]; then
+		_extraopts+=(-Xbcj x86)
+	fi
+
 	pushd $workdir
 	sudo mksquashfs $strapdir binary/live/filesystem.squashfs \
-		-Xbcj x86 -noappend -comp xz || zerr
+		${_extraopts} -noappend -comp xz || zerr
 	popd
 	unset uefi_opt
 }
