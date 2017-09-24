@@ -26,6 +26,10 @@ bootstrap_complete_base() {
 
 	notice "bootstrapping $os $arch base"
 
+	export LANG=C
+	export LC_ALL=C
+	export DEBIAN_FRONTEND=noninteractive
+
 	bootstrap_tgz_stage3="$R/tmp/bootstrap-${os}-${arch}-stage3.tgz"
 	bootstrap_tgz_stage4="$R/tmp/bootstrap-${os}-${arch}-stage4.tgz"
 
@@ -46,10 +50,6 @@ bootstrap_complete_base() {
 	fi
 
 	notice "running debootstrap stage 1"
-	## deboostrap stage 1
-	export LANG=C
-	export LC_ALL=C
-	export DEBIAN_FRONTEND=noninteractive
 
 	sudo -E "$LIBPATH/extra/debootstrap/debootstrap" \
 		--keyring="$LIBPATH/extra/devuan-keyring/keyrings/devuan-archive-keyring.gpg" \
