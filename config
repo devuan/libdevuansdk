@@ -73,7 +73,8 @@ base_packages=(
 	mawk
 	tmux
 	screen
-	openntpd
+	#openntpd
+	ntp
 	wpasupplicant
 	wireless-tools
 	elinks

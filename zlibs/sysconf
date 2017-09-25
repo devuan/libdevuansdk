@@ -117,6 +117,13 @@ conf_print_sourceslist() {
 	req=(mirror release section)
 	ckreq || return 1
 
+	[[ $APT_CACHE = 1 ]] && {
+		cat <<EOF
+deb file:/mnt ./
+
+EOF
+	}
+
 	cat <<EOF
 deb file:/mnt ./
 

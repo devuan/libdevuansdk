@@ -40,7 +40,8 @@ EOF
 	print "rootfs / rootfs rw 0 0" | sudo tee ${strapdir}/etc/fstab >/dev/null
 
 	sudo sed -i ${strapdir}/etc/ssh/sshd_config \
-		-e 's/without-password/yes/' || zerr
+		-e 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' \
+		-e 's/PermitRootLogin without-password/PermitRootLogin yes/'|| zerr
 }
 
 vm_setup_grub() {
@@ -54,6 +55,8 @@ vm_setup_grub() {
 export DEBIAN_FRONTEND=noninteractive
 apt-get --yes --force-yes install linux-image-amd64 grub-pc
 sed -e 's:GRUB_TIMEOUT=5:GRUB_TIMEOUT=1:' -i /etc/default/grub
+sed -e 's:GRUB_CMDLINE_LINUX_DEFAULT=".*":GRUB_CMDLINE_LINUX_DEFAULT="quiet net.ifnames=0":' \
+	-i /etc/default/grub
 update-grub
 grub-install --no-floppy --recheck --modules="biosdisk part_msdos" \
 	${loopdevice}

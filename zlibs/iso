@@ -103,13 +103,12 @@ iso_squash_strap() {
 
 	notice "creating squashfs out of strapdir"
 
-	[[ -n "$mkefi" ]] && uefi_opt="-Xbcj x86"
+	[[ -n "$mkefi" ]] && _uefi_opt="-Xbcj x86"
 	pushd $workdir
 	sudo mksquashfs $strapdir binary/live/filesystem.squashfs \
-		${=uefi_opt} \
-		-noappend -comp xz || zerr
+		${=_uefi_opt} -noappend -comp xz || zerr
+
 	popd
-	unset uefi_opt
 }
 
 iso_xorriso_build() {
