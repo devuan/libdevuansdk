@@ -129,7 +129,7 @@ apt-get --yes --force-yes autoremove
 rm -f /debconf.set
 rm -f /etc/ssh/ssh_host_*
 rm -f /root/.bash_history
-echo "1" > .keep
+#echo "1" > .keep
 EOF
 }
 
@@ -164,15 +164,15 @@ bootstrap_tar_unpack() {
 	req=(unpath bootstrap_tgz)
 	ckreq || return 1
 
-	if [[ -f "${unpath}/.keep" ]]; then
-		act "skipping tarball unpack"
-	else
-		sudo rm -rf ${unpath}
-		mkdir -p ${unpath}
-		silly
-		sudo tar xfp $bootstrap_tgz -C ${unpath}
-		sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
-	fi
+	# if [[ -f "${unpath}/.keep" ]]; then
+	#	act "skipping tarball unpack"
+	# else
+	sudo rm -rf ${unpath}
+	mkdir -p ${unpath}
+	silly
+	sudo tar xfp $bootstrap_tgz -C ${unpath}
+	sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
+	# fi
 
 	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list >/dev/null
 
