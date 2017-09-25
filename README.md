@@ -13,7 +13,7 @@ it. You are required to include it in your SDK. However, libdevuansdk
 requires the following packages to be installed:
 
 ```
-zsh debootstrap sudo kpartx cgpt xz-utils
+zsh sudo cgpt parted xz-utils
 ```
 
 ## Documentation
