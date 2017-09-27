@@ -207,12 +207,12 @@ EOF
 	for i in $inittab; do
 		grep -q "^$i" $strapdir/etc/inittab && continue
 		print "$i" | sudo tee -a $strapdir/etc/inittab >/dev/null
-	done
+	done || true
 
 	for i in $custmodules; do
 		grep -q "^$i" $strapdir/etc/modules && continue
 		print "$i" | sudo tee -a $strapdir/etc/modules >/dev/null
-	done
+	done || true
 
 	[[ -n "$TAR_STAGE4" ]] && bootstrap_tar_pack "$bootstrap_tgz_stage4"
 }
