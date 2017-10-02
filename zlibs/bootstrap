@@ -168,7 +168,7 @@ bootstrap_tar_unpack() {
 	#	act "skipping tarball unpack"
 	# else
 	sudo rm -rf ${unpath}
-	mkdir -p ${unpath}
+	sudo mkdir -p ${unpath}
 	silly
 	sudo tar xfp $bootstrap_tgz -C ${unpath}
 	sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
