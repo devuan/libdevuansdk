@@ -35,6 +35,34 @@ image_prepare_raw() {
 		count=$size
 }
 
+image_format_partitions() {
+	fn image_format_partitions
+	req=(bootfs bootpart rootpart)
+	ckreq || return 1
+
+	notice "formatting partitions..."
+	case "$bootfs" in
+		none)
+			act "skipping boot partition"
+			;;
+		vfat|fat|dos)
+			act "formatting boot as vfat"
+			sudo mkfs.vfat ${bootpart}
+			;;
+		ext4)
+			act "formatting boot as ext4"
+			sudo mkfs.ext4 ${bootpart}
+			;;
+		*)
+			error "unknown parted_bootfs type '$bootfs'"
+			zerr
+			;;
+	esac
+
+	act "formatting root as ext4"
+	sudo mkfs.ext4 ${rootpart}
+}
+
 image_partition_raw_dos() {
 	fn image_partition_raw_dos
 	req=(workdir image_name parted_boot parted_root)
@@ -54,14 +82,12 @@ image_partition_raw_dos() {
 	bootpart=${loopdevice}p1
 	rootpart=${loopdevice}p2
 
-	notice "formatting partitions..."
-	sudo mkfs.vfat ${bootpart}
-	sudo mkfs.ext4 ${rootpart}
+	image_format_partitions
 }
 
 image_partition_raw_gpt() {
 	fn image_partition_raw_gpt
-	req=(workdir image_name)
+	req=(workdir image_name gpt_boot gpt_root)
 	ckreq || return 1
 
 	notice "partitioning raw gpt image..."
@@ -84,8 +110,7 @@ image_partition_raw_gpt() {
 	bootpart="${loopdevice}p1"
 	rootpart="${loopdevice}p2"
 
-	notice "formatting partitions..."
-	sudo mkfs.ext4 -L rootfs ${rootpart}
+	image_format_partitions
 }
 
 image_pack_dist() {
@@ -139,14 +164,14 @@ image_pack_dist() {
 
 image_raw_mount() {
 	fn image_raw_mount
-	req=(workdir bootpart rootpart)
+	req=(workdir bootpart rootpart bootfs)
 	ckreq || return 1
 
 	mkdir -p $workdir/mnt
 	sudo mount $rootpart $workdir/mnt && \
 		act "mounted root partition" || zerr
 
-	[[ "$parted_type" == gpt ]] || {
+	[[ "$bootfs" == none ]] || {
 		sudo mkdir $workdir/mnt/boot
 		sudo mount $bootpart $workdir/mnt/boot && \
 			act "mounted boot partition" || zerr
@@ -158,7 +183,7 @@ image_raw_umount() {
 	req=(workdir bootpart rootpart)
 	ckreq || return 1
 
-	[[ "$parted_type" == gpt ]] || {
+	[[ "$bootfs" == none ]] || {
 		sudo umount $workdir/mnt/boot && act "unmounted boot partition" || zerr
 		sleep 1
 	}

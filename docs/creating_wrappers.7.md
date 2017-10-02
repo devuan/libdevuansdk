@@ -84,6 +84,12 @@ the [zuper](https://github.com/dyne/zuper) zsh library.
   available space. again, see the `image_partition_raw_gpt()` function for a
   better understanding.
 
+* `$bootfs`
+  This variable controls the file system type of the boot partition. Recognised
+  values are `none`, `vfat` (or the synonyms `fat` and `dos`), and `ext4`.
+  When `none` is specified, the boot partition is left raw and not mounted,
+  so /boot becomes part of the root partition.
+
 * `$qemu_bin`  
   declare this if you are bootstrapping for an architecture different than
   yours. it should hold the path to `qemu-user-static` or a similarly named
