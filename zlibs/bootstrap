@@ -214,5 +214,5 @@ EOF
 		print "$i" | sudo tee -a $strapdir/etc/modules >/dev/null
 	done || true
 
-	[[ -n "$TAR_STAGE4" ]] && bootstrap_tar_pack "$bootstrap_tgz_stage4"
+	[[ -n "$TAR_STAGE4" ]] && bootstrap_tar_pack "$bootstrap_tgz_stage4" || true
 }
