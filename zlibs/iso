@@ -106,7 +106,7 @@ iso_squash_strap() {
 	[[ -n "$mkefi" ]] && _uefi_opt="-Xbcj x86"
 	pushd $workdir
 	sudo mksquashfs $strapdir binary/live/filesystem.squashfs \
-		${=_uefi_opt} -noappend -comp xz || zerr
+		-comp xz ${=_uefi_opt} -noappend || zerr
 
 	popd
 }
