@@ -257,7 +257,7 @@ for deb in ${custom_deb_packages}; do
 	apt-get --yes --force-yes -f install
 done
 cd /
-apt-get autoremove
+apt-get --yes --force-yes autoremove
 rm -rf /debs
 EOF
 	chroot-script install-debs
