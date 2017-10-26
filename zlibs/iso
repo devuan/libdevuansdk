@@ -125,6 +125,10 @@ iso_xorriso_build() {
 		binary || zerr
 	popd
 	unset uefi_opt
+
+	[[ "$DEBUG" = 1 ]] || {
+		[[ -n "$workdir" ]] && sudo rm -rf "$workdir"
+	}
 }
 
 iso_setup_installer() {
