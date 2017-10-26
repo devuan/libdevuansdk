@@ -125,8 +125,6 @@ EOF
 	}
 
 	cat <<EOF
-deb file:/mnt ./
-
 ## package repositories
 deb ${mirror} ${release} ${section}
 deb ${mirror} ${release}-updates ${section}
