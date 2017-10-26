@@ -126,6 +126,8 @@ apt-get --yes --force-yes install ${base_packages}
 apt-get --yes --force-yes purge  ${purge_packages}
 apt-get --yes --force-yes autoremove
 
+apt-get clean
+
 rm -f /debconf.set
 rm -f /etc/ssh/ssh_host_*
 rm -f /root/.bash_history
@@ -200,6 +202,8 @@ done
 apt-get --yes --force-yes upgrade
 apt-get --yes --force-yes install ${extra_packages}
 apt-get --yes --force-yes autoremove
+
+apt-get clean
 EOF
 
 	chroot-script -d postunpack || zerr
