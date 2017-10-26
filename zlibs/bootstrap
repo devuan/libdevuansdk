@@ -141,9 +141,9 @@ bootstrap_tar_pack() {
 	bootstrap_tgz="$1"
 	ckreq || return 1
 
-	local _dest=$(dirname $bootstrap_tgz)
+	local _dest="$(dirname $bootstrap_tgz)"
 
-	if [[ -f $bootstrap_tgz ]]; then
+	if [[ -f "$bootstrap_tgz" ]]; then
 		notice "tarball found already in $_dest"
 	else
 		notice "Creating boostrap tarball in $bootstrap_tgz"
@@ -153,8 +153,7 @@ bootstrap_tar_pack() {
 		mkdir -p ${_dest}
 		silly
 		sudo tar czfp $bootstrap_tgz \
-			--exclude={./boot,./dev,./sys,./proc} \
-			./
+			--exclude={./boot,./dev,./sys,./proc} .
 		popd
 	fi
 }
