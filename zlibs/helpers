@@ -396,5 +396,6 @@ silly() {
 		"A million hamsters are spinning their wheels right now"
 	)
 	local rnd=$(shuf -i1-$#funneh -n 1)
-	act "${funneh[$rnd]}" ; [[ $arg1 = sleep ]] && sleep $arg2
+	act "${funneh[$rnd]}"
+	[[ $arg1 = sleep ]] && sleep $arg2 || true
 }
