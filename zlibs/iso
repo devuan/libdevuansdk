@@ -52,25 +52,9 @@ iso_setup_isolinux() {
 	sudo cp $strapdir/boot/initrd*  binary/live/initrd
 	#sudo cp $strapdir/boot/memtest86+.bin binary/live/memtest
 
-	eval $(cat /etc/os-release)
-	case "$ID" in
-		devuan)
-			sudo cp \
-				/usr/share/live/build/bootloaders/isolinux/isolinux.bin \
-				binary/isolinux || zerr
-			sudo cp /usr/share/live/build/bootloaders/isolinux/*.c32 \
-				binary/isolinux || zerr
-			;;
-		gentoo)
-			sudo cp \
-				/usr/share/syslinux/isolinux.bin binary/isolinux || zerr
-			sudo cp \
-				/usr/share/syslinux/*.c32 binary/isolinux || zerr
-			;;
-		*)
-			warn "no isolinux has been copied. take care of it yourself"
-			;;
-	esac
+	sudo cp "$R"/extra/syslinux/isolinux.bin binary/isolinux || zerr
+	sudo cp "$R"/extra/syslinux/*.c32 binary/isolinux || zerr
+
 	popd
 }
 
@@ -123,15 +107,7 @@ iso_xorriso_build() {
 	uefi_opt="-eltorito-alt-boot -e boot/grub/efiboot.img -isohybrid-gpt-basdat -no-emul-boot"
 	}
 
-	eval $(cat /etc/os-release)
-	case "$ID" in
-		devuan)
-			isohybrid=/usr/lib/ISOLINUX/isohdpfx.bin
-			;;
-		gentoo)
-			isohybrid=/usr/share/syslinux/isohdpfx.bin
-			;;
-	esac
+	isohybrid="$R"/extra/syslinux/isohdpfx.bin
 
 	mkdir -p $R/dist
 	pushd $workdir
