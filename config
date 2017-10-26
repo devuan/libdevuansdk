@@ -77,7 +77,7 @@ base_packages=(
 	ntp
 	wpasupplicant
 	wireless-tools
-	elinks
+	lynx
 	firmware-linux-free
 	btrfs-tools
 	zsh
