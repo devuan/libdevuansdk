@@ -33,13 +33,8 @@ conf_print_fstab() {
 
 	cat <<EOF
 #<file system>  <mount point>  <type>  <options>            <dump> <pass>
-proc            /proc          proc    nodev,noexec,nosuid    0      0
-
 # rootfs
 /dev/sda2       /              ext4    errors=remount-ro      0      1
-
-# boot
-/dev/sda1       /boot          ext2    defaults               0      0
 EOF
 }
 
@@ -58,7 +53,7 @@ conf_print_hosts() {
 
 	cat <<EOF
 127.0.0.1        ${os}                localhost
-::1              localhost            ip6-localhost ip6-loopback
+::1              ip6-localhost ip6-loopback
 fe00::0          ip6-localnet
 fe00::0          ip6-mcastprefix
 fe02::1          ip6-allnodes
@@ -93,11 +88,11 @@ iface eth0 inet dhcp
 #	netmask 255.255.255.0
 
 # allow-hotplug wlan0
-# iface wlan0 inet manual
+# iface wlan0 inet dhcp
 #	wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
 
 # allow-hotplug wlan1
-# iface wlan1 inet manual
+# iface wlan1 inet dhcp
 #	wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
 EOF
 }
@@ -136,14 +131,5 @@ deb ${mirror} ${release}-security ${section}
 #deb-src ${mirror} ${release}-updates ${section}
 #deb-src ${mirror} ${release}-security ${section}
 #deb-src ${mirror} ${release}-backports ${section}
-EOF
-}
-
-conf_print_locales() {
-	fn conf_print_locales
-
-	cat <<EOF
-export LANG=C
-export LC_ALL=C
 EOF
 }
