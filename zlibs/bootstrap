@@ -128,6 +128,9 @@ apt-get --yes --force-yes autoremove
 
 apt-get clean
 
+sed -e 's/# en_US.UTF-8/en_US.UTF-8/' -i /etc/locale.gen
+locale-gen
+
 rm -f /debconf.set
 rm -f /etc/ssh/ssh_host_*
 rm -f /root/.bash_history

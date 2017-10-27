@@ -84,6 +84,7 @@ base_packages=(
 	rsync
 	git-core
 	mlocate
+	locales
 )
 
 purge_packages+=(
