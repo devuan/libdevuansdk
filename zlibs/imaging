@@ -149,12 +149,16 @@ image_pack_dist() {
 	pushd $workdir
 	xz -zv "${image_name}.img"
 
+	mkdir -p "$R/dist"
+	mv -v ${image_name}.img.xz     $R/dist/
+
+	pushd "$R/dist"
 	notice "generating sha256 for ${image_name}.img.xz"
 	sha256sum ${image_name}.img.xz > ${image_name}.img.xz.sha
+	notice "generating sha256 for ${image_name}.tar.gz"
+	sha256sum ${image_name}.tar.gz > ${image_name}.tar.gz.sha
+	popd
 
-	mkdir -p $R/dist
-	mv -v ${image_name}.img.xz     $R/dist/
-	mv -v ${image_name}.img.xz.sha $R/dist/
 	popd
 
 	[[ $DEBUG = 1 ]] || sudo rm -r $workdir
