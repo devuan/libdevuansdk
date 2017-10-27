@@ -175,7 +175,7 @@ findfreenbd() {
 
 qemu_install_user() {
 	fn qemu_install_user
-	req=(qemu_bin strapdir)
+	req=(arch strapdir)
 	ckreq || return 1
 
 	[[ "$(uname -m)" =~ "arm" ]]   && return
