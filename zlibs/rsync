@@ -24,11 +24,15 @@ rsync_to_raw_image() {
 	req=(workdir strapdir bootpart rootpart)
 	ckreq || return 1
 
-	notice "rsyncing strapdir to raw image..."
+	notice "Preparing to rsync and tar the rootfs..."
 	image_raw_mount
 	silly sleep 1
 
 	pushd $strapdir
+		notice "creating a tarbomb of the rootfs..."
+		sudo tar czf "$R/dist/${image_name}.tar.gz" . || zerr
+
+		notice "rsyncing strapdir to raw image..."
 		sudo rsync -HPavz -q ./* $workdir/mnt || {
 			image_raw_umount
 			die "not enough space, please report a bug"
