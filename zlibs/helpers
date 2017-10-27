@@ -178,8 +178,21 @@ qemu_install_user() {
 	req=(qemu_bin strapdir)
 	ckreq || return 1
 
+	[[ "$(uname -m)" =~ "arm" ]]   && return
+	[[ "$(uname -m)" =~ "aarch" ]] && return
+
 	notice "installing qemu-user-static"
-	sudo cp $qemu_bin $strapdir/usr/bin
+	case "$arch" in
+		armel)
+			sudo cp "$armel_qemu_bin" "$strapdir/usr/bin"
+			;;
+		armhf)
+			sudo cp "$armhf_qemu_bin" "$strapdir/usr/bin"
+			;;
+		arm64)
+			sudo cp "$arm64_qemu_bin" "$strapdir/usr/bin"
+			;;
+	esac
 }
 
 dpkgdivert() {
