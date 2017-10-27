@@ -260,7 +260,7 @@ cd /
 apt-get --yes --force-yes autoremove
 rm -rf /debs
 EOF
-	chroot-script install-debs
+	chroot-script -d install-debs
 }
 
 chroot-script() {
