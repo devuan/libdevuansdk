@@ -52,6 +52,9 @@ image_format_partitions() {
 		ext4)
 			act "formatting boot as ext4"
 			sudo mkfs.ext4 ${bootpart}
+		ext2)
+			act "formating boot as ext2"
+			sudo mkfs.ext2 ${bootpart}
 			;;
 		*)
 			error "unknown parted_bootfs type '$bootfs'"
