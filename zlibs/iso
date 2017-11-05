@@ -49,7 +49,7 @@ iso_setup_isolinux() {
 	sudo mkdir -p binary/{live,isolinux}
 	act "copying kernel and initrd"
 	sudo cp $strapdir/boot/vmlinuz* binary/live/vmlinuz
-	sudo cp $strapdir/boot/initrd*  binary/live/initrd
+	sudo cp $strapdir/boot/initrd*  binary/live/initrd.img
 	#sudo cp $strapdir/boot/memtest86+.bin binary/live/memtest
 
 	sudo cp "$R"/extra/syslinux/isolinux.bin binary/isolinux || zerr
@@ -74,7 +74,7 @@ label live-${arch}
 menu label ^${os} live (${arch})
 menu default
 linux /live/vmlinuz
-append initrd=/live/initrd boot=live
+append initrd=/live/initrd.img boot=live
 
 endtext
 EOF
