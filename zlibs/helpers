@@ -292,11 +292,11 @@ chroot-script() {
 
 			## logging
 			sudo sed -i "$strapdir/$script" \
-				-e 's@#!/bin/sh@#!/bin/sh\'$'\nset -x ; exec 2>/'$script'.log@'
+				-e 's@#!/bin/sh@#!/bin/sh\'$'\nset -x ; exec 2>/'$script'.log ; export DEBIAN_FRONTEND=noninteractive@'
 
 			notice "chrooting to execute $script..."
 			sudo chmod +x  "$strapdir/$script"    || zerr
-			sudo -E chroot "$strapdir" "/$script" || zerr
+			sudo chroot "$strapdir" "/$script" || zerr
 			sudo mv -f "$strapdir/${script}.log" "$R/log/"
 
 			[[ "$APT_CACHE" = 1 ]] && { aptcache off "$strapdir/mnt" || zerr }
@@ -313,7 +313,7 @@ chroot-script() {
 
 			notice "chrooting to execute $script..."
 			sudo chmod +x  "$strapdir/$script"    || zerr
-			sudo -E chroot "$strapdir" "/$script" || zerr
+			sudo chroot "$strapdir" "/$script" || zerr
 			sudo mv -f "$strapdir/${script}.log" "$R/log/"
 
 			[[ "$APT_CACHE" = 1 ]] && { aptcache off "$strapdir/mnt" || zerr }

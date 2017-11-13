@@ -51,7 +51,7 @@ bootstrap_complete_base() {
 
 	notice "running debootstrap stage 1"
 
-	sudo -E env DEBOOTSTRAP_DIR="$LIBPATH/extra/debootstrap" "$LIBPATH/extra/debootstrap/debootstrap" \
+	sudo DEBOOTSTRAP_DIR="$LIBPATH/extra/debootstrap" "$LIBPATH/extra/debootstrap/debootstrap" \
 		--keyring="$LIBPATH/extra/devuan-keyring/keyrings/devuan-archive-keyring.gpg" \
 		--foreign \
 		--arch $arch $release $strapdir $mirror || zerr
@@ -63,7 +63,7 @@ bootstrap_complete_base() {
 
 	## debootstrap stage 2
 	notice "running debootstrap stage 2"
-	sudo -E chroot $strapdir \
+	sudo chroot $strapdir \
 		/debootstrap/debootstrap --second-stage || zerr
 
 	## write all system configuration
