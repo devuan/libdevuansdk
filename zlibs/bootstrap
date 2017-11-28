@@ -18,6 +18,8 @@
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
 vars+=(bootstrap_tgz_stage3 bootstrap_tgz_stage4 TAR_STAGE4)
+arrs+=(base_packages_option core_packages_option extra_packages_option)
+arrs+=(purge_packages_option)
 
 bootstrap_complete_base() {
 	fn bootstrap_complete_base "$@"
@@ -121,9 +123,9 @@ sed -i -e 's/KERNEL\!=\"eth\*|/KERNEL\!=\"/' \
 rm -f /etc/udev/rules.d/70-persistent-net.rules
 export DEBIAN_FRONTEND=noninteractive
 
-apt-get --yes --force-yes install ${core_packages}
-apt-get --yes --force-yes install ${base_packages}
-apt-get --yes --force-yes purge  ${purge_packages}
+apt-get --yes --force-yes install ${core_packages_option} ${core_packages}
+apt-get --yes --force-yes install ${base_packages_option} ${base_packages}
+apt-get --yes --force-yes purge  ${purge_packages_option} ${purge_packages}
 apt-get --yes --force-yes autoremove
 
 apt-get clean
@@ -202,7 +204,7 @@ done
 }
 
 apt-get --yes --force-yes upgrade
-apt-get --yes --force-yes install ${extra_packages}
+apt-get --yes --force-yes install ${extra_packages_option} ${extra_packages}
 apt-get --yes --force-yes autoremove
 
 apt-get clean

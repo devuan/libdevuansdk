@@ -48,6 +48,7 @@ vm_name="${os}_${release}_${version}_${arch}_vagrant"
 rootcredentials="root:toor"
 usercredentials="devuan:devuan"
 
+core_packages_option=()
 core_packages=(
 	devuan-keyring
 	debian-keyring
@@ -62,6 +63,7 @@ core_packages=(
 	sysvinit
 )
 
+base_packages_option=()
 base_packages=(
 	apt-utils
 	parted
@@ -87,6 +89,7 @@ base_packages=(
 	locales
 )
 
+purge_packages_option=()
 purge_packages+=(
 	dbus
 )
