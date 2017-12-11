@@ -70,7 +70,7 @@ base_packages=(
 	openssh-server
 	openssh-client
 	sudo
-	alsa-base
+#	alsa-base
 	alsa-utils
 	mawk
 	tmux
