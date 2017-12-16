@@ -100,6 +100,7 @@ EOF
 	}
 
 	if [[ -n "$TAR_STAGE4" ]]; then
+		bootstrap_tar_pack   "$bootstrap_tgz_stage3"             || zerr
 		bootstrap_tar_unpack "$bootstrap_tgz_stage4" "$strapdir" || zerr
 	else
 		bootstrap_tar_pack   "$bootstrap_tgz_stage3"             || zerr
@@ -166,19 +167,16 @@ bootstrap_tar_pack() {
 bootstrap_tar_unpack() {
 	fn bootstrap_tar_unpack $@
 	local bootstrap_tgz="$1"
-	local unpath="$2"
-	req=(unpath bootstrap_tgz)
+	req=(strapdir bootstrap_tgz)
 	ckreq || return 1
 
-	# if [[ -f "${unpath}/.keep" ]]; then
-	#	act "skipping tarball unpack"
-	# else
-	sudo rm -rf ${unpath}
-	sudo mkdir -p ${unpath}
+	[[ -n "$TAR_STAGE4" ]] && {
+		[[ -f "$bootstrap_tgz" ]] || bootstrap_tgz="$bootstrap_tgz_stage3"
+	}
+	sudo rm -rf "${strapdir}"/*
 	silly
-	sudo tar xfp $bootstrap_tgz -C ${unpath}
-	sudo mkdir -p ${unpath}/{boot,dev,sys,proc}
-	# fi
+	sudo tar xfp $bootstrap_tgz -C ${strapdir}
+	sudo mkdir -p ${strapdir}/{boot,dev,sys,proc}
 
 	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list >/dev/null
 
