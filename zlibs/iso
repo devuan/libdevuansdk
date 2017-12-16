@@ -87,10 +87,20 @@ iso_squash_strap() {
 
 	notice "creating squashfs out of strapdir"
 
-	[[ -n "$mkefi" ]] && _uefi_opt="-Xbcj x86"
+	case "$arch" in
+		amd64|i386)
+			_compfilt="-Xbcj x86"
+			;;
+		arm*)
+			_compfilt="-Xbcj arm"
+			;;
+		*)
+			_compfilt=""
+			;;
+	esac
 	pushd $workdir
 	sudo mksquashfs $strapdir binary/live/filesystem.squashfs \
-		-comp xz ${=_uefi_opt} -noappend || zerr
+		-comp xz ${=_compfilt} -noappend || zerr
 
 	popd
 }

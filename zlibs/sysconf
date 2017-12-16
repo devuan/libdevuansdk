@@ -30,7 +30,7 @@ EOF
 
 conf_print_fstab() {
 	fn conf_print_fstab
-
+	[[ -n "$livesdk_version" ]] && return
 	cat <<EOF
 #<file system>  <mount point>  <type>  <options>            <dump> <pass>
 # rootfs
