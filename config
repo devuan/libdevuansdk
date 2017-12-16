@@ -33,9 +33,9 @@ aptcachedir="$LIBPATH/apt-cache"
 aptcachegpg="0xdeadbeefdeadbeef"
 
 os="devuan"
-release="jessie"
-version="1.0.0"
-mirror="http://pkgmaster.devuan.org/merged"
+release="ascii"
+version="2.0.0"
+mirror="http://deb.devuan.org/merged"
 section="main contrib non-free"
 
 image_name="${os}_${release}_${version}_${arch}"
@@ -70,12 +70,10 @@ base_packages=(
 	openssh-server
 	openssh-client
 	sudo
-#	alsa-base
 	alsa-utils
 	mawk
 	tmux
 	screen
-	#openntpd
 	ntp
 	wpasupplicant
 	wireless-tools
