@@ -35,7 +35,7 @@ aptcachegpg="0xdeadbeefdeadbeef"
 os="devuan"
 release="ascii"
 version="2.0.0"
-mirror="http://deb.devuan.org/merged"
+mirror="http://pkgmaster.devuan.org/merged"
 section="main contrib non-free"
 
 image_name="${os}_${release}_${version}_${arch}"
