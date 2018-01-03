@@ -178,7 +178,7 @@ image_raw_mount() {
 		act "mounted root partition" || zerr
 
 	[[ "$bootfs" == none ]] || {
-		sudo mkdir $workdir/mnt/boot
+		sudo mkdir -p $workdir/mnt/boot
 		sudo mount $bootpart $workdir/mnt/boot && \
 			act "mounted boot partition" || zerr
 	}

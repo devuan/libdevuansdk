@@ -28,6 +28,7 @@ rsync_to_raw_image() {
 	image_raw_mount
 	silly sleep 1
 
+	mkdir -p $R/dist
 	pushd $strapdir
 		notice "creating a tarbomb of the rootfs..."
 		sudo tar czf "$R/dist/${image_name}.tar.gz" . || zerr
