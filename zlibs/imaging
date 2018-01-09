@@ -125,7 +125,7 @@ image_pack_dist() {
 	notice "packaging image for dist"
 
 	act "rechecking filesystem"
-	sudo e2fsck -f ${loopdevice}p2
+	sudo e2fsck -fy ${loopdevice}p2
 	sudo resize2fs ${loopdevice}p2
 
 	sleep 2
