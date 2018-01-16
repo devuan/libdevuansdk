@@ -260,8 +260,9 @@ tar_strapdir() {
 	ckreq || return 1
 
 	notice "creating a tarbomb of the rootfs..."
+	mkdir -p "$R/dist"
 	silly
 	pushd "$strapdir"
-	tar czf "$R/dist/${image_name}.tar.gz" . || zerr
+	sudo tar czf "$R/dist/${image_name}.tar.gz" . || zerr
 	popd
 }
