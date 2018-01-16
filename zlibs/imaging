@@ -253,3 +253,15 @@ image_qcow2_as_strapdir() {
 	echo 1 | sudo tee ${strapdir}/.keep >/dev/null
 	popd
 }
+
+tar_strapdir() {
+	fn tar_strapdir
+	req=(strapdir)
+	ckreq || return 1
+
+	notice "creating a tarbomb of the rootfs..."
+	silly
+	pushd "$strapdir"
+	tar czf "$R/dist/${image_name}.tar.gz" . || zerr
+	popd
+}
