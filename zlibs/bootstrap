@@ -68,6 +68,8 @@ bootstrap_complete_base() {
 	sudo chroot $strapdir \
 		/debootstrap/debootstrap --second-stage || zerr
 
+	blend_bootstrap_setup || zerr
+
 	## write all system configuration
 	notice "writing system configuration"
 	conf_print_debconf     | sudo tee $strapdir/debconf.set              >/dev/null
@@ -221,4 +223,9 @@ EOF
 	done || true
 
 	[[ -n "$TAR_STAGE4" ]] && bootstrap_tar_pack "$bootstrap_tgz_stage4" || true
+}
+
+blend_bootstrap_setup() {
+	fn blend_bootstrap_setup "noop"
+	return 0
 }
