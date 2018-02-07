@@ -178,6 +178,7 @@ vm_pack_dist() {
 	mkdir -p $R/dist
 	mv $workdir/${vm_name}.box $R/dist
 	mv $workdir/base.${imageformat} $R/dist/${vm_name}.${imageformat}
+	cp $workdir/base.vdi $R/dist/${vm_name}.vdi
 
 	act "calculating sha256 sums..."
 	silly
@@ -185,6 +186,8 @@ vm_pack_dist() {
 		$R/dist/${vm_name}.box.sha
 	sha256sum $R/dist/${vm_name}.${imageformat} > \
 		$R/dist/${vm_name}.${imageformat}.sha
+	sha256sum $R/dist/${vm_name}.vdi > \
+		$R/dist/${vm_name}.vdi.sha
 
 	notice "cleaning up virtualbox leftovers"
 	pushd "$workdir"
