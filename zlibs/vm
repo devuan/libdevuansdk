@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016-2017 Dyne.org Foundation
+# Copyright (c) 2016-2018 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -31,7 +31,7 @@ vm_inject_overrides() {
 #!/bin/sh
 # rc.local for base images
 
-[ -f /etc/ssh/ssh_host_rsa_key.pub ] || dpkg-reconfigure openssh-server
+[ -f /etc/ssh/ssh_host_rsa_key.pub ] || ssh-keygen -A
 
 exit 0
 EOF
@@ -40,8 +40,8 @@ EOF
 	print "rootfs / rootfs rw 0 0" | sudo tee ${strapdir}/etc/fstab >/dev/null
 
 	sudo sed -i ${strapdir}/etc/ssh/sshd_config \
-		-e 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' \
-		-e 's/PermitRootLogin without-password/PermitRootLogin yes/'|| zerr
+		-e 's/#PermitRootLogin .*/PermitRootLogin yes/' \
+		-e 's/PermitRootLogin .*/PermitRootLogin yes/'|| zerr
 }
 
 vm_setup_grub() {
