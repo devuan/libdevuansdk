@@ -63,8 +63,34 @@ image_format_partitions() {
 			;;
 	esac
 
-	act "formatting root as ext4"
-	sudo mkfs.ext4 ${rootpart}
+	# default to ext4
+	[[ -z "$rootfs"]] && rootfs=ext4
+
+	case "$rootfs" in
+		none)
+			act "skipping root partition"
+			;;
+		vfat|fat|dos)
+			act "formatting root as vfat"
+			sudo mkfs.vfat ${=rootopts} ${rootpart}
+			;;
+		ext4)
+			act "formatting root as ext4"
+			sudo mkfs.ext4 ${=rootopts} ${rootpart}
+			;;
+		ext2)
+			act "formating root as ext2"
+			sudo mkfs.ext2 ${=rootopts} ${rootpart}
+			;;
+		btrfs)
+			act "formatting root as btrfs"
+			sudo mfks.btrfs ${=rootopts} ${rootpart}
+			;;
+		*)
+			error "unknown parted_rootfs type '$rootfs'"
+			zerr
+			;;
+	esac
 }
 
 image_partition_raw_dos() {
