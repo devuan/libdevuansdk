@@ -47,15 +47,15 @@ image_format_partitions() {
 			;;
 		vfat|fat|dos)
 			act "formatting boot as vfat"
-			sudo mkfs.vfat ${bootpart}
+			sudo mkfs.vfat ${=bootopts} ${bootpart}
 			;;
 		ext4)
 			act "formatting boot as ext4"
-			sudo mkfs.ext4 ${bootpart}
+			sudo mkfs.ext4 ${=bootopts} ${bootpart}
 			;;
 		ext2)
 			act "formating boot as ext2"
-			sudo mkfs.ext2 ${bootpart}
+			sudo mkfs.ext2 ${=bootopts} ${bootpart}
 			;;
 		*)
 			error "unknown parted_bootfs type '$bootfs'"
