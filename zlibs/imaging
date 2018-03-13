@@ -64,7 +64,7 @@ image_format_partitions() {
 	esac
 
 	# default to ext4
-	[[ -z "$rootfs"]] && rootfs=ext4
+	[[ -z "$rootfs" ]] && rootfs=ext4
 
 	case "$rootfs" in
 		none)
