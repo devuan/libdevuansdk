@@ -184,13 +184,13 @@ qemu_install_user() {
 	notice "installing qemu-user-static"
 	case "$arch" in
 		armel)
-			sudo cp "$armel_qemu_bin" "$strapdir/usr/bin"
+			sudo cp -a "$armel_qemu_bin" "$strapdir/usr/bin"
 			;;
 		armhf)
-			sudo cp "$armhf_qemu_bin" "$strapdir/usr/bin"
+			sudo cp -a "$armhf_qemu_bin" "$strapdir/usr/bin"
 			;;
 		arm64)
-			sudo cp "$arm64_qemu_bin" "$strapdir/usr/bin"
+			sudo cp -a "$arm64_qemu_bin" "$strapdir/usr/bin"
 			;;
 	esac
 }
