@@ -170,17 +170,26 @@ image_pack_dist() {
 		zerr
 	}
 
-	notice "compressing image with xz"
-	silly
+	if [[ -n "$nocompressimage" ]]; then
+		_suffix="img"
+	else
+		_suffix="img.xz"
+	fi
+
 	pushd $workdir
-	xz -zv "${image_name}.img"
+
+	[[ -n "$nocompressimage" ]] || {
+		notice "compressing image with xz"
+		silly
+		xz -zv "${image_name}.img"
+	}
 
 	mkdir -p "$R/dist"
-	mv -v ${image_name}.img.xz     $R/dist/
+	mv -v ${image_name}.${_suffix} $R/dist/
 
 	pushd "$R/dist"
-	notice "generating sha256 for ${image_name}.img.xz"
-	sha256sum ${image_name}.img.xz > ${image_name}.img.xz.sha
+	notice "generating sha256 for ${image_name}.${_suffix}"
+	sha256sum ${image_name}.${_suffix} > ${image_name}.${_suffix}.sha
 	notice "generating sha256 for ${image_name}.tar.gz"
 	sha256sum ${image_name}.tar.gz > ${image_name}.tar.gz.sha
 	popd
