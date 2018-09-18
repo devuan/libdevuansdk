@@ -55,7 +55,7 @@ vm_setup_grub() {
 export DEBIAN_FRONTEND=noninteractive
 apt-get --yes --force-yes install linux-image-amd64 grub-pc
 sed -e 's:GRUB_TIMEOUT=5:GRUB_TIMEOUT=1:' -i /etc/default/grub
-sed -e 's:GRUB_CMDLINE_LINUX_DEFAULT=".*":GRUB_CMDLINE_LINUX_DEFAULT="quiet net.ifnames=0":' \
+sed -e 's:GRUB_CMDLINE_LINUX_DEFAULT=".*":GRUB_CMDLINE_LINUX_DEFAULT="net.ifnames=0":' \
 	-i /etc/default/grub
 update-grub
 grub-install --no-floppy --recheck --modules="biosdisk part_msdos" \
