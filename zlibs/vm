@@ -174,8 +174,8 @@ vm_init_cloud() {
 	req=(workdir strapdir imageformat loopdevice)
 	ckreq || return 1
 
-	[ -n "$makecloud" ] || return
-	[ "$imageformat" = qcow2 ] || {
+	[[ -n "$makecloud" ]] || return
+	[[ "$imageformat" = qcow2 ]] || {
 		die "imageformat is not qcow2"
 		zerr
 	}
@@ -187,6 +187,7 @@ vm_init_cloud() {
 	notice "Connecting qemu-nbd and mounting"
 	sudo mkdir -p "$strapdir"
 	sudo qemu-nbd --connect=${loopdevice} base-cloud.qcow2 || zerr
+	silly sleep 1
 	sudo mount ${loopdevice}p1 $strapdir || zerr
 
 	notice "Installing cloud-init"
@@ -213,8 +214,9 @@ vm_pack_dist() {
 	mv $workdir/base.${imageformat} $R/dist/${vm_name}.${imageformat}
 	cp $workdir/base.vdi $R/dist/${vm_name}.vdi
 
-	[ -n "$makecloud" ] && \
-		mv base-cloud.${imageformat} $R/dist/${vm_name}-cloud.${imageformat}
+	[[ -n "$makecloud" ]] && \
+		mv $workdir/base-cloud.${imageformat} \
+			$R/dist/${vm_name}-cloud.${imageformat}
 
 	act "calculating sha256 sums..."
 	silly
@@ -224,7 +226,7 @@ vm_pack_dist() {
 		$R/dist/${vm_name}.${imageformat}.sha
 	sha256sum $R/dist/${vm_name}.vdi > \
 		$R/dist/${vm_name}.vdi.sha
-	[ -n "$makecloud" ] && \
+	[[ -n "$makecloud" ]] && \
 		sha256sum $R/dist/${vm_name}-cloud.${imageformat} > \
 			$R/dist/${vm_name}-cloud.${imageformat}.sha
 
