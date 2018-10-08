@@ -169,6 +169,39 @@ EOF
 	popd
 }
 
+vm_init_cloud() {
+	fn vm_init_cloud
+	req=(workdir strapdir imageformat loopdevice)
+	ckreq || return 1
+
+	[ -n "$makecloud" ] || return
+	[ "$imageformat" = qcow2 ] || {
+		die "imageformat is not qcow2"
+		zerr
+	}
+
+	notice "Creating a cloud-based image"
+	pushd "$workdir"
+	cp -v "base.qcow2" "base-cloud.qcow2"
+
+	notice "Connecting qemu-nbd and mounting"
+	sudo mkdir -p "$strapdir"
+	sudo qemu-nbd --connect=${loopdevice} base-cloud.qcow2 || zerr
+	sudo mount ${loopdevice}p1 $strapdir || zerr
+
+	notice "Installing cloud-init"
+	cat <<EOF | sudo tee ${strapdir}/initcloud >/dev/null
+#!/bin/sh
+
+apt-get update
+apt-get --yes --force-yes install cloud-init
+apt-get clean
+EOF
+	chroot-script -d initcloud || zerr
+	vm_umount_${imageformat} || zerr
+	popd
+}
+
 vm_pack_dist() {
 	fn vm_pack_dist
 	req=(workdir imageformat)
@@ -180,6 +213,9 @@ vm_pack_dist() {
 	mv $workdir/base.${imageformat} $R/dist/${vm_name}.${imageformat}
 	cp $workdir/base.vdi $R/dist/${vm_name}.vdi
 
+	[ -n "$makecloud" ] && \
+		mv base-cloud.${imageformat} $R/dist/${vm_name}-cloud.${imageformat}
+
 	act "calculating sha256 sums..."
 	silly
 	sha256sum $R/dist/${vm_name}.box > \
@@ -188,6 +224,9 @@ vm_pack_dist() {
 		$R/dist/${vm_name}.${imageformat}.sha
 	sha256sum $R/dist/${vm_name}.vdi > \
 		$R/dist/${vm_name}.vdi.sha
+	[ -n "$makecloud" ] && \
+		sha256sum $R/dist/${vm_name}-cloud.${imageformat} > \
+			$R/dist/${vm_name}-cloud.${imageformat}.sha
 
 	notice "cleaning up virtualbox leftovers"
 	pushd "$workdir"

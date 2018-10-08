@@ -81,6 +81,7 @@ build_vagrant_dist() {
 	vm_umount_${imageformat}           || { zerr; wrapup }
 	vm_vbox_setup                      || { zerr; wrapup }
 	vm_vagrant_package                 || { zerr; wrapup }
+	vm_init_cloud                      || { zerr; wrapup }
 	vm_pack_dist                       || { zerr; wrapup }
 }
 
