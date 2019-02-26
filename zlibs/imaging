@@ -179,9 +179,16 @@ image_pack_dist() {
 	pushd $workdir
 
 	[[ -n "$nocompressimage" ]] || {
-		notice "compressing image with xz"
+		if which pixz > /dev/null ; then
+			xzcomp=$(which pixz)
+		else
+			xzcomp=$(which xz)
+		fi
+
+		notice "compressing image with $xzcomp"
 		silly
-		xz -zv "${image_name}.img"
+
+		$xzcomp "${image_name}.img"
 	}
 
 	mkdir -p "$R/dist"
