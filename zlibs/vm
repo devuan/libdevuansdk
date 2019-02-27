@@ -112,7 +112,7 @@ vm_vbox_setup() {
 		base.vdi || zerr
 	VBoxManage modifyhd base.vdi --type immutable --compact || zerr
 
-	vmname="${os}-${release}-prevagrant"
+	vmname="${os}-${release}-prevagrant-${RANDOM}"
 	notice "importing base.vdi to a VBox"
 	act "creating vm"
 	VBoxManage createvm --name "$vmname" --ostype Debian_64 --register || zerr
