@@ -104,7 +104,7 @@ image_partition_raw_dos() {
 	parted $workdir/${image_name}.img --script -- mkpart primary ${parted_boot}
 	parted $workdir/${image_name}.img --script -- mkpart primary ${parted_root}
 	[ -n "$bootable_part" ] && \
-	    parted "$workdir/${image_name}.img" --script -- set "$bootable_part" boot on
+		parted "$workdir/${image_name}.img" --script -- set "$bootable_part" boot on
 
 	## get loopdevice (see ./helpers)
 	findloopdev
@@ -160,6 +160,14 @@ image_pack_dist() {
 		sudo cgpt repair $loopdevice
 		sleep 1
 	}
+
+	case "$device_name" in
+		pinephone-dontbeevil)
+			notice "dd-ing u-boot bootloader to image"
+			sudo dd if="$R/dist/u-boot-sunxi-with-spl-sopine.bin" \
+				of="$loopdevice" bs=1024 seek=8 || zerr
+			;;
+	esac
 
 	sudo partx -dv $loopdevice || {
 		die "partx failed to remove $loopdevice"
