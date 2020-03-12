@@ -41,7 +41,7 @@ conf_print_hostname() {
 	req=(os)
 	ckreq || return 1
 
-	print $os
+	print "$os"
 }
 
 conf_print_hosts() {
@@ -50,12 +50,8 @@ conf_print_hosts() {
 	ckreq || return 1
 
 	cat <<EOF
-127.0.0.1        ${os}                localhost
-::1              ip6-localhost ip6-loopback
-fe00::0          ip6-localnet
-fe00::0          ip6-mcastprefix
-fe02::1          ip6-allnodes
-fe02::1          ip6-allrouters
+127.0.0.1  localhost  ${os}
+::1        localhost
 EOF
 }
 
