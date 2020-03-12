@@ -55,6 +55,7 @@ bootstrap_complete_base() {
 
 	sudo DEBOOTSTRAP_DIR="$LIBPATH/extra/debootstrap" "$LIBPATH/extra/debootstrap/debootstrap" \
 		--keyring="$LIBPATH/extra/devuan-keyring/keyrings/devuan-archive-keyring.gpg" \
+		--include=wget,ca-certificates \
 		--foreign \
 		--arch $arch $release $strapdir $mirror || zerr
 
