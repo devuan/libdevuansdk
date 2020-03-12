@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016-2017 Dyne.org Foundation
+# Copyright (c) 2016-2020 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -34,8 +34,8 @@ aptcachedir="$LIBPATH/apt-cache"
 aptcachegpg="0xdeadbeefdeadbeef"
 
 os="devuan"
-release="ascii"
-version="2.0.0"
+release="beowulf"
+version="3.0.0"
 mirror="http://pkgmaster.devuan.org/merged"
 section="main contrib non-free"
 
