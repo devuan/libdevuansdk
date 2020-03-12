@@ -86,6 +86,7 @@ base_packages=(
 	git-core
 	mlocate
 	locales
+	htop
 )
 
 purge_packages_option=()
