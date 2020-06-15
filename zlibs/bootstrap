@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016-2017 Dyne.org Foundation
+# Copyright (c) 2016-2020 Dyne.org Foundation
 # libdevuansdk maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -161,8 +161,11 @@ bootstrap_tar_pack() {
 		pushd ${strapdir}
 		mkdir -p ${_dest}
 		silly
-		sudo tar czfp $bootstrap_tgz \
-			--exclude={./boot,./dev,./sys,./proc} .
+		sudo tar czfp "$bootstrap_tgz" . \
+			--xattrs \
+			--xattrs-include=security.capability \
+			--xattrs-include=user.pax.flags \
+			--exclude={./boot,./dev,./sys,./proc} || zerr
 		popd
 	fi
 }
@@ -178,7 +181,7 @@ bootstrap_tar_unpack() {
 	}
 	sudo rm -rf "${strapdir}"/*
 	silly
-	sudo tar xfp $bootstrap_tgz -C ${strapdir}
+	sudo tar xpf "$bootstrap_tgz" -C "$strapdir" --xattrs-include='*.*' --numeric-owner
 	sudo mkdir -p ${strapdir}/{boot,dev,sys,proc}
 
 	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list >/dev/null
