@@ -161,13 +161,13 @@ bootstrap_tar_pack() {
 		pushd ${strapdir}
 		mkdir -p ${_dest}
 		silly
-		sudo tar czfp "$bootstrap_tgz" . \
+		sudo tar czfp "$bootstrap_tgz" \
 			--acls \
 			--selinux \
 			--xattrs \
 			--xattrs-include=security.capability \
 			--xattrs-include=user.pax.flags \
-			--exclude={./dev,./sys,./proc} || zerr
+			--exclude={./dev,./sys,./proc} . || zerr
 		popd
 	fi
 }
