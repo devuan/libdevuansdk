@@ -162,10 +162,12 @@ bootstrap_tar_pack() {
 		mkdir -p ${_dest}
 		silly
 		sudo tar czfp "$bootstrap_tgz" . \
+			--acls \
+			--selinux \
 			--xattrs \
 			--xattrs-include=security.capability \
 			--xattrs-include=user.pax.flags \
-			--exclude={./boot,./dev,./sys,./proc} || zerr
+			--exclude={./dev,./sys,./proc} || zerr
 		popd
 	fi
 }
@@ -181,7 +183,8 @@ bootstrap_tar_unpack() {
 	}
 	sudo rm -rf "${strapdir}"/*
 	silly
-	sudo tar xpf "$bootstrap_tgz" -C "$strapdir" --xattrs-include='*.*' --numeric-owner
+	sudo tar xpf "$bootstrap_tgz" -C "$strapdir" --xattrs-include='*.*' --numeric-owner \
+		--acls --selinux --xattrs
 	sudo mkdir -p ${strapdir}/{boot,dev,sys,proc}
 
 	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list >/dev/null

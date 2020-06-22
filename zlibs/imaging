@@ -314,7 +314,8 @@ tar_strapdir() {
 	silly
 	pushd "$strapdir"
 	sudo tar czf "$R/dist/${image_name}.tar.gz" . \
-		--xattrs --xattrs-include=security.capability \
+		--acls --selinux --xattrs \
+		--xattrs-include=security.capability \
 		--xattrs.include=user.pax.flags || zerr
 	popd
 }
