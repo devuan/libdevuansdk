@@ -23,10 +23,14 @@ vars+=(vmname)
 vm_inject_overrides()
 {
 	fn vm_inject_overrides
-	req=(strapdir)
+	req=(strapdir bootfs)
 	ckreq || return 1
 
 	notice "Injecting rootfs overrides"
+
+	cat <<EOF | sudo tee -a "$strapdir/etc/fstab" >/dev/null
+/dev/sda1 /boot ${bootfs} defaults 0 1
+EOF
 
 	cat <<EOF | sudo tee "$strapdir/etc/rc.local" >/dev/null
 #!/bin/sh
