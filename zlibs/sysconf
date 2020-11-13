@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016-2019 Dyne.org Foundation
+# Copyright (c) 2016-2020 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -95,7 +95,6 @@ conf_print_resolvconf() {
 	fn conf_print_resolvconf
 
 	cat <<EOF
-## google's nameservers
 nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
@@ -106,21 +105,14 @@ conf_print_sourceslist() {
 	req=(mirror release section)
 	ckreq || return 1
 
-	[[ $APT_CACHE = 1 ]] && {
-		cat <<EOF
-deb file:/mnt ./
-
-EOF
-	}
-
 	cat <<EOF
-## package repositories
+# Package repositories
 deb ${mirror} ${release} ${section}
 deb ${mirror} ${release}-updates ${section}
 deb ${mirror} ${release}-security ${section}
 #deb ${mirror} ${release}-backports ${section}
 
-## source repositories
+# Source repositories
 #deb-src ${mirror} ${release} ${section}
 #deb-src ${mirror} ${release}-updates ${section}
 #deb-src ${mirror} ${release}-security ${section}

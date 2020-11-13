@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
+# shellcheck shell=bash
 # Copyright (c) 2016-2020 Dyne.org Foundation
-# libdevuansdk maintained by Ivan J. <parazyd@dyne.org>
+# libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
 #
@@ -17,222 +18,227 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-vars+=(bootstrap_tgz_stage3 bootstrap_tgz_stage4 TAR_STAGE4)
-arrs+=(base_packages_option core_packages_option extra_packages_option)
-arrs+=(purge_packages_option)
+vars+=(bootstrap_cpio_stage3 bootstrap_cpio_stage4 CPIO_STAGE4)
 
-bootstrap_complete_base() {
-	fn bootstrap_complete_base "$@"
-	req=(arch)
+bootstrap_complete_base()
+{
+	fn bootstrap_complete_base "$*"
+	req=(R os arch strapdir LIBPATH release mirror)
 	ckreq || return 1
 
-	notice "bootstrapping $os $arch base"
+	notice "Bootstrapping: ${os}:${arch} base"
 
 	export LANG=C
 	export LC_ALL=C
 	export DEBIAN_FRONTEND=noninteractive
 
-	bootstrap_tgz_stage3="$R/tmp/bootstrap-${os}-${arch}-stage3.tgz"
-	bootstrap_tgz_stage4="$R/tmp/bootstrap-${os}-${arch}-stage4.tgz"
+	bootstrap_cpio_stage3="$R/tmp/bootstrap-${os}-${arch}-stage3.cpio.gz"
+	bootstrap_cpio_stage4="$R/tmp/bootstrap-${os}-${arch}-stage4.cpio.gz"
 
-	if [[ -n "$TAR_STAGE4" && -f "$bootstrap_tgz_stage4" ]]; then
-		notice "using the existing stage4 bootstrap tarball found in $R/tmp"
-		bootstrap_tar_unpack "$bootstrap_tgz_stage4" "$strapdir" || {
-			die "failed to extract tarball"
-			zerr
+	if [[ -n "$CPIO_STAGE4" && -f "$bootstrap_cpio_stage4" ]]; then
+		act "Using the existing stage4 bootstrap cpio archive..."
+		bootstrap_cpio_unpack "$bootstrap_cpio_stage4" "$strapdir" || {
+			die "Failed to extract cpio archive"
+			return 1
 		}
 		return
-	elif [[ -f "$bootstrap_tgz_stage3" ]]; then
-		notice "using the existing stage3 bootstrap tarball found in $R/tmp"
-		bootstrap_tar_unpack "$bootstrap_tgz_stage3" "$strapdir" || {
-			die "failed to extract tarball"
-			zerr
+	elif [[ -f "$bootstrap_cpio_stage3" ]]; then
+		act "Using the existing stage3 bootstrap cpio archive..."
+		bootstrap_cpio_unpack "$bootstrap_cpio_stage3" "$strapdir" || {
+			die "Failed to extract cpio archive"
+			return 1
 		}
+		bootstrap_stage4 || { zerr; return 1; }
+		if [[ -n "$CPIO_STAGE4" ]]; then
+			bootstrap_cpio_pack "$bootstrap_cpio_stage4" || { zerr; return 1; }
+		fi
 		return
 	fi
 
-	notice "running debootstrap stage 1"
+	notice "Running stage1 debootstrap"
 
-	sudo DEBOOTSTRAP_DIR="$LIBPATH/extra/debootstrap" "$LIBPATH/extra/debootstrap/debootstrap" \
+	sudo debootstrap \
 		--keyring="$LIBPATH/extra/devuan-keyring/keyrings/devuan-archive-keyring.gpg" \
-		--include=wget,ca-certificates \
+		--include=devuan-keyring,wget,ca-certificates \
 		--foreign \
-		--arch $arch $release $strapdir $mirror || zerr
+		--arch "$arch" "$release" "$strapdir" "$mirror" || { zerr; return 1; }
 
-	[[ $arch =~ "^arm.." ]] && { qemu_install_user || zerr }
-
-	sudo mkdir -p $strapdir/tmp
-	sudo chmod 1777 $strapdir/tmp
-
-	## debootstrap stage 2
-	notice "running debootstrap stage 2"
-	sudo chroot $strapdir \
-		/debootstrap/debootstrap --second-stage || zerr
-
-	blend_bootstrap_setup || zerr
-
-	## write all system configuration
-	notice "writing system configuration"
-	conf_print_debconf     | sudo tee $strapdir/debconf.set              >/dev/null
-	conf_print_fstab       | sudo tee $strapdir/etc/fstab                >/dev/null
-	conf_print_hostname    | sudo tee $strapdir/etc/hostname             >/dev/null
-	conf_print_hosts       | sudo tee $strapdir/etc/hosts                >/dev/null
-	conf_print_netifaces   | sudo tee $strapdir/etc/network/interfaces   >/dev/null
-	conf_print_resolvconf  | sudo tee $strapdir/etc/resolv.conf          >/dev/null
-	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list     >/dev/null
-	#conf_print_locales     | sudo tee $strapdir/etc/profile.d/locales.sh >/dev/null
-
-	## write third-stage for chroot
-	bootstrap_config_thirdstage | sudo tee $strapdir/thirdstage >/dev/null
-
-	## chroot into it and configure further
-	## debootstrap stage 3
-	notice "running debootstrap stage 3"
-
-
-	chroot-script -d thirdstage || zerr
-
-	[[ $APT_CACHE = 1 ]] && {
-		notice "adding apt cache gpg pubkey"
-		cat <<EOF | sudo tee ${strapdir}/addcachepubkey >/dev/null
-#!/bin/sh
-gpgkey="$(gpg --export -a $aptcachegpg)"
-printf "%s" "\$gpgkey" | apt-key add -
-EOF
-		chroot-script addcachepubkey || zerr
-	}
-
-	if [[ -n "$TAR_STAGE4" ]]; then
-		bootstrap_tar_pack   "$bootstrap_tgz_stage3"             || zerr
-		bootstrap_tar_unpack "$bootstrap_tgz_stage4" "$strapdir" || zerr
-	else
-		bootstrap_tar_pack   "$bootstrap_tgz_stage3"             || zerr
-		bootstrap_tar_unpack "$bootstrap_tgz_stage3" "$strapdir" || zerr
+	if [[ "$arch" =~ "^arm.." ]]; then
+		qemu_install_user "$strapdir" || { zerr; return 1; }
 	fi
+
+	notice "Running stage2 debootstrap"
+
+	sudo chroot "$strapdir" /debootstrap/debootstrap --second-stage || { zerr; return 1; }
+
+	# TODO: sys config as function
+	conf_print_fstab       | sudo tee "$strapdir/etc/fstab" >/dev/null
+	conf_print_hostname    | sudo tee "$strapdir/etc/hostname" >/dev/null
+	conf_print_hosts       | sudo tee "$strapdir/etc/hosts" >/dev/null
+	conf_print_netifaces   | sudo tee "$strapdir/etc/network/interfaces" >/dev/null
+	conf_print_resolvconf  | sudo tee "$strapdir/etc/resolv.conf" >/dev/null
+	conf_print_sourceslist | sudo tee "$strapdir/etc/apt/sources.list" >/dev/null
+
+	blend_bootstrap_setup || { zerr; return 1; }
+
+	bootstrap_stage3 || { zerr; return 1; }
+	bootstrap_cpio_pack "$bootstrap_cpio_stage3" || { zerr; return 1; }
+
+	bootstrap_stage4 || { zerr; return 1; }
+	if [[ -n "$CPIO_STAGE4" ]]; then
+		bootstrap_cpio_pack "$bootstrap_cpio_stage4" || { zerr; return 1; }
+	fi
+
+	return
 }
 
-bootstrap_config_thirdstage() {
-	fn bootstrap_config_thirdstage
-	req=(core_packages base_packages)
+bootstrap_stage3()
+{
+	fn bootstrap_stage3
+	req=(core_packages base_packages rootcredentials)
 	ckreq || return 1
 
-	cat << EOF
+	cat <<EOF | sudo tee "$strapdir/thirdstage" >/dev/null
 #!/bin/sh
 apt-get update
-debconf-set-selections /debconf.set
-
-echo "${rootcredentials}" | chpasswd
-sed -i -e 's/KERNEL\!=\"eth\*|/KERNEL\!=\"/' \
-	/lib/udev/rules.d/75-persistent-net-generator.rules
-rm -f /etc/udev/rules.d/70-persistent-net.rules
-export DEBIAN_FRONTEND=noninteractive
-
-apt-get --yes --force-yes install ${core_packages_option} ${core_packages}
-apt-get --yes --force-yes install ${base_packages_option} ${base_packages}
-apt-get --yes --force-yes purge  ${purge_packages_option} ${purge_packages}
-apt-get --yes --force-yes autoremove
-
+apt-get --yes --force-yes install ${core_packages_option} ${core_packages} || exit 1
+apt-get --yes --force-yes install ${base_packages_option} ${base_packages} || exit 1
+apt-get --yes --force-yes purge ${purge_packages_option} ${purge_packages} || exit 1
+apt-get --yes --force-yes --purge autoremove || exit 1
 apt-get clean
 
-sed -e 's/# en_US.UTF-8/en_US.UTF-8/' -i /etc/locale.gen
-locale-gen
+echo "${rootcredentials}" | chpasswd
 
-rm -f /debconf.set
 rm -f /etc/ssh/ssh_host_*
 rm -f /root/.bash_history
-#echo "1" > .keep
 EOF
+
+	chroot-script -d thirdstage || { zerr; return 1; }
 }
 
-bootstrap_tar_pack() {
-	fn bootstrap_tar_pack
-	req=(bootstrap_tgz)
-	bootstrap_tgz="$1"
+bootstrap_stage4()
+{
+	fn bootstrap_stage4
+	req=(strapdir extra_packages)
 	ckreq || return 1
 
-	local _dest="$(dirname $bootstrap_tgz)"
+	sudo mkdir -p "$strapdir"/{boot,dev,proc,sys}
 
-	if [[ -f "$bootstrap_tgz" ]]; then
-		notice "tarball found already in $_dest"
-	else
-		notice "Creating boostrap tarball in $bootstrap_tgz"
-		silly
-
-		pushd ${strapdir}
-		mkdir -p ${_dest}
-		silly
-		sudo tar czfp "$bootstrap_tgz" \
-			--acls \
-			--selinux \
-			--xattrs \
-			--xattrs-include=security.capability \
-			--xattrs-include=user.pax.flags \
-			--exclude={./dev,./sys,./proc} . || zerr
-		popd
-	fi
-}
-
-bootstrap_tar_unpack() {
-	fn bootstrap_tar_unpack $@
-	local bootstrap_tgz="$1"
-	req=(strapdir bootstrap_tgz)
-	ckreq || return 1
-
-	[[ -n "$TAR_STAGE4" ]] && {
-		[[ -f "$bootstrap_tgz" ]] || bootstrap_tgz="$bootstrap_tgz_stage3"
-	}
-	sudo rm -rf "${strapdir}"/*
-	silly
-	sudo tar xpf "$bootstrap_tgz" -C "$strapdir" --xattrs-include='*.*' --numeric-owner \
-		--acls --selinux --xattrs
-	sudo mkdir -p ${strapdir}/{boot,dev,sys,proc}
-
-	conf_print_sourceslist | sudo tee $strapdir/etc/apt/sources.list >/dev/null
-
-	cat <<EOF | sudo tee ${strapdir}/postunpack >/dev/null
+	cat <<EOF | sudo tee "$strapdir/fourthstage" >/dev/null
 #!/bin/sh
 apt-get update
 
-## check if all our extra_packages exist
+# check if all our extra_packages exist
 allpkgs="\$(apt-cache search '.' | cut -d' ' -f1)"
-for i in ${extra_packages} ; do
+for i in ${extra_packages}; do
 	printf "%s" "\$allpkgs" | grep -q "^\$i$" || {
 		case "\$i" in
-			--*) continue ;;
-			*)   missing="\$missing \$i" ;;
+		--*) continue;;
+		*)   missing="\$missing \$i" ;;
 		esac
 	}
 done
 
-[ -n "\$missing" ] && {
-	printf "\033[1;31m[!!] some extra packages don't exist\033[0m\n"
+if [ -n "\$missing" ]; then
+	printf "\033[1;31m[!!] Some extra packages don't exist:\033[0m\n"
 	printf "%s\n" "\$missing"
 	exit 1
-}
+fi
 
-apt-get --yes --force-yes upgrade
-apt-get --yes --force-yes install ${extra_packages_option} ${extra_packages}
-apt-get --yes --force-yes autoremove
-
+apt-get --yes --force-yes upgrade || exit 1
+apt-get --yes --force-yes install ${extra_packages_option} ${extra_packages} || exit 1
+apt-get --yes --force-yes --purge autoremove || exit 1
 apt-get clean
 EOF
 
-	chroot-script -d postunpack || zerr
+	chroot-script -d fourthstage || { zerr; return 1; }
 
 	for i in $inittab; do
-		grep -q "^$i" $strapdir/etc/inittab && continue
-		print "$i" | sudo tee -a $strapdir/etc/inittab >/dev/null
+		grep -q "$^i" "$strapdir/etc/inittab" && continue
+		echo "$i" | sudo tee -a "$strapdir/etc/inittab" >/dev/null
 	done || true
 
 	for i in $custmodules; do
-		grep -q "^$i" $strapdir/etc/modules && continue
-		print "$i" | sudo tee -a $strapdir/etc/modules >/dev/null
+		grep -q "^$i" "$strapdir/etc/modules" && continue
+		echo "$i" | sudo tee -a "$strapdir/etc/modules" >/dev/null
 	done || true
-
-	[[ -n "$TAR_STAGE4" ]] && bootstrap_tar_pack "$bootstrap_tgz_stage4" || true
 }
 
-blend_bootstrap_setup() {
-	fn blend_bootstrap_setup "noop"
-	return 0
+qemu_install_user()
+{
+	fn qemu_install_user "$*"
+	req=(arch _target)
+	local _target="$1"
+	ckreq || return 1
+
+	case "$(uname -m)" in
+	arm*|aarch*)
+		return
+		;;
+	esac
+
+	notice "Installing qemu-user-static"
+	case "$arch" in
+	armel)
+		sudo cp -a "$armel_qemu_bin" "$_target/usr/bin/" || { zerr; return 1; }
+		;;
+	armhf)
+		sudo cp -a "$armhf_qemu_bin" "$_target/usr/bin/" || { zerr; return 1; }
+		;;
+	arm64)
+		sudo cp -a "$arm64_qemu_bin" "$_target/usr/bin/" || { zerr; return 1; }
+		;;
+	esac
+}
+
+bootstrap_cpio_pack()
+{
+	fn bootstrap_cpio_pack "$*"
+	req=(_bootstrap_cpio strapdir)
+	local _bootstrap_cpio="$1"
+	ckreq || return 1
+
+	local _dest="$(dirname "$_bootstrap_cpio")"
+	if [[ -f "$_bootstrap_cpio" ]]; then
+		notice "cpio archive already found in $_dest"
+		return
+	fi
+
+	notice "Creating bootstrap cpio archive: $_bootstrap_cpio"
+	silly
+
+	pushd "$strapdir"
+	mkdir -p "$_dest"
+	sudo find . \
+		-not -path "./dev/*" \
+		-a -not -path "./proc/*" \
+		-a -not -path "./sys/*" \
+		| sudo cpio -o --format=newc \
+		| gzip - > "$_bootstrap_cpio" || { zerr; return 1; }
+	popd
+}
+
+bootstrap_cpio_unpack()
+{
+	fn bootstrap_cpio_unpack "$*"
+	req=(_bootstrap_cpio strapdir)
+	local _bootstrap_cpio="$1"
+	ckreq || return 1
+
+	notice "Unpacking bootstrap cpio archive: $_bootstrap_cpio"
+	silly
+
+	sudo rm -rf "${strapdir}"/*
+
+	pushd "$strapdir" || { zerr; return 1; }
+	zcat "$_bootstrap_cpio" | sudo cpio -id || { zerr; return 1; }
+	popd
+
+	sudo mkdir -p "$strapdir"/{boot,dev,proc,sys}
+}
+
+blend_bootstrap_setup()
+{
+	fn blend_bootstrap_setup "(noop)"
+	return
 }

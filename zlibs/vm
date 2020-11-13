@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016-2018 Dyne.org Foundation
+# shellcheck shell=bash
+# Copyright (c) 2016-2020 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -17,17 +18,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-## ma baker
-
 vars+=(vmname)
 
-vm_inject_overrides() {
+vm_inject_overrides()
+{
 	fn vm_inject_overrides
 	req=(strapdir)
 	ckreq || return 1
 
-	notice "injecting rootfs overrides"
-	cat <<EOF | sudo tee ${strapdir}/etc/rc.local >/dev/null
+	notice "Injecting rootfs overrides"
+
+	cat <<EOF | sudo tee "$strapdir/etc/rc.local" >/dev/null
 #!/bin/sh
 # rc.local for base images
 
@@ -35,210 +36,69 @@ vm_inject_overrides() {
 
 exit 0
 EOF
-	sudo chmod +x $strapdir/etc/rc.local
+	sudo chmod +x "$strapdir/etc/rc.local"
 
-	print "rootfs / rootfs rw 0 0" | sudo tee ${strapdir}/etc/fstab >/dev/null
-
-	sudo sed -i ${strapdir}/etc/ssh/sshd_config \
+	sudo sed -i "$strapdir/etc/ssh/sshd_config" \
 		-e 's/#PermitRootLogin .*/PermitRootLogin yes/' \
-		-e 's/PermitRootLogin .*/PermitRootLogin yes/'|| zerr
+		-e 's/PermitRootLogin .*/PermitRootLogin yes/' || { zerr; return 1; }
 }
 
-vm_setup_grub() {
-	fn vm_setup_grub
-	req=(strapdir loopdevice)
-	ckreq || return 1
-
-	notice "setting up grub"
-	cat <<EOF | sudo tee ${strapdir}/setupgrub >/dev/null
-#!/bin/sh
-export DEBIAN_FRONTEND=noninteractive
-apt-get --yes --force-yes install linux-image-amd64 grub-pc
-sed -e 's:GRUB_TIMEOUT=5:GRUB_TIMEOUT=1:' -i /etc/default/grub
-sed -e 's:GRUB_CMDLINE_LINUX_DEFAULT=".*":GRUB_CMDLINE_LINUX_DEFAULT="net.ifnames=0":' \
-	-i /etc/default/grub
-update-grub
-grub-install --no-floppy --recheck --modules="biosdisk part_msdos" \
-	${loopdevice}
-sed -e 's:${loopdevice}p1:/dev/sda1:g' -i /boot/grub/grub.cfg
-sync; sync; sync
-EOF
-	chroot-script -d setupgrub  || zerr
-}
-
-vm_umount_${imageformat}() {
-	fn vm_umount_${imageformat}
-	req=(strapdir loopdevice imageformat)
-	ckreq || return 1
-
-	notice "remounting ${imageformat} image"
-	sudo mount -o remount,ro $strapdir || zerr
-
-	notice "flushing bytes and buffers"
-	sudo blockdev --flushbufs $loopdevice || zerr
-	sudo python -c 'import os;os.fsync(open("'${loopdevice}'", "r+b"))' || zerr
-
-	notice "unmounting ${imageformat} image from strapdir"
-	sudo umount $strapdir || zerr
-	silly sleep 1
-	sudo rmdir $strapdir  || zerr
-
-	notice "cleaning up"
-	case "$imageformat" in
-		raw)
-			sudo losetup -d ${loopdevice} || zerr
-			;;
-		qcow2)
-			sudo qemu-nbd --disconnect ${loopdevice} || zerr
-			;;
-		*)
-			zerr
-			;;
-	esac
-	silly sleep 1
-}
-
-vm_vbox_setup() {
-	fn vm_vbox_setup
-	req=(workdir imageformat)
-	ckreq || return 1
-
-	notice "converting ${imageformat} image to vdi"
-	pushd $workdir
-	qemu-img convert \
-		-f ${imageformat} \
-		-O vdi \
-		base.${imageformat} \
-		base.vdi || zerr
-	VBoxManage modifyhd base.vdi --type immutable --compact || zerr
-
-	vmname="${os}-${release}-prevagrant-${RANDOM}"
-	notice "importing base.vdi to a VBox"
-	act "creating vm"
-	VBoxManage createvm --name "$vmname" --ostype Debian_64 --register || zerr
-
-	act "setting up ram and group"
-	VBoxManage modifyvm "$vmname" --memory 256 --groups /vmsdk || zerr
-
-	act "setting up storage"
-	VBoxManage storagectl "$vmname" --name "IDE Controller" --add ide || zerr
-
-	act "attaching storage"
-	VBoxManage storageattach "$vmname" --storagectl "IDE Controller" --port 0 \
-		--device 0 --type hdd --medium base.vdi || zerr
-
-	vminfo="$(VBoxManage showvminfo "$vmname" --machinereadable)"
-	diskuuid="$(getfield "$vminfo" '"IDE Controller-ImageUUID-0-0"')"
-
-	act "autoreset off on storage"
-	VBoxManage modifyhd "$diskuuid" --autoreset off || zerr
-
-	act "setting up nat network"
-	VBoxManage modifyvm "$vmname" --nic1 nat || zerr
-	popd
-}
-
-vm_vagrant_package() {
-	fn vm_vagrant_package
-	req=(workdir vmname)
-	ckreq || return 1
-
-	notice "packaging a vagrant box"
-
-	pushd $workdir
-	act "creating vagrantfile"
-	cat <<EOF > Vagrantfile
-Vagrant.configure("2") do |config|
-	config.vm.box = "devuanbox.box"
-	config.ssh.username = "root"
-	config.ssh.password = "toor"
-	config.vm.guest = :debian
-	config.vm.synced_folder ".", "/vagrant", disabled: true
-	# https://github.com/dotless-de/vagrant-vbguest
-end
-EOF
-	act "creating metadata.json"
-	cat <<EOF > metadata.json
+vm_setup_grub()
 {
-	"provider": "virtualbox"
-}
-EOF
-	notice "actually packaging..."
-	vagrant package --base "$vmname" --output ${vm_name}.box \
-		--include metadata.json --vagrantfile Vagrantfile || zerr
-	popd
-}
-
-vm_init_cloud() {
-	fn vm_init_cloud
-	req=(workdir strapdir imageformat loopdevice)
+	fn vm_setup_grub
+	req=(workdir loopdevice bootfs)
 	ckreq || return 1
 
-	[[ -n "$makecloud" ]] || return
-	[[ "$imageformat" = qcow2 ]] || {
-		die "imageformat is not qcow2"
-		zerr
-	}
+	notice "Setting up grub"
 
-	notice "Creating a cloud-based image"
-	pushd "$workdir"
-	cp -v "base.qcow2" "base-cloud.qcow2"
-
-	notice "Connecting qemu-nbd and mounting"
-	sudo mkdir -p "$strapdir"
-	sudo qemu-nbd --connect=${loopdevice} base-cloud.qcow2 || zerr
-	silly sleep 1
-	sudo mount ${loopdevice}p1 $strapdir || zerr
-
-	notice "Installing cloud-init"
-	cat <<EOF | sudo tee ${strapdir}/initcloud >/dev/null
+	cat <<EOF | sudo tee "$workdir/mnt/setupgrub" >/dev/null
 #!/bin/sh
-
-apt-get update
-apt-get --yes --force-yes install cloud-init
-apt-get clean
+grub-install "${loopdevice}" || exit 1
+grub-mkconfig -o /boot/grub/grub.cfg || exit 1
 EOF
-	chroot-script -d initcloud || zerr
-	vm_umount_${imageformat} || zerr
-	popd
+	chroot-script -d "$workdir/mnt/setupgrub" || { zerr; return 1; }
 }
 
-vm_pack_dist() {
+vm_pack_dist()
+{
 	fn vm_pack_dist
-	req=(workdir imageformat)
+	req=(R workdir image_name imageformat)
 	ckreq || return 1
 
-	notice "packing up dist"
-	mkdir -p $R/dist
-	mv $workdir/${vm_name}.box $R/dist
-	mv $workdir/base.${imageformat} $R/dist/${vm_name}.${imageformat}
-	cp $workdir/base.vdi $R/dist/${vm_name}.vdi
+	notice "Packing up built images"
 
-	[[ -n "$makecloud" ]] && \
-		mv $workdir/base-cloud.${imageformat} \
-			$R/dist/${vm_name}-cloud.${imageformat}
+	local _xzcomp=""
+	local _rsuffix="${imageformat}"
+	local _vsuffix="vdi"
 
-	act "calculating sha256 sums..."
+	if [[ -n "$COMPRESS_IMAGE" ]]; then
+		if command -v pixz >/dev/null; then
+			_xzcomp="$(command -v pixz)"
+		else
+			_xzcomp="$(command -v xz)"
+		fi
+		_rsuffix="${imageformat}.xz"
+		_vsuffix="vdi.xz"
+	fi
+
+	pushd "$workdir" || { zerr; return 1; }
+
+	if [[ -n "$COMPRESS_IMAGE" ]]; then
+		act "Compressing images with $_xzcomp"
+		silly
+		$_xzcomp "${image_name}.${imageformat}" || { zerr; return 1; }
+		$_xzcomp "${image_name}.vdi" || { zerr; return 1; }
+	fi
+
+	act "Calculating sha256 checksums"
 	silly
-	sha256sum $R/dist/${vm_name}.box > \
-		$R/dist/${vm_name}.box.sha
-	sha256sum $R/dist/${vm_name}.${imageformat} > \
-		$R/dist/${vm_name}.${imageformat}.sha
-	sha256sum $R/dist/${vm_name}.vdi > \
-		$R/dist/${vm_name}.vdi.sha
-	[[ -n "$makecloud" ]] && \
-		sha256sum $R/dist/${vm_name}-cloud.${imageformat} > \
-			$R/dist/${vm_name}-cloud.${imageformat}.sha
+	sha256sum "${image_name}.${_rsuffix}" > "${image_name}.${_rsuffix}.sha256"
+	sha256sum "${image_name}.${_vsuffix}" > "${image_name}.${_vsuffix}.sha256"
 
-	notice "cleaning up virtualbox leftovers"
-	pushd "$workdir"
-		VBoxManage unregistervm "$vmname" --delete
-		rm -f metadata.json Vagrantfile
-		rm -rf .vagrant
+	mkdir -p "$R/dist"
+	mv -v "${image_name}".* "$R/dist" || { zerr; return 1; }
+
+	notice "Done! Thanks for being patient!"
+
 	popd
-	rm -rf "$workdir"
-	rm -rf "$HOME/VirtualBox VMs/vmsdk"
-
-	notice "done!"
-	ls -1 $R/dist
 }

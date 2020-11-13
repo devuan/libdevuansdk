@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016-2017 Dyne.org Foundation
+# shellcheck shell=bash
+# Copyright (c) 2016-2020 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -17,54 +18,55 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-## burn baby
+vars+=(MKEFI)
 
-#[[ $INSTALLER = 1 ]] && base_packages+=(grub-pc)
-
-iso_prepare_strap() {
+iso_prepare_strap()
+{
 	fn iso_prepare_strap
 	req=(strapdir)
 	ckreq || return 1
 
-	notice "preparing strapdir for livecd"
+	notice "Preparing strapdir for Live CD"
 
-	cat <<EOF | sudo tee ${strapdir}/isoprep >/dev/null
+	cat <<EOF | sudo tee "$strapdir/isoprep" >/dev/null
 #!/bin/sh
 apt-get update
-apt-get --yes --force-yes install dialog live-boot live-boot-initramfs-tools
-apt-get --yes --force-yes autoremove
+apt-get --yes --force-yes install dialog live-boot live-boot-initramfs-tools || exit 1
+apt-get --yes --force-yes --purge autoremove || exit 1
 EOF
 
-	chroot-script -d isoprep    || zerr
+	chroot-script -d isoprep || { zerr; return 1; }
 }
 
-iso_setup_isolinux() {
+iso_setup_isolinux()
+{
 	fn iso_setup_isolinux
 	req=(workdir strapdir)
 	ckreq || return 1
 
-	notice "setting up isolinux"
+	notice "Setting up isolinux"
 
-	pushd $workdir
+	pushd "$workdir" || { zerr; return 1; }
 	sudo mkdir -p binary/{live,isolinux}
-	act "copying kernel and initrd"
-	sudo cp $strapdir/boot/vmlinuz* binary/live/vmlinuz
-	sudo cp $strapdir/boot/initrd*  binary/live/initrd.img
-	#sudo cp $strapdir/boot/memtest86+.bin binary/live/memtest
+	act "Copyring kernel and initrd"
+	sudo cp "$strapdir/boot/"vmlinuz* binary/live/vmlinuz || { zerr; return 1; }
+	sudo cp "$strapdir/boot/"initrd*  binary/live/initrd.img || { zerr; return 1; }
+	#sudo cp "$strapdir/boot/memtest86+.bin binary/live/memtest || { zerr; return 1; }
 
-	sudo cp "$R"/extra/syslinux/isolinux.bin binary/isolinux || zerr
-	sudo cp "$R"/extra/syslinux/*.c32 binary/isolinux || zerr
-
+	sudo cp "$R/extra/syslinux/isolinux.bin" binary/isolinux || { zerr; return 1; }
+	sudo cp "$R"/extra/syslinux/*.c32 binary/isolinux || { zerr; return 1; }
 	popd
 }
 
-iso_write_isolinux_cfg() {
+iso_write_isolinux_cfg()
+{
 	fn iso_write_isolinux_cfg
 	req=(workdir arch os)
 	ckreq || return 1
 
-	notice "writing isolinux configuration"
-	cat <<EOF | sudo tee ${workdir}/binary/isolinux/isolinux.cfg >/dev/null
+	notice "Writing isolinux configuration"
+
+	cat <<EOF | sudo tee "$workdir/binary/isolinux/isolinux.cfg" >/dev/null
 ui vesamenu.c32
 prompt 0
 menu title ${os} boot menu
@@ -80,49 +82,51 @@ endtext
 EOF
 }
 
-iso_squash_strap() {
+iso_squash_strap()
+{
 	fn iso_squash_strap
 	req=(workdir strapdir)
 	ckreq || return 1
 
-	notice "creating squashfs out of strapdir"
+	notice "Creating squashfs out of strapdir"
 
 	case "$arch" in
-		amd64|i386)
-			_compfilt="-Xbcj x86"
-			;;
-		arm*)
-			_compfilt="-Xbcj arm"
-			;;
-		*)
-			_compfilt=""
-			;;
+	amd64|i386)
+		_compfilt="-Xbcj x86"
+		;;
+	arm*)
+		_compfilt="-Xbcj arm"
+		;;
+	*)
+		_compfilt=""
+		;;
 	esac
-	pushd $workdir
-	sudo mksquashfs $strapdir binary/live/filesystem.squashfs \
-		-comp xz ${=_compfilt} -noappend || zerr
 
+	pushd "$workdir" || { zerr; return 1; }
+	sudo mksquashfs "$strapdir" binary/live/filesystem.squashfs \
+		-comp xz ${=_compfilt} -noappend || { zerr; return 1; }
 	popd
 }
 
-iso_xorriso_build() {
+iso_xorriso_build()
+{
 	fn iso_xorriso_build
 	req=(workdir image_name)
 	ckreq || return 1
 
-	notice "building iso..."
+	notice "Building iso..."
 	isoname="${image_name}-live.iso"
 
-	[[ -n "$mkefi" ]] && {
-	uefi_opt="-eltorito-alt-boot -e boot/grub/efiboot.img -isohybrid-gpt-basdat -no-emul-boot"
-	}
+	if [[ -n "$MKEFI" ]]; then
+		uefi_opt="-eltorito-alt-boot -e boot/grub/efiboot.img -isohybrid-gpt-basdat -no-emul-boot"
+	fi
 
-	isohybrid="$R"/extra/syslinux/isohdpfx.bin
+	isohybrid="$R/extra/syslinux/isohdpfx.bin"
 
-	mkdir -p $R/dist
-	pushd $workdir
+	mkdir -p "$R/dist"
+	pushd "$workdir"
 	sudo xorriso -as mkisofs -r -J -joliet-long -l \
-		-isohybrid-mbr $isohybrid \
+		-isohybrid-mbr "$isohybrid" \
 		-partition_offset 16 \
 		-A "${os} Live - ${arch}" \
 		-b isolinux/isolinux.bin \
@@ -131,21 +135,20 @@ iso_xorriso_build() {
 		-boot-load-size 4 \
 		-boot-info-table \
 		${=uefi_opt} \
-		-o $R/dist/$isoname \
-		binary || zerr
+		-o "$R/dist/$isoname" \
+		binary || { zerr; return 1; }
 	popd
-	unset uefi_opt
 
-	[[ "$DEBUG" = 1 ]] || {
-		[[ -n "$workdir" ]] && sudo rm -rf "$workdir"
-	}
-}
+	act "Calculating sha256 checksums"
+	pushd "$R/dist" || { zerr; return 1; }
+	sha256sum "$isoname" > "${isoname}.sha256"
+	popd
 
-iso_setup_installer() {
-	fn iso_setup_installer
+	if [[ "$DEBUG" = 1 ]]; then
+		return
+	fi
 
-	notice "setting up devuan-installer"
-	sudo cp $R/extra/installer/* $strapdir/
+	sudo rm -rf "$workdir"
 
-	## TODO: init to script
+	notice "Done! Thanks for being patient!"
 }

@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# shellcheck shell=bash
 # Copyright (c) 2016-2020 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
@@ -17,305 +18,337 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-## imagine images
+vars+=(bootpart rootpart loopdevice)
 
-vars+=(image_name bootpart rootpart loopdevice filesystem)
-arrs+=(fsargs)
+strapdir_to_image()
+{
+	fn strapdir_to_image
+	req=(workdir strapdir bootpart rootpart loopdevice)
+	ckreq || return 1
 
-image_prepare_raw() {
+	notice "Copying strapdir to image ..."
+
+	if [[ ! -d "$workdir/mnt" ]]; then
+		die "$workdir/mnt doesn't exist. Did you run image_mount?"
+		zerr; return 1
+	fi
+
+	pushd "$strapdir"
+	sudo find . \
+		-not -path "./dev/*" \
+		-a -not -path "./proc/*" \
+		-a -not -path "./sys/*" \
+		| sudo cpio -p "$workdir/mnt" || { zerr; return 1; }
+	popd
+}
+
+image_prepare_raw()
+{
 	fn image_prepare_raw
 	req=(workdir size image_name)
 	ckreq || return 1
 
-	notice "creating raw image file from zeroes..."
-
-	dd if=/dev/zero \
-		of=$workdir/${image_name}.img \
-		bs=1M \
-		count=$size
+	notice "Creating raw image of $size MB"
+	touch "$workdir/${image_name}.img"
+	chattr +C "$workdir/${image_name}.img"
+	dd if=/dev/zero of="$workdir/${image_name}.img" bs=1M count="$size" || { zerr; return 1; }
 }
 
-image_format_partitions() {
+image_prepare_qcow2()
+{
+	fn image_prepare_qcow2
+	req=(workdir size image_name)
+	ckreq || return 1
+
+	notice "Creating qcow2 image of $size MB"
+	touch "$workdir/${image_name}.qcow2"
+	chattr +C "$workdir/${image_name}.qcow2"
+	qemu-img create -f qcow2 "${workdir}/${image_name}.qcow2" "${size}M" || { zerr; return 1; }
+}
+
+image_format_partitions()
+{
 	fn image_format_partitions
 	req=(bootfs bootpart rootpart)
 	ckreq || return 1
 
-	notice "formatting partitions..."
-	case "$bootfs" in
-		none)
-			act "skipping boot partition"
-			;;
-		vfat|fat|dos)
-			act "formatting boot as vfat"
-			sudo mkfs.vfat ${=bootopts} ${bootpart}
-			;;
-		ext4)
-			act "formatting boot as ext4"
-			sudo mkfs.ext4 ${=bootopts} ${bootpart}
-			;;
-		ext2)
-			act "formating boot as ext2"
-			sudo mkfs.ext2 ${=bootopts} ${bootpart}
-			;;
-		*)
-			error "unknown parted_bootfs type '$bootfs'"
-			zerr
-			;;
-	esac
+	notice "Formatting image partitions"
 
-	# default to ext4
-	[[ -z "$rootfs" ]] && rootfs=ext4
+	case "$bootfs" in
+	none)
+		act "Skipping boot partition"
+		;;
+	vfat|fat|dos)
+		act "Formatting boot as VFAT"
+		sudo mkfs.vfat ${=bootopts} "${bootpart}" || { zerr; return 1; }
+		;;
+	ext?)
+		act "Formatting boot as $bootfs"
+		sudo mkfs.${bootfs} ${=bootopts} "${bootpart}" || { zerr; return 1; }
+		;;
+	btrfs)
+		act "Formatting boot as btrfs"
+		sudo mkfs.btrfs ${=bootopts} "${bootpart}" || { zerr; return 1; }
+		;;
+	"")
+		die "No bootfs filesystem set!"
+		zerr; return 1
+		;;
+	*)
+		die "Unimplemented filesystem: $bootfs"
+		die "Please report it for inclusion."
+		zerr; return 1
+		;;
+	esac
 
 	case "$rootfs" in
-		none)
-			act "skipping root partition"
-			;;
-		vfat|fat|dos)
-			act "formatting root as vfat"
-			sudo mkfs.vfat ${=rootopts} ${rootpart}
-			;;
-		ext4)
-			act "formatting root as ext4"
-			sudo mkfs.ext4 ${=rootopts} ${rootpart}
-			;;
-		ext2)
-			act "formating root as ext2"
-			sudo mkfs.ext2 ${=rootopts} ${rootpart}
-			;;
-		btrfs)
-			act "formatting root as btrfs"
-			sudo mfks.btrfs ${=rootopts} ${rootpart}
-			;;
-		*)
-			error "unknown parted_rootfs type '$rootfs'"
-			zerr
-			;;
+	none)
+		act "Skipping root partition"
+		;;
+	vfat|fat|dos)
+		act "Formatting root as VFAT"
+		sudo mkfs.vfat ${=rootopts} "${rootpart}" || { zerr; return 1; }
+		;;
+	ext?)
+		act "Formatting root as $rootfs"
+		sudo mkfs.${rootfs} ${=rootopts} "${rootpart}" || { zerr; return 1; }
+		;;
+	btrfs)
+		act "Formatting root as btrfs"
+		sudo mkfs.btrfs ${=rootopts} "${rootpart}" || { zerr; return 1; }
+		;;
+	"")
+		die "No rootfs filesystem set!"
+		zerr; return 1
+		;;
+	*)
+		die "Unimplemented filesystem: $rootfs"
+		die "Please report it for inclusion."
+		zerr; return 1
+		;;
 	esac
 }
 
-image_partition_raw_dos() {
-	fn image_partition_raw_dos
-	req=(workdir image_name parted_boot parted_root)
+image_connect_raw()
+{
+	fn image_connect_raw
+	req=(workdir image_name)
 	ckreq || return 1
 
-	notice "partitioning raw dos image..."
+	notice "Connecting raw image to loop device"
 
-	parted $workdir/${image_name}.img --script -- mklabel msdos
-	parted $workdir/${image_name}.img --script -- mkpart primary ${parted_boot}
-	parted $workdir/${image_name}.img --script -- mkpart primary ${parted_root}
-	[ -n "$bootable_part" ] && \
-		parted "$workdir/${image_name}.img" --script -- set "$bootable_part" boot on
-
-	## get loopdevice (see ./helpers)
-	findloopdev
-
-	bootpart=${loopdevice}p1
-	rootpart=${loopdevice}p2
-
-	image_format_partitions
-}
-
-image_partition_raw_gpt() {
-	fn image_partition_raw_gpt
-	req=(workdir image_name gpt_boot gpt_root)
-	ckreq || return 1
-
-	notice "partitioning raw gpt image..."
-
-	parted $workdir/${image_name}.img --script -- mklabel gpt || zerr
-	cgpt create -z $workdir/${image_name}.img || zerr
-	cgpt create    $workdir/${image_name}.img || zerr
-
-	cgpt add -i 1 -t kernel -b ${gpt_boot[1]} \
-		-s ${gpt_boot[2]} \
-		-l kernel -S 1 -T 5 -P 10 $workdir/${image_name}.img
-
-	cgpt add -i 2 -t data -b ${gpt_root[1]} \
-		-s $(expr $(cgpt show $workdir/${image_name}.img | \
-		awk '/Sec GPT table/ {print $1}') - ${gpt_root[1]}) \
-		-l Root $workdir/${image_name}.img
-
-	findloopdev
+	loopdevice="$(findloopdev)"
+	if [[ -z "$loopdevice" ]]; then
+		die "Didn't find a free loop device"
+		zerr; return 1
+	fi
 
 	bootpart="${loopdevice}p1"
 	rootpart="${loopdevice}p2"
-
-	image_format_partitions
 }
 
-image_pack_dist() {
-	fn image_pack_dist
-	req=(loopdevice image_name strapdir workdir)
+image_connect_qcow2()
+{
+	fn image_connect_qcow2
+	req=(workdir image_name)
 	ckreq || return 1
 
-	notice "packaging image for dist"
+	notice "Connecting qcow2 image to nbd device"
 
-	act "rechecking filesystem"
-	sudo e2fsck -fy ${loopdevice}p2
-	sudo resize2fs ${loopdevice}p2
-
-	sleep 2
-
-	[[ $parted_type = gpt ]] && {
-		sudo cgpt repair $loopdevice
-		sleep 1
-	}
-
-	case "$device_name" in
-		pinephone-dontbeevil)
-			notice "dd-ing u-boot bootloader to image"
-			sudo dd if="$R/dist/u-boot-sunxi-with-spl-sopine.bin" \
-				of="$loopdevice" bs=1024 seek=8 || zerr
-			;;
-	esac
-
-	sudo partx -dv $loopdevice || {
-		die "partx failed to remove $loopdevice"
-		zerr
-	}
-	sudo losetup -d $loopdevice || {
-		die "losetup failed to remove $loopdevice"
-		zerr
-	}
-
-	if [[ -n "$nocompressimage" ]]; then
-		_suffix="img"
-	else
-		_suffix="img.xz"
+	sudo modprobe nbd max_part=8 || { zerr; return 1; }
+	loopdevice="$(findnbddev)"
+	if [[ -z "$loopdevice" ]]; then
+		die "Didn't find a free nbd device"
+		zerr; return 1
 	fi
 
-	pushd $workdir
-
-	[[ -n "$nocompressimage" ]] || {
-		if which pixz > /dev/null ; then
-			xzcomp=$(which pixz)
-		else
-			xzcomp=$(which xz)
-		fi
-
-		notice "compressing image with $xzcomp"
-		silly
-
-		$xzcomp "${image_name}.img"
-	}
-
-	mkdir -p "$R/dist"
-	mv -v ${image_name}.${_suffix} $R/dist/
-
-	pushd "$R/dist"
-	notice "generating sha256 for ${image_name}.${_suffix}"
-	sha256sum ${image_name}.${_suffix} > ${image_name}.${_suffix}.sha
-	notice "generating sha256 for ${image_name}.tar.gz"
-	sha256sum ${image_name}.tar.gz > ${image_name}.tar.gz.sha
-	popd
-
-	popd
-
-	[[ $DEBUG = 1 ]] || sudo rm -r $workdir
-
-	notice "finished packing $image_name"
-	act "find it in $R/dist/"
-	act "thanks for being patient!"
+	sudo qemu-nbd --connect="${loopdevice}" "$workdir/${image_name}.qcow2" || { zerr; return 1; }
 }
 
-image_raw_mount() {
-	fn image_raw_mount
+image_partition_dos()
+{
+	fn image_partition_dos
+	req=(loopdevice bootpart rootpart dos_boot dos_root)
+	ckreq || return 1
+
+	notice "Partitioning dos image"
+
+	sudo parted "$loopdevice" --script -- mklabel msdos || { zerr; return 1; }
+	sudo parted "$loopdevice" --script -- mkpart primary "$dos_boot" || { zerr; return 1; }
+	sudo parted "$loopdevice" --script -- mkpart primary "$dos_root" || { zerr; return 1; }
+	if [[ -n "$bootable_part" ]]; then
+		sudo parted "$loopdevice" --script -- set "$bootable_part" boot on
+	fi
+
+	sudo partprobe "$loopdevice" || { zerr; return 1; }
+}
+
+image_mount()
+{
+	fn image_mount
 	req=(workdir bootpart rootpart bootfs)
 	ckreq || return 1
 
-	mkdir -p $workdir/mnt
-	sudo mount $rootpart $workdir/mnt && \
-		act "mounted root partition" || zerr
+	notice "Mounting image to $workdir/mnt"
 
-	[[ "$bootfs" == none ]] || {
-		sudo mkdir -p $workdir/mnt/boot
-		sudo mount $bootpart $workdir/mnt/boot && \
-			act "mounted boot partition" || zerr
-	}
+	mkdir -p "$workdir/mnt"
+	sudo mount "$rootpart" "$workdir/mnt" || { zerr; return 1; }
+	act "Mounted root partition"
+
+	if [[ "$bootfs" = none ]]; then
+		return
+	fi
+
+	sudo mkdir -p "$workdir/mnt/boot"
+	sudo mount "$bootpart" "$workdir/mnt/boot" || { zerr; return 1; }
+	act "Mounted boot partition"
 }
 
-image_raw_umount() {
-	fn image_raw_umount
+image_umount()
+{
+	fn image_umount
 	req=(workdir bootpart rootpart)
 	ckreq || return 1
 
-	[[ "$bootfs" == none ]] || {
-		sudo umount $workdir/mnt/boot && act "unmounted boot partition" || zerr
-		sleep 1
+	notice "Umounting image from $workdir/mnt"
+
+	sudo umount -R "$workdir/mnt" || { zerr; return 1; }
+	act "Umounted"
+
+	act "Flushing bytes and buffers"
+	sudo blockdev --flushbufs "$loopdevice" || { zerr; return 1; }
+	sudo python -c 'import os; os.fsync(open("'$loopdevice'", "r+b"))' || { zerr; return 1; }
+}
+
+image_disconnect_raw()
+{
+	fn image_disconnect_raw
+	req=(loopdevice bootfs rootfs bootpart rootpart)
+	ckreq || return 1
+
+	notice "Disconnecting image from $loopdevice"
+
+	act "Rechecking filesystems"
+	case "$bootfs" in
+	ext?)
+		sudo e2fsck -fy "$bootpart"
+		sudo resize2fs "$bootpart"
+		;;
+	esac
+
+	case "$rootfs" in
+	ext?)
+		sudo e2fsck -fy "$rootpart"
+		sudo resize2fs "$rootpart"
+		;;
+	esac
+
+	act "Disconnecting"
+	sudo partx -dv "$loopdevice" || {
+		die "partx failed to remove $loopdevice"
+		zerr; return 1
 	}
-	sudo umount $workdir/mnt      && act "unmounted root partition" || zerr
+
+	sudo losetup -d "$loopdevice" || {
+		die "losetup failed to remove $loopdevice"
+		zerr; return 1
+	}
 }
 
-image_raw_as_strapdir() {
-	fn image_raw_as_strapdir
-	req=(workdir strapdir size)
+image_disconnect_qcow2()
+{
+	fn image_disconnect_qcow2
+	req=(loopdevice bootfs rootfs bootpart rootpart)
 	ckreq || return 1
 
-	pushd "$workdir"
+	notice "Disconnecting image from $loopdevice"
 
-	notice "creating raw image of $size MB"
-	sudo rm -f base.raw
-	sudo qemu-img create -f raw base.raw ${size}M   || zerr
-	notice "partitioning"
-	sudo parted base.raw mktable msdos              || zerr
-	sudo parted base.raw mkpart primary '0%' '100%' || zerr
-	loopdevice=$(losetup --find)
-	sudo losetup -P $loopdevice base.raw || zerr
-	sudo mkfs.ext4 ${loopdevice}p1       || zerr
+	act "Rechecking filesystems"
+	case "$bootfs" in
+	ext?)
+		sudo e2fsck -fy "$bootpart"
+		sudo resize2fs "$bootpart"
+		;;
+	esac
 
-	notice "mounting raw image to strapdir"
-	sudo mount ${loopdevice}p1 $strapdir
-	echo 1 | sudo tee ${strapdir}/.keep >/dev/null
+	case "$rootfs" in
+	ext?)
+		sudo e2fsck -fy "$rootpart"
+		sudo resize2fs "$rootpart"
+		;;
+	esac
+
+	act "Disconnecting"
+
+	sudo qemu-nbd --disconnect "$loopdevice" || { zerr; return 1; }
+}
+
+image_raw_to_qcow2()
+{
+	fn image_raw_to_qcow2
+	req=(image_name workdir)
+	ckreq || return 1
+
+	notice "Converting raw image to qcow2"
+	pushd "$workdir" || { zerr; return 1; }
+	touch "${image_name}.qcow2"
+	chattr +C "${image_name}.qcow2"
+	qemu-img convert -f raw -O qcow2 "${image_name}.img" "${image_name}.qcow2" || { zerr; return 1; }
 	popd
 }
 
-image_qcow2_as_strapdir() {
-	fn image_qcow2_as_strapdir
-	req=(workdir strapdir size)
+image_raw_to_vdi()
+{
+	fn image_raw_to_vdi
+	req=(image_name workdir)
 	ckreq || return 1
 
-	pushd "$workdir"
-
-	# default filesystem fallback to ext4
-	filesystem=${filesystem:-ext4}
-
-	notice "creating qcow2 image of $size MB formatted with $filesystem"
-	rm -f base.qcow2
-	qemu-img create -f qcow2 base.qcow2 ${size}M     || zerr
-	sudo modprobe nbd max_part=8                     || zerr
-	loopdevice="$(findfreenbd)"
-	[ -n "$loopdevice" ]                             || zerr
-	act "$loopdevice"
-	sudo qemu-nbd --connect=${loopdevice} base.qcow2 || zerr
-
-	notice "partitioning"
-	sudo parted ${loopdevice} mktable msdos              || zerr
-	sudo parted ${loopdevice} mkpart primary '0%' '100%' || zerr
-
-	notice "formatting with $filesystem"
-	command -v mkfs.${filesystem} >/dev/null || {
-		error "filesystem tools not found in path: mkfs.${filesystem}"
-		zerr }
-	sudo mkfs.${filesystem} ${=fsargs} ${loopdevice}p1 || zerr
-
-	notice "mounting qcow2 image to strapdir"
-	sudo mount ${loopdevice}p1 $strapdir || zerr
-	echo 1 | sudo tee ${strapdir}/.keep >/dev/null
+	notice "Converting raw image to vdi"
+	pushd "$workdir" || { zerr; return 1; }
+	touch "${image_name}.vdi"
+	chattr +C "${image_name}.vdi"
+	qemu-img convert -f raw -O vdi "${image_name}.img" "${image_name}.vdi" || { zerr; return 1; }
+	#VBoxManage modifyhd "${image_name}.vdi" --type immutable --compact || { zerr; return 1; }
 	popd
 }
 
-tar_strapdir() {
-	fn tar_strapdir
-	req=(strapdir)
+image_pack_dist()
+{
+	fn image_pack_dist
+	req=(R image_name workdir)
 	ckreq || return 1
 
-	notice "creating a tarbomb of the rootfs..."
-	mkdir -p "$R/dist"
+	notice "Packing up built images"
+
+	local _xzcomp=""
+	local _rsuffix="img"
+
+	if [[ -n "$COMPRESS_IMAGE" ]]; then
+		if command -v pixz >/dev/null; then
+			_xzcomp="$(command -v pixz)"
+		else
+			_xzcomp="$(command -v xz)"
+		fi
+		_rsuffix="img.xz"
+	fi
+
+	pushd "$workdir" || { zerr; return 1; }
+
+	if [[ -n "$COMPRESS_IMAGE" ]]; then
+		act "Compressing images with $_xzcomp"
+		silly
+		$_xzcomp "${image_name}.img" || { zerr; return 1; }
+		# TODO: cpio image?
+	fi
+
+	act "Calculating sha256 checksums"
 	silly
-	pushd "$strapdir"
-	sudo tar czf "$R/dist/${image_name}.tar.gz" . \
-		--acls --selinux --xattrs \
-		--xattrs-include=security.capability \
-		--xattrs-include=user.pax.flags || zerr
+	sha256sum "${image_name}.${_rsuffix}" > "${image_name}.${_rsuffix}.sha256"
+	# TODO: cpio image?
+	mkdir -p "$R/dist"
+	mv -v "${image_name}".* "$R/dist" || { zerr; return 1; }
+
+	notice "Done! Thanks for being patient!"
+
 	popd
 }

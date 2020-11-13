@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016-2017 Dyne.org Foundation
+# shellcheck shell=bash
+# Copyright (c) 2016-2020 Dyne.org Foundation
 # libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
@@ -17,101 +18,109 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-## helper functions that make my life easier
-
-vars+=(loopdevice)
-
-build_image_dist() {
-	fn build_image_dist
-	req=(arch size parted_type)
-	if [[ $parted_type = gpt ]]; then
-		req+=(gpt_boot gpt_root)
-	elif [[ $parted_type = dos ]]; then
-		req+=(parted_root parted_boot)
-	fi
-	req+=(workdir strapdir image_name)
+build_arm_dist()
+{
+	fn build_arm_dist
+	req=(workdir strapdir os arch size parted_type)
+	case "$parted_type" in
+	gpt) req+=(gpt_boot gpt_root) ;;
+	dos) req+=(dos_boot dos_root) ;;
+	*) die "Unknown parted_type: $parted_type. Supported is gpt|dos."
+		zerr; return 1
+		;;
+	esac
 	ckreq || return 1
 
-	notice "building complete dist image"
-	act "$image_name"
+	notice "Building complete Arm image(s)"
 
-	bootstrap_complete_base            || { zerr; wrapup }
-	blend_preinst                      || { zerr; wrapup }
-	image_prepare_raw                  || { zerr; wrapup }
-	image_partition_raw_${parted_type} || { zerr; wrapup }
-	build_kernel_${arch}               || { zerr; wrapup }
-	blend_postinst                     || { zerr; wrapup }
-	rsync_to_raw_image                 || { zerr; wrapup }
-	image_pack_dist                    || { zerr; wrapup }
+	bootstrap_complete_base        || { zerr; return 1; }
+	blend_preinst                  || { zerr; return 1; }
+	image_prepare_raw              || { zerr; return 1; }
+	image_connect_raw              || { zerr; return 1; }
+	image_partition_${parted_type} || { zerr; return 1; }
+	image_format_partitions        || { zerr; return 1; }
+	build_kernel_${arch}           || { zerr; return 1; }
+	image_mount                    || { zerr; return 1; }
+	strapdir_to_image              || { zerr; return 1; }
+	blend_postinst                 || { zerr; return 1; }
+	image_umount                   || { zerr; return 1; }
+	image_disconnect_raw           || { zerr; return 1; }
+	image_pack_dist                || { zerr; return 1; }
+	clean_strapdir                 || { zerr; return 1; }
 }
 
-build_iso_dist() {
+build_iso_dist()
+{
 	fn build_iso_dist
 	req=(workdir strapdir os arch)
 	ckreq || return 1
 
-	notice "building complete iso image"
+	notice "Building complete iso image(s)"
 
-	bootstrap_complete_base || { zerr; wrapup }
-	blend_preinst           || { zerr; wrapup }
-	iso_prepare_strap       || { zerr; wrapup }
-	build_kernel_${arch}    || { zerr; wrapup }
-	iso_setup_isolinux      || { zerr; wrapup }
-	iso_write_isolinux_cfg  || { zerr; wrapup }
-	#[[ $INSTALLER = 1 ]] && iso_setup_installer || zerr
-	blend_postinst          || { zerr; wrapup }
-	fill_apt_cache          || { zerr; wrapup }
-	iso_squash_strap        || { zerr; wrapup }
-	iso_xorriso_build       || { zerr; wrapup }
+	bootstrap_complete_base || { zerr; return 1; }
+	blend_preinst           || { zerr; return 1; }
+	iso_prepare_strap       || { zerr; return 1; }
+	iso_setup_isolinux      || { zerr; return 1; }
+	iso_write_isolinux_cfg  || { zerr; return 1; }
+	blend_postinst          || { zerr; return 1; }
+	iso_squash_strap        || { zerr; return 1; }
+	iso_xorriso_build       || { zerr; return 1; }
 }
 
-build_vagrant_dist() {
-	fn build_vagrant_dist
-	req=(workdir strapdir os arch imageformat)
+build_vm_dist()
+{
+	fn build_vm_dist
+	req=(workdir strapdir os arch size imageformat parted_type)
+	case "$parted_type" in
+	gpt) req+=(gpt_boot gpt_root) ;;
+	dos) req+=(dos_boot dos_root) ;;
+	*) die "Unknown parted_type: $parted_type. Supported is gpt|dos."
+		zerr; return 1
+		;;
+	esac
 	ckreq || return 1
 
-	notice "building complete vagrant image"
+	notice "Building complete VM image(s)"
 
-	image_${imageformat}_as_strapdir   || { zerr; wrapup }
-	bootstrap_complete_base            || { zerr; wrapup }
-	vm_inject_overrides                || { zerr; wrapup }
-	blend_preinst                      || { zerr; wrapup }
-	vm_setup_grub                      || { zerr; wrapup }
-	blend_postinst                     || { zerr; wrapup }
-	vm_umount_${imageformat}           || { zerr; wrapup }
-	vm_vbox_setup                      || { zerr; wrapup }
-	vm_vagrant_package                 || { zerr; wrapup }
-	vm_init_cloud                      || { zerr; wrapup }
-	vm_pack_dist                       || { zerr; wrapup }
+	bootstrap_complete_base        || { zerr; return 1; }
+	vm_inject_overrides            || { zerr; return 1; }
+	blend_preinst                  || { zerr; return 1; }
+	image_prepare_raw              || { zerr; return 1; }
+	image_connect_raw              || { zerr; return 1; }
+	image_partition_${parted_type} || { zerr; return 1; }
+	image_format_partitions        || { zerr; return 1; }
+	image_mount                    || { zerr; return 1; }
+	strapdir_to_image              || { zerr; return 1; }
+	vm_setup_grub                  || { zerr; return 1; }
+	blend_postinst                 || { zerr; return 1; }
+	image_umount                   || { zerr; return 1; }
+	image_disconnect_raw           || { zerr; return 1; }
+	if [[ "$imageformat" = qcow2 ]]; then
+		image_raw_to_qcow2         || { zerr; return 1; }
+	fi
+	image_raw_to_vdi               || { zerr; return 1; }
+	vm_pack_dist                   || { zerr; return 1; }
+	clean_strapdir                 || { zerr; return 1; }
 }
 
-getfield() {
-	fn getfield $*
-	print "$1" | \
-		grep "^$2=" | \
-		sed -e 's:.*=\(.*\)$:\1:g' | \
-		sed -e 's:^"\(.*\)"$:\1:g'
-}
-
-add-user() {
-	fn add-user $*
-	local user="$1"
-	local pass="$2"
-	req=(strapdir user pass)
+clean_strapdir()
+{
+	fn clean_strapdir
+	req=(strapdir)
 	ckreq || return 1
 
-	notice "adding user $user:$pass"
+	if [[ "$DEBUG" = 1 ]]; then
+		return
+	fi
 
-	cat <<EOF | sudo tee ${strapdir}/adduser
-#!/bin/sh
-useradd -m ${user}
-echo "${user}:${pass}" | chpasswd
-EOF
-	chroot-script adduser || zerr
+	notice "Cleaning strapdir"
+
+	sudo rm -rf "$strapdir"
 }
 
-devprocsys() {
-	fn devprocsys "$@"
+devprocsys()
+{
+	fn devprocsys "$*"
 	local watdo="$1"
 	local werdo="$2"
 	req=(watdo werdo)
@@ -124,79 +133,17 @@ devprocsys() {
 		sudo mount -o bind /dev/pts $werdo/dev/pts && act "mounted devpts" && \
 		return 0
 	elif [[ $watdo = umount ]]; then
-		sudo umount $werdo/dev/pts  && act "umounted devpts" && sleep 1
-		sudo umount $werdo/dev      && act "umounted dev"    && sleep 1
-		sudo umount $werdo/proc     && act "umounted proc"   && sleep 1
-		sudo umount $werdo/sys      && act "umounted sys"    && sleep 1
+		sudo umount $werdo/dev/pts  && act "umounted devpts"
+		sudo umount $werdo/dev      && act "umounted dev"
+		sudo umount $werdo/proc     && act "umounted proc"
+		sudo umount $werdo/sys      && act "umounted sys"
 		return 0
 	fi
-	return 1
+	zerr; return 1
 }
 
-wrapup() {
-	# a hopefully clean exit
-	fn wrapup
-	req=(strapdir)
-	ckreq || {
-		die "something is very wrong"
-		die "cleanup yourself, sorry"
-		exit 1
-	}
-
-	devprocsys umount $strapdir
-	exit 1
-}
-
-findloopdev() {
-	fn findloopdev
-	req=(workdir image_name)
-	ckreq || return 1
-
-	notice "finding a free loopdevice"
-
-	loopdevice=$(sudo losetup -f --show $workdir/${image_name}.img)
-	sudo partx -av $loopdevice || zerr
-
-	func "loopdevice: $loopdevice"
-	silly sleep 2
-}
-
-findfreenbd() {
-	fn findfreenbd
-
-	notice "looking for a free /dev/nbd"
-
-	for i in $(seq 0 8); do
-		grep "^/dev/nbd${i}" /proc/mounts >/dev/null || {
-			print "/dev/nbd${i}"
-			break
-		}
-	done
-}
-
-qemu_install_user() {
-	fn qemu_install_user
-	req=(arch strapdir)
-	ckreq || return 1
-
-	[[ "$(uname -m)" =~ "arm" ]]   && return
-	[[ "$(uname -m)" =~ "aarch" ]] && return
-
-	notice "installing qemu-user-static"
-	case "$arch" in
-		armel)
-			sudo cp -a "$armel_qemu_bin" "$strapdir/usr/bin"
-			;;
-		armhf)
-			sudo cp -a "$armhf_qemu_bin" "$strapdir/usr/bin"
-			;;
-		arm64)
-			sudo cp -a "$arm64_qemu_bin" "$strapdir/usr/bin"
-			;;
-	esac
-}
-
-dpkgdivert() {
+dpkgdivert()
+{
 	fn dpkgdivert "$@"
 	req=(watdo werdo)
 	local watdo="$1"
@@ -207,8 +154,8 @@ dpkgdivert() {
 		cat <<EOF | sudo tee ${werdo}/dpkgdivert >/dev/null
 #!/bin/sh
 dpkg-divert --add --local \
-	--divert /usr/sbin/invoke-rc.d.chroot \
-	--rename /usr/sbin/invoke-rc.d
+--divert /usr/sbin/invoke-rc.d.chroot \
+--rename /usr/sbin/invoke-rc.d
 cp /bin/true /usr/sbin/invoke-rc.d
 echo -e "#!/bin/sh\nexit 101" > /usr/sbin/policy-rc.d
 chmod +x /usr/sbin/policy-rc.d
@@ -222,163 +169,98 @@ dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
 EOF
 	fi
 
-	chroot-script dpkgdivert || zerr
+	chroot-script "$werdo/dpkgdivert" || { zerr; return 1; }
 }
 
-enableserv() {
-	fn enableserv "$@"
-	local service="$1"
-	req=(service strapdir)
-	ckreq || return 1
-
-	cat <<EOF | sudo tee -a ${strapdir}/enserv >/dev/null
-#!/bin/sh
-update-rc.d ${service} enable
-EOF
-
-	notice "enabling $service service"
-	chroot-script enserv
-}
-
-disableserv() {
-	fn disableserv "$@"
-	local service="$1"
-	req=(service strapdir)
-	ckreq || return 1
-
-	cat <<EOF | sudo tee -a ${strapdir}/disserv >/dev/null
-#!/bin/sh
-update-rc.d ${service} disable
-EOF
-
-	notice "disabling $service service"
-	chroot-script disserv
-}
-
-install-custdebs() {
-	fn install-custdebs
-	req=(R strapdir custom_deb_packages)
-	ckreq || return 1
-
-	sudo mkdir -p $strapdir/debs
-	sudo cp $R/extra/custom-packages/*.deb $strapdir/debs/
-
-	cat <<EOF | sudo tee ${strapdir}/install-debs >/dev/null
-#!/bin/sh
-cd /debs
-for deb in ${custom_deb_packages}; do
-	dpkg -i \$deb
-	apt-get --yes --force-yes -f install
-done
-cd /
-apt-get --yes --force-yes autoremove
-rm -rf /debs
-EOF
-	chroot-script -d install-debs
-}
-
-chroot-script() {
-	fn chroot-script "$@"
-	req=(strapdir)
+chroot-script()
+{
+	fn chroot-script "$*"
+	req=(R workdir strapdir)
 	ckreq || return 1
 
 	mkdir -p "$R/log"
 
+	local _divert=""
+	local _path=""
+	local _script=""
+
 	case "x$1" in
-		x-d)
-			local script="$2"
-			devprocsys mount "$strapdir" || zerr
-			dpkgdivert on "$strapdir"    || zerr
-			[[ "$APT_CACHE" = 1 ]] && { aptcache on "$strapdir/mnt"  || zerr }
-
-			## logging
-			sudo sed -i "$strapdir/$script" \
-				-e 's@#!/bin/sh@#!/bin/sh\'$'\nset -x ; exec 2>/'$script'.log ; export DEBIAN_FRONTEND=noninteractive@'
-
-			notice "chrooting to execute $script..."
-			sudo chmod +x  "$strapdir/$script"    || zerr
-			sudo chroot "$strapdir" "/$script" || zerr
-			sudo mv -f "$strapdir/${script}.log" "$R/log/"
-
-			[[ "$APT_CACHE" = 1 ]] && { aptcache off "$strapdir/mnt" || zerr }
-			dpkgdivert off "$strapdir"    || zerr
-			devprocsys umount "$strapdir" || zerr
-			;;
-		*)
-			local script="$1"
-			[[ "$APT_CACHE" = 1 ]] && { aptcache on "$strapdir/mnt"  || zerr }
-
-			## logging
-			sudo sed -i "$strapdir/$script" \
-				-e 's@#!/bin/sh@#!/bin/sh\'$'\nset -x ; exec 2>/'$script'.log@'
-
-			notice "chrooting to execute $script..."
-			sudo chmod +x  "$strapdir/$script"    || zerr
-			sudo chroot "$strapdir" "/$script" || zerr
-			sudo mv -f "$strapdir/${script}.log" "$R/log/"
-
-			[[ "$APT_CACHE" = 1 ]] && { aptcache off "$strapdir/mnt" || zerr }
-			;;
+	x-d)
+		_divert=1
+		shift
+		;;
 	esac
 
-	sudo rm -f $strapdir/$script
+	if [[ "$(dirname "$1")" = "." ]]; then
+		_path="$strapdir"
+	else
+		_path="$(dirname "$1")"
+	fi
+
+	_script="$(basename "$1")"
+
+	if [[ -n "$_divert" ]]; then
+		devprocsys mount "$_path" || { zerr; return 1; }
+		dpkgdivert on "$_path"    || { zerr; return 1; }
+	fi
+
+	sudo sed -i "$_path/$_script" \
+		-e 's@^#!/bin/sh@&\nexport DEBIAN_FRONTEND=noninteractive@' \
+		-e 's@^#!/bin/sh@&\nexport LC_ALL=C@' \
+		-e 's@^#!/bin/sh@&\nexport LANG=C@' \
+		-e 's@^#!/bin/sh@&\nset -x ; exec 2>/'$_script'.log@'
+
+	notice "Chrooting to execute '$_script' ..."
+	sudo chmod +x "$_path/$_script"  || { zerr; return 1; }
+	sudo chroot "$_path" "/$_script" || { zerr; return 1; }
+	sudo mv -f "$_path/${_script}.log" "$R/log/"
+
+	if [[ -n "$_divert" ]]; then
+		dpkgdivert off "$_path"    || { zerr; return 1; }
+		devprocsys umount "$_path" || { zerr; return 1; }
+	fi
+
+	sudo rm -f "$_path/$_script"
 }
 
-install_fake_package() {
-	fn install_fake_package "$@"
-	req=(strapdir pkgname pkgver section)
-	local pkgname="$1"
-	local pkgver="$2"
-	local section="$3"
+findloopdev()
+{
+	fn findloopdev
+	req=(workdir image_name)
 	ckreq || return 1
 
-	local _tmp="$strapdir/tmp"
-	sudo mkdir -p "$_tmp/$pkgname"
+	local _l="$(sudo losetup -f --show "$workdir/${image_name}.img")"
+	if [[ -z "$_l" ]]; then
+		zerr; return 1
+	fi
 
-	cat <<EOF | sudo tee ${_tmp}/${pkgname}/${pkgname}_${pkgver}.control >/dev/null
-Section: ${section}
-Priority: optional
-Homepage: https://devuan.org/
-Standards-Version: 3.9.6
-
-Package: ${pkgname}
-Version: ${pkgver}
-Maintainer: Devuan developers <onelove@devuan.org>
-Architecture: all
-Description: (Fake) ${pkgname}
-  Dummy package used to meet some dependencies without installing the
-  real ${pkgname} package.
-EOF
-
-	cat <<EOF | sudo tee ${strapdir}/install-fake-package >/dev/null
-#!/bin/sh
-cd /tmp/${pkgname}
-equivs-build ${pkgname}_${pkgver}.control \
-	&& dpkg -i ${pkgname}_${pkgver}_all.deb || exit 1
-cd /tmp
-rm -rf ${pkgname}
-EOF
-	chroot-script install-fake-package || zerr
+	echo "$_l"
 }
 
-blend_preinst() {
-	fn blend_preinst
-	func "not overriden"
-	return 0
+findnbddev()
+{
+	fn findnbddev
+
+	notice "Finding a free /dev/nbd device"
+
+	for i in $(seq 0 8); do
+		grep -q "^/dev/nbd${i}" /proc/mounts || {
+			echo "/dev/nbd${i}"
+			return
+		}
+	done
+
+	zerr; return 1
 }
 
-blend_postinst() {
-	fn blend_postinst
-	func "not overriden"
-	return 0
-}
-
-silly() {
+silly()
+{
 	fn silly "$@"
 	local arg1="$1"
 	local arg2="$2"
-	## cheers mailpile!
-	funneh=("do not think of purple hippos"
+	# Cheers Mailpile!
+	funneh=(
+		"do not think of purple hippos"
 		"increasing entropy & scrambling bits"
 		"indexing kittens..."
 		"patching bugs..."
@@ -406,10 +288,20 @@ silly() {
 		"Supplying monkeys with typewriters"
 		"Swapping time and space"
 		"Self potato"
-		"god is porco"
+		"God is porco"
 		"A million hamsters are spinning their wheels right now"
 	)
 	local rnd=$(shuf -i1-$#funneh -n 1)
 	act "${funneh[$rnd]}"
 	[[ $arg1 = sleep ]] && sleep $arg2 || true
+}
+
+blend_preinst()
+{
+	fn blend_preinst "(noop)"
+}
+
+blend_postinst()
+{
+	fn blend_postinst "(noop)"
 }

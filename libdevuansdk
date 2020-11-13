@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
-# Copyright (c) 2016-2017 Dyne.org Foundation
-# libdevuansdk maintained by Ivan J. <parazyd@dyne.org>
+# shellcheck shell=bash
+# Copyright (c) 2016-2020 Dyne.org Foundation
+# libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
 #
 # This file is part of libdevuansdk
 #
@@ -17,22 +18,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this source code. If not, see <http://www.gnu.org/licenses/>.
 
-libdevuansdk_version="1.0"
-LIBPATH=${LIBPATH:-$(dirname $0)}
+vars+=(libdevuansdk_version LIBPATH)
 
-source $LIBPATH/config
-source $LIBPATH/zlibs/bootstrap
-source $LIBPATH/zlibs/cache
-source $LIBPATH/zlibs/helpers
-source $LIBPATH/zlibs/imaging
-source $LIBPATH/zlibs/iso
-source $LIBPATH/zlibs/kernel
-source $LIBPATH/zlibs/rsync
-source $LIBPATH/zlibs/sysconf
-source $LIBPATH/zlibs/vm
+libdevuansdk_version="2.0"
+LIBPATH="${LIBPATH:-$(dirname $0)}"
 
-vars+=(libdevuansdk_version)
-vars+=(LIBPATH)
+source "$LIBPATH/config"
+source "$LIBPATH/zlibs/bootstrap"
+source "$LIBPATH/zlibs/helpers"
+source "$LIBPATH/zlibs/imaging"
+source "$LIBPATH/zlibs/iso"
+source "$LIBPATH/zlibs/vm"
+source "$LIBPATH/zlibs/sysconf"
 
 setopt pushdsilent
 
