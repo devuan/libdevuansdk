@@ -1,7 +1,3 @@
 [submodule "extra/devuan-keyring"]
 	path = extra/devuan-keyring
-	url = https://git.devuan.org/devuan/devuan-keyring
-[submodule "extra/debootstrap"]
-	path = extra/debootstrap
-	url = https://git.devuan.org/devuan/debootstrap
-	branch = suites/jessie
+	url = https://salsa.debian.org/parazyd/devuan-keyring.git
