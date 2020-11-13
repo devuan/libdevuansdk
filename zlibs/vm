@@ -90,6 +90,10 @@ vm_pack_dist()
 		$_xzcomp "${image_name}.vdi" || { zerr; return 1; }
 	fi
 
+	if [[ "$imageformat" != raw ]]; then
+		rm -f "${image_name}.img"
+	fi
+
 	act "Calculating sha256 checksums"
 	silly
 	sha256sum "${image_name}.${_rsuffix}" > "${image_name}.${_rsuffix}.sha256"
