@@ -41,6 +41,7 @@ bootstrap_complete_base()
 			die "Failed to extract cpio archive"
 			return 1
 		}
+		bootstrap_stage4
 		return
 	elif [[ -f "$bootstrap_cpio_stage3" ]]; then
 		act "Using the existing stage3 bootstrap cpio archive..."
