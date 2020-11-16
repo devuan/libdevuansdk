@@ -38,7 +38,7 @@ strapdir_to_image()
 		-not -path "./dev/*" \
 		-a -not -path "./proc/*" \
 		-a -not -path "./sys/*" \
-		| sudo cpio -p "$workdir/mnt" || { zerr; return 1; }
+		| sudo cpio -adm -p "$workdir/mnt" || { zerr; return 1; }
 	popd
 }
 

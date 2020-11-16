@@ -213,7 +213,7 @@ bootstrap_cpio_pack()
 		-not -path "./dev/*" \
 		-a -not -path "./proc/*" \
 		-a -not -path "./sys/*" \
-		| sudo cpio -o --format=newc \
+		| sudo cpio -oa --reproducible  --format=newc \
 		| gzip - > "$_bootstrap_cpio" || { zerr; return 1; }
 	popd
 }
@@ -231,7 +231,7 @@ bootstrap_cpio_unpack()
 	sudo rm -rf "${strapdir}"/*
 
 	pushd "$strapdir" || { zerr; return 1; }
-	zcat "$_bootstrap_cpio" | sudo cpio -id || { zerr; return 1; }
+	zcat "$_bootstrap_cpio" | sudo cpio -idmn --format=newc || { zerr; return 1; }
 	popd
 
 	sudo mkdir -p "$strapdir"/{boot,dev,proc,sys}
