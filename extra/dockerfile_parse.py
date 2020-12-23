@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-# Copyright (c) 2018 Dyne.org Foundation
-# libdevuansdk is maintained by Ivan J. <parazyd@dyne.org>
-#
+#!/usr/bin/env python3
+# Copyright (c) 2018-2021 Ivan J. <parazyd@dyne.org>
 # This file is part of libdevuansdk
 #
 # This source code is free software: you can redistribute it and/or modify
