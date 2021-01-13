@@ -204,6 +204,7 @@ chroot-script()
 
 	sudo sed -i "$_path/$_script" \
 		-e 's@^#!/bin/sh@&\nexport DEBIAN_FRONTEND=noninteractive@' \
+		-e 's@^#!/bin/sh@&\nexport SOURCE_DATE_EPOCH=1610550434@' \
 		-e 's@^#!/bin/sh@&\nexport LC_ALL=C@' \
 		-e 's@^#!/bin/sh@&\nexport LANG=C@' \
 		-e 's@^#!/bin/sh@&\nset -x ; exec 2>/'$_script'.log@'

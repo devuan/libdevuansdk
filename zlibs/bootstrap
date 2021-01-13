@@ -29,6 +29,7 @@ bootstrap_complete_base()
 	export LANG=C
 	export LC_ALL=C
 	export DEBIAN_FRONTEND=noninteractive
+	export SOURCE_DATE_EPOCH=1610550434
 
 	bootstrap_cpio_stage3="$R/tmp/bootstrap-${os}-${arch}-stage3.cpio.gz"
 	bootstrap_cpio_stage4="$R/tmp/bootstrap-${os}-${arch}-stage4.cpio.gz"
