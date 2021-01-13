@@ -81,13 +81,13 @@ build_vm_dist()
 	notice "Building complete VM image(s)"
 
 	bootstrap_complete_base        || { zerr; return 1; }
-	vm_inject_overrides            || { zerr; return 1; }
 	blend_preinst                  || { zerr; return 1; }
 	image_prepare_raw              || { zerr; return 1; }
 	image_connect_raw              || { zerr; return 1; }
 	image_partition_${parted_type} || { zerr; return 1; }
 	image_format_partitions        || { zerr; return 1; }
 	image_mount                    || { zerr; return 1; }
+	vm_inject_overrides            || { zerr; return 1; }
 	strapdir_to_image              || { zerr; return 1; }
 	vm_setup_grub                  || { zerr; return 1; }
 	blend_postinst                 || { zerr; return 1; }

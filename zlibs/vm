@@ -21,13 +21,17 @@ vars+=(vmname)
 vm_inject_overrides()
 {
 	fn vm_inject_overrides
-	req=(strapdir bootfs)
+	req=(strapdir bootfs rootfs bootpart rootpart)
 	ckreq || return 1
 
 	notice "Injecting rootfs overrides"
 
+	bootuuid="$(lsblk "$bootpart" -no UUID)"
+	rootuuid="$(lsblk "$rootpart" -no UUID)"
+
 	cat <<EOF | sudo tee -a "$strapdir/etc/fstab" >/dev/null
-/dev/sda1 /boot ${bootfs} defaults 0 1
+UUID=${rootuuid} /     ${rootfs} defaults 0 1
+UUID=${bootuuid} /boot ${bootfs} defaults 0 1
 EOF
 
 	cat <<EOF | sudo tee "$strapdir/etc/rc.local" >/dev/null
