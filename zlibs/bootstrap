@@ -178,6 +178,24 @@ qemu_install_user()
 	esac
 
 	notice "Installing qemu-user-static"
+
+	if [[ -f "/etc/gentoo-release" ]] && [[ "$arch" = armhf ]]; then
+		cat <<EOF | gcc -O3 -static -o /tmp/qemu-wrapper -x c -
+#include <string.h>
+#include <unistd.h>
+int main(int argc, char **argv, char **envp) {
+	char *newargv[argc+3];
+	newargv[0] = argv[0];
+	newargv[1] = "-cpu";
+	newargv[2] = "cortex-a8";
+	memcpy(&newargv[3], &argv[1], sizeof(*argv) * (argc-1));
+	newargv[argc+2] = NULL;
+	return execve("${armhf_qemu_bin}", newargv, envp);
+}
+EOF
+		sudo mv /tmp/qemu-wrapper "$_target" || { zerr; return 1 ; }
+	fi
+
 	case "$arch" in
 	armel)
 		sudo cp -a "$armel_qemu_bin" "$_target/usr/bin/" || { zerr; return 1; }
