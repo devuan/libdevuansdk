@@ -196,7 +196,7 @@ image_partition_gpt()
 	sudo cgpt add -i 1 -t kernel -b ${gpt_boot[1]} -s ${gpt_boot[2]} \
 		-l kernel -S 1 -T 5 -P 10 "$loopdevice" || { zerr; return 1; }
 
-	sudo cgpd add -i 2 -t data -b ${gpt_root[1]} -s
+	sudo cgpt add -i 2 -t data -b ${gpt_root[1]} -s
 		$(expr $(cgpt show "$loopdevice" \
 				| awk '/Sec GPT table/ {print $1}') - ${gpt_root[1]}) \
 		-l Root "$loopdevice" || { zerr; return 1; }
