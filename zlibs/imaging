@@ -181,6 +181,29 @@ image_partition_dos()
 	sudo partprobe "$loopdevice" || { zerr; return 1; }
 }
 
+image_partition_gpt()
+{
+	fn image_partition_gpt
+	req=(loopdevice bootpart rootpart gpt_boot gpt_root)
+	ckreq || return 1
+
+	notice "Partitioning gpt image"
+
+	sudo parted "$loopdevice" --script -- mklabel gpt || { zerr; return 1; }
+	sudo cgpt create -z "$loopdevice" || { zerr; return 1; }
+	sudo cgpt create    "$loopdevice" || { zerr; return 1; }
+
+	sudo cgpt add -i 1 -t kernel -b ${gpt_boot[1]} -s ${gpt_boot[2]} \
+		-l kernel -S 1 -T 5 -P 10 "$loopdevice" || { zerr; return 1; }
+
+	sudo cgpd add -i 2 -t data -b ${gpt_root[1]} -s
+		$(expr $(cgpt show "$loopdevice" \
+				| awk '/Sec GPT table/ {print $1}') - ${gpt_root[1]}) \
+		-l Root "$loopdevice" || { zerr; return 1; }
+
+	sudo partprobe "$loopdevice" || { zerr; return 1; }
+}
+
 image_mount()
 {
 	fn image_mount
