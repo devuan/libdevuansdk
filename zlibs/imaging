@@ -48,7 +48,7 @@ image_prepare_raw()
 
 	notice "Creating raw image of $size MB"
 	touch "$workdir/${image_name}.img"
-	chattr +C "$workdir/${image_name}.img"
+	chattr -f +C "$workdir/${image_name}.img"
 	dd if=/dev/zero of="$workdir/${image_name}.img" bs=1M count="$size" || { zerr; return 1; }
 }
 
@@ -60,7 +60,7 @@ image_prepare_qcow2()
 
 	notice "Creating qcow2 image of $size MB"
 	touch "$workdir/${image_name}.qcow2"
-	chattr +C "$workdir/${image_name}.qcow2"
+	chattr -f +C "$workdir/${image_name}.qcow2"
 	qemu-img create -f qcow2 "${workdir}/${image_name}.qcow2" "${size}M" || { zerr; return 1; }
 }
 
@@ -313,7 +313,7 @@ image_raw_to_qcow2()
 	notice "Converting raw image to qcow2"
 	pushd "$workdir" || { zerr; return 1; }
 	touch "${image_name}.qcow2"
-	chattr +C "${image_name}.qcow2"
+	chattr -f +C "${image_name}.qcow2"
 	qemu-img convert -f raw -O qcow2 "${image_name}.img" "${image_name}.qcow2" || { zerr; return 1; }
 	popd
 }
@@ -327,7 +327,7 @@ image_raw_to_vdi()
 	notice "Converting raw image to vdi"
 	pushd "$workdir" || { zerr; return 1; }
 	touch "${image_name}.vdi"
-	chattr +C "${image_name}.vdi"
+	chattr -f +C "${image_name}.vdi"
 	qemu-img convert -f raw -O vdi "${image_name}.img" "${image_name}.vdi" || { zerr; return 1; }
 	#VBoxManage modifyhd "${image_name}.vdi" --type immutable --compact || { zerr; return 1; }
 	popd
