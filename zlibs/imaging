@@ -21,7 +21,7 @@ vars+=(bootpart rootpart loopdevice)
 strapdir_to_image()
 {
 	fn strapdir_to_image
-	req=(workdir strapdir bootpart rootpart loopdevice)
+	req=(workdir strapdir)
 	ckreq || return 1
 
 	notice "Copying strapdir to image ..."
@@ -130,8 +130,6 @@ image_format_partitions()
 image_connect_raw()
 {
 	fn image_connect_raw
-	req=(workdir image_name)
-	ckreq || return 1
 
 	notice "Connecting raw image to loop device"
 
@@ -166,7 +164,7 @@ image_connect_qcow2()
 image_partition_dos()
 {
 	fn image_partition_dos
-	req=(loopdevice bootpart rootpart dos_boot dos_root)
+	req=(loopdevice dos_boot dos_root)
 	ckreq || return 1
 
 	notice "Partitioning dos image"
@@ -228,7 +226,7 @@ image_mount()
 image_umount()
 {
 	fn image_umount
-	req=(workdir bootpart rootpart)
+	req=(workdir loopdevice)
 	ckreq || return 1
 
 	notice "Umounting image from $workdir/mnt"
