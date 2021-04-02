@@ -175,6 +175,7 @@ dpkg-divert --remove --rename /usr/sbin/invoke-rc.d
 EOF
 	fi
 
+	# NOTE: tread carefully, potential for recursive calling
 	chroot-script "$werdo/dpkgdivert" || { zerr; return 1; }
 }
 
@@ -206,6 +207,7 @@ chroot-script()
 	_script="$(basename "$1")"
 
 	if [[ -n "$_divert" ]]; then
+		# NOTE: tread carefully, potential for recursive calling
 		devprocsys mount "$_path" || { zerr; return 1; }
 		dpkgdivert on "$_path"    || { zerr; return 1; }
 	fi
@@ -228,6 +230,7 @@ chroot-script()
 	sudo chmod 1777 "${_path}/tmp"
 
 	if [[ -n "$_divert" ]]; then
+		# NOTE: tread carefully, potential for recursive calling
 		dpkgdivert off "$_path"    || { zerr; return 1; }
 		devprocsys umount "$_path" || { zerr; return 1; }
 	fi
