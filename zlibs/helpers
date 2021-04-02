@@ -213,12 +213,18 @@ chroot-script()
 	sudo chmod +x "$_path/$_script"  || { zerr; return 1; }
 	sudo chroot "$_path" "/$_script" || { zerr; return 1; }
 	sudo mv -f "$_path/${_script}.log" "$R/log/"
+	# Some dpkg Debian scripts now expect "/tmp/user/0"
+	sudo mkdir -p "${_path}/tmp/user/0"
+	sudo chmod 0700 "${_path}/tmp/user/0"
+	sudo chmod 0600 "${_path}/tmp/user"
+	sudo chmod 1777 "${_path}/tmp"
 
 	if [[ -n "$_divert" ]]; then
 		dpkgdivert off "$_path"    || { zerr; return 1; }
 		devprocsys umount "$_path" || { zerr; return 1; }
 	fi
 
+	sudo rm -rf "$_path/tmp/user"
 	sudo rm -f "$_path/$_script"
 }
 
