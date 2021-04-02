@@ -36,7 +36,7 @@ strapdir_to_image()
 		-not -path "./dev/*" \
 		-a -not -path "./proc/*" \
 		-a -not -path "./sys/*" \
-		| sudo cpio -adm -p "$workdir/mnt" || { zerr; return 1; }
+		| sudo cpio --quiet -adm -p "$workdir/mnt" || { zerr; return 1; }
 	popd
 }
 
@@ -263,7 +263,7 @@ image_disconnect_raw()
 	esac
 
 	act "Disconnecting"
-	sudo partx -dv "$loopdevice" || {
+	sudo partx -dv "$loopdevice" >>/dev/null || {
 		die "partx failed to remove $loopdevice"
 		zerr; return 1
 	}
