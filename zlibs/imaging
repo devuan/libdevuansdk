@@ -88,6 +88,10 @@ image_format_partitions()
 		act "Formatting boot as btrfs"
 		sudo mkfs.btrfs ${=bootopts} "${bootpart}" || { zerr; return 1; }
 		;;
+	f2fs)
+		act "Formatting boot as f2fs"
+		sudo mkfs.f2fs ${=bootopts} "${bootpart}" || { zerr; return 1; }
+		;;
 	"")
 		die "No bootfs filesystem set!"
 		zerr; return 1
@@ -114,6 +118,10 @@ image_format_partitions()
 	btrfs)
 		act "Formatting root as btrfs"
 		sudo mkfs.btrfs ${=rootopts} "${rootpart}" || { zerr; return 1; }
+		;;
+	f2fs)
+		act "Formatting root as f2fs"
+		sudo mkfs.f2fs ${=rootopts} "${rootpart}" || { zerr; return 1; }
 		;;
 	"")
 		die "No rootfs filesystem set!"
