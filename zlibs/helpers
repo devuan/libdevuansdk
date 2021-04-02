@@ -113,6 +113,14 @@ clean_strapdir()
 
 	notice "Cleaning strapdir"
 
+	# Danger Will Robinson
+	# Check for (bind) mounts as sudo rm -rf will trash the host
+	for m in sys proc dev; do
+		if [[ $(mountpoint -q "${strapdir}/$m") ]]; then
+			zerr
+			return 1
+		fi
+	done
 	sudo rm -rf "$strapdir"
 }
 

@@ -246,7 +246,17 @@ bootstrap_cpio_unpack()
 	notice "Unpacking bootstrap cpio archive: $_bootstrap_cpio"
 	silly
 
-	sudo rm -rf "${strapdir}"/*
+	# Danger Will Robinson
+	# Check for (bind) mounts as sudo rm -rf will trash the host
+	for m in sys proc dev; do
+		if [[ $(mountpoint -q "${strapdir}/$m") ]]; then
+			zerr
+			return 1
+		fi
+	done
+	# remove everything, including .dotdirfiles
+	sudo rm -rf "$strapdir"
+	mkdir -p "$strapdir"
 
 	pushd "$strapdir" || { zerr; return 1; }
 	zcat "$_bootstrap_cpio" | sudo cpio -idmn --format=newc || { zerr; return 1; }
