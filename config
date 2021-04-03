@@ -26,7 +26,7 @@ arrs+=(core_packages_option base_packages_option purge_packages_option blend_pac
 
 os="devuan"
 release="beowulf"
-version="3.0.0"
+version="3.1.0"
 mirror="https://pkgmaster.devuan.org/merged"
 section="main contrib non-free"
 
