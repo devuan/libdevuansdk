@@ -81,5 +81,4 @@ base_packages=(
 
 purge_packages_option=()
 purge_packages+=(
-	dbus
 )
