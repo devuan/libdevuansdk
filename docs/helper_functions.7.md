@@ -7,11 +7,11 @@ within developing libdevuansdk. some of these functions are required for
 libdevuansdk to properly work as well.
 
 
-## build_image_dist()  
-this function is kind of a wrapper function, mostly used in `arm-sdk` to build a
-complete "dd-able" image from start to end. to run, it requires `$arch`,
-`$size`, `$parted_type`, `$bootfs`, `$workdir`, and `$strapdir` to be declared. as well as
-`$parted_root`, `$parted_boot` if `$parted_type=dos`, or `$gpt_root`,
+## build_arm_dist()
+this function is kind of a wrapper function, mostly used in `arm-sdk` to build
+a complete "dd-able" image from start to end. to run, it requires `$workdir`
+`$strapdir`, and `$os`, `$arch`, `$size`, `$parted_type`, `$bootfs`, defined.
+additionally, `$dos_root`, `$dos_boot` if `$parted_type=dos`, or `$gpt_root`,
 `$gpt_boot` if `$parted_type=gpt`. see `creating_wrappers(7)` for insight on
 these variables.
 
