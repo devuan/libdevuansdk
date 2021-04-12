@@ -133,10 +133,13 @@ devprocsys()
 	ckreq || return 1
 
 	if [[ $watdo = mount ]]; then
-		sudo mount -o bind /sys     $werdo/sys     && act "mounted sys"    && \
-		sudo mount -t proc proc     $werdo/proc    && act "mounted proc"   && \
-		sudo mount -o bind /dev     $werdo/dev     && act "mounted dev"    && \
-		sudo mount -o bind /dev/pts $werdo/dev/pts && act "mounted devpts" && \
+		sudo mount -t proc proc,ro             $werdo/proc    && act "mounted proc"   && \
+		sudo mount -o bind /sys                $werdo/sys                             && \
+		sudo mount -o remount,bind,ro /sys     $werdo/sys     && act "mounted sys"    && \
+		sudo mount -o bind /dev                $werdo/dev                             && \
+		sudo mount -o remount,bind,ro /dev     $werdo/dev     && act "mounted dev"    && \
+		sudo mount -o bind /dev/pts            $werdo/dev/pts                         && \
+		sudo mount -o remount,bind,ro /dev/pts $werdo/dev/pts && act "mounted devpts" && \
 		return 0
 	elif [[ $watdo = umount ]]; then
 		sudo umount $werdo/dev/pts  && act "umounted devpts"
