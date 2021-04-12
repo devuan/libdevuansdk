@@ -259,7 +259,7 @@ bootstrap_cpio_unpack()
 	mkdir -p "$strapdir"
 
 	pushd "$strapdir" || { zerr; return 1; }
-	zcat "$_bootstrap_cpio" | sudo cpio -idmn --format=newc || { zerr; return 1; }
+	zcat "$_bootstrap_cpio" | sudo cpio -idmn --format=newc 2>>/dev/null || { zerr; return 1; }
 	popd
 
 	sudo mkdir -p "$strapdir"/{boot,dev,proc,sys}

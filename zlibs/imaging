@@ -78,7 +78,7 @@ image_format_partitions()
 		;;
 	vfat|fat|dos)
 		act "Formatting boot as VFAT"
-		sudo mkfs.vfat ${=bootopts} "${bootpart}" || { zerr; return 1; }
+		sudo mkfs.vfat ${=bootopts} "${bootpart}" >>/dev/null || { zerr; return 1; }
 		;;
 	ext?)
 		act "Formatting boot as $bootfs"
@@ -109,7 +109,7 @@ image_format_partitions()
 		;;
 	vfat|fat|dos)
 		act "Formatting root as VFAT"
-		sudo mkfs.vfat ${=rootopts} "${rootpart}" || { zerr; return 1; }
+		sudo mkfs.vfat ${=rootopts} "${rootpart}" >>/dev/null || { zerr; return 1; }
 		;;
 	ext?)
 		act "Formatting root as $rootfs"
