@@ -25,8 +25,8 @@ arrs+=(core_packages base_packages purge_packages blend_packages)
 arrs+=(core_packages_option base_packages_option purge_packages_option blend_packages_option)
 
 os="devuan"
-release="beowulf"
-version="3.1.0"
+release="chimaera"
+version="4.0.0"
 mirror="https://pkgmaster.devuan.org/merged"
 section="main contrib non-free"
 
@@ -70,7 +70,7 @@ base_packages=(
 	wireless-tools
 	lynx
 	firmware-linux-free
-	btrfs-tools
+	btrfs-progs
 	zsh
 	rsync
 	git-core
